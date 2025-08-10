@@ -25,7 +25,7 @@ export default function Step2() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FAF8F5",
+        backgroundColor: "white",
     },
     progressbar: {
         gap: "10",

@@ -1,5 +1,7 @@
-import { View } from "react-native";
+import { View,Text } from "react-native";
 
 export default function Rules(){
-    return <View>규칙</View>
+    return <View style={{ flex: 1, backgroundColor: 'white' }}>
+          <Text>규칙</Text>
+        </View>
 }

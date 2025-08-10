@@ -2,10 +2,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { useFonts } from 'expo-font';
 
 type RoutePath = "/onboarding/onboarding1" | "/login" | "/home";
 
 export default function Index() {
+
+  const [fontsLoaded] = useFonts({
+    PretendardSemiBold: require('../assets/fonts/Pretendard-SemiBold.otf'),
+  });
+
   const [initialRoute, setInitialRoute] = useState<RoutePath | null>(null);
 
   useEffect(() => {
@@ -29,6 +35,10 @@ export default function Index() {
 
     checkState();
   }, []);
+
+  if (!fontsLoaded) {
+    return null; // 또는 로딩 스피너
+  }
 
   if (!initialRoute) {
     return (

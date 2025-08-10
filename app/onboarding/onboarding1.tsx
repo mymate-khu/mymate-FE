@@ -25,7 +25,7 @@ export default function Step1() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FAF8F5",
+        backgroundColor: "white",
     },
     progressbar: {
         gap: "10",
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     titelbarText: {
         fontSize: screenWidth * 0.09,
         color: '#222221', // var(--label-normal)
-        fontFamily: 'NanumSquareNeo', // var(--typescale-display_l-family)
+        fontFamily: 'PretendardSemiBold', // var(--typescale-display_l-family)
         fontStyle: 'normal',
         fontWeight: '400',
         lineHeight: 45, // 150% of 30px

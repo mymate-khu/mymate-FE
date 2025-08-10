@@ -1,56 +1,87 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, View, Text } from 'react-native';
+
+import HomeIcon from '@/assets/image/tabsicon/home_Icon.svg';
+import CalendarIcon from '@/assets/image/tabsicon/calendar_Icon.svg';
+import AdjustmentIcon from '@/assets/image/tabsicon/adjustment_Icon.svg';
+import RulesIcon from '@/assets/image/tabsicon/rules_Icon.svg';
 
 import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { useColorScheme } from '@/hooks/useColorScheme';
+
+const FixedLabel = ({ title }: { title: string }) => (
+  <Text style={{ fontSize: 10, color: 'black' }}>{title}</Text>
+);
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: 'rgba(0,0,0,0.7)',
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
+        tabBarButton: (p) => <HapticTab {...p} />,
+        tabBarActiveTintColor: 'rgba(255, 230, 0, 1)',
+        tabBarInactiveTintColor: 'white',
+
+
+        // 2) 탭바 배경 완전 투명 + 그림자 제거
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS to show the blur effect
             position: 'absolute',
+            backgroundColor: 'white',
+            borderTopWidth: 0,
+            shadowOpacity: 0,
           },
-          default: {},
+          default: {
+            backgroundColor: 'white',
+            borderTopWidth: 0,
+            elevation: 0,
+          },
         }),
-      }}>
+
+        // 3) iOS 기본 블러/배경을 완전히 덮어쓰기
+        tabBarBackground: () => (
+          <View style={{ flex: 1, backgroundColor: 'transparent' }} />
+        ),
+
+        // (선택) 눌렀을 때도 배경색 고정/투명 유지
+        tabBarActiveBackgroundColor: 'transparent',
+        tabBarInactiveBackgroundColor: 'transparent',
+      }}
+    >
       <Tabs.Screen
         name="home"
         options={{
-          title: '홈',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarLabel: () => <FixedLabel title="홈" />,
+          tabBarIcon: ({ color, size }) => (
+            <HomeIcon width={size ?? 28} height={size ?? 28} fill={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="calendar"
         options={{
-          title: '캘린더',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="magnifyingglass" color={color} />,
+          tabBarLabel: () => <FixedLabel title="캘린더" />,
+          tabBarIcon: ({ color, size }) => (
+            <CalendarIcon width={size ?? 28} height={size ?? 28} fill={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="adjustment"
         options={{
-          title: '정산',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle" color={color} />,
+          tabBarLabel: () => <FixedLabel title="정산" />,
+          tabBarIcon: ({ color, size }) => (
+            <AdjustmentIcon width={size ?? 28} height={size ?? 28} fill={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="rules"
         options={{
-          title: '규칙',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle" color={color} />,
+          tabBarLabel: () => <FixedLabel title="규칙" />,
+          tabBarIcon: ({ color, size }) => (
+            <RulesIcon width={size ?? 28} height={size ?? 28} fill={color} />
+          ),
         }}
       />
     </Tabs>
