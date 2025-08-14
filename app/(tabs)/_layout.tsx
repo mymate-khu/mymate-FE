@@ -22,7 +22,6 @@ export default function TabLayout() {
         tabBarActiveTintColor: 'rgba(255, 230, 0, 1)',
         tabBarInactiveTintColor: 'white',
 
-
         // 2) 탭바 배경 완전 투명 + 그림자 제거
         tabBarStyle: Platform.select({
           ios: {
