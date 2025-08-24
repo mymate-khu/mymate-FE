@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, useWindowDimensions, TouchableOpacity, StyleSheet, SectionList } from 'react-native';
 import { Calendar, DateData, LocaleConfig } from 'react-native-calendars';
-
+import { router } from 'expo-router';
 
 const initialEvents = {
   '2025-08-18': {
@@ -42,10 +42,13 @@ LocaleConfig.defaultLocale = 'ko';
 
 export default function MyCalendar() {
 
+
   const { width, height } = useWindowDimensions();
 
   const today = new Date();
   const todayISO = today.toISOString().split('T')[0];
+
+  const [current,setcurrent] = useState(todayISO)
 
   const [selected, setSelected] = useState(todayISO);
   const [events, setEvents] = useState(initialEvents);
@@ -60,8 +63,8 @@ export default function MyCalendar() {
         style={{
           textAlign: 'center',
           fontFamily: 'PretendardSemiBold',
-          fontWeight: '600',
-          fontSize: width * 0.075,
+          fontWeight: '500',
+          fontSize: width * 0.06,
         }}
       >
         {String(curmonth).padStart(2, '0')}월
@@ -74,13 +77,13 @@ export default function MyCalendar() {
     () => (
       <View style={{ backgroundColor: 'white' }}>
         <View style={{ height: height * 0.05, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: height * 0.02, fontFamily: "PretendardSemiBold", fontWeight: 600 }}>캘린더</Text>
+          <Text style={{ fontSize: width * 0.04, fontFamily: "PretendardSemiBold", fontWeight: 500 }}>캘린더</Text>
         </View>
         <View style={{ height: height * 0.03, alignItems: 'center', justifyContent: 'flex-end', flex: 1 }}>
-          <Text style={{ fontSize: height * 0.02 }}>{curyear}</Text>
+          <Text style={{ fontSize: width * 0.04 }}>{curyear}</Text>
         </View>
         <Calendar
-          current={todayISO}
+          current={current}
           markingType="multi-dot"
           renderHeader={Header}
           onMonthChange={(m: DateData) => {
@@ -157,9 +160,14 @@ export default function MyCalendar() {
           }}
         >
           <Text style={{ fontWeight: '400', fontSize: height * 0.03 }}>{section.title}</Text>
-          <Text style={{ marginLeft: 'auto', fontWeight: '400', fontSize: height * 0.03 }} onPress={() => console.log(`${section.title} + clicked`)}>
+          {section.title === "My Puzzle" &&
+            <Text style={{ marginLeft: 'auto', fontWeight: '400', fontSize: height * 0.03 }} 
+          onPress={() => {setEvents(null); 
+          console.log(current); 
+          router.push({pathname:"calendar_add",params : {date:current}})}}>
             +
           </Text>
+          }
         </View>
       )}
       renderItem={({ item, section }) => {
