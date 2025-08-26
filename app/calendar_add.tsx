@@ -15,7 +15,7 @@ export default function CalendarAdd() {
 
     const { date } = useLocalSearchParams<{ date?: string }>();
 
-    const [curdate, setcurdate] = useState("2025-10-11")
+    const [curdate, setcurdate] = useState(date)
 
     const [title, settitle] = useState("")
     const [discription, setdiscription] = useState("")
