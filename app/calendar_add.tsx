@@ -1,7 +1,7 @@
 // calendar_add.tsx
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { View, Text,useWindowDimensions,TextInput,Image} from "react-native";
+import { View, Text,useWindowDimensions,TextInput,Image, TouchableOpacity} from "react-native";
 import { StyleSheet } from "react-native";
 import {router} from "expo-router"
 import CalendarIcon from '../assets/image/Calendar.png';
@@ -14,6 +14,21 @@ export default function CalendarAdd() {
 
     const [curdate, setcurdate] = useState(date)
 
+    const [title,settitle] = useState("")
+    const [discription,setdiscription] = useState("")
+
+    const [calendaron , setcalendaron] = useState(false)
+
+    const handletitle = (e)=>{
+        settitle(e.target.value)
+        console.log(title)
+    }
+
+    const handlediscription = (e)=>{
+        setdiscription(e.target.value)
+        console.log(discription)
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -23,17 +38,28 @@ export default function CalendarAdd() {
             <View 
             style={[styles.bar_small, { marginHorizontal: width * 0.07, marginTop: 30 }]}>
                 {curdate}
-                <Image source={CalendarIcon} style={styles.calendaricon}></Image>
+                <TouchableOpacity style={styles.calendaricon} onPress={()=>{setcalendaron(!calendaron)}}>
+                    <Image source={CalendarIcon} ></Image>
+                </TouchableOpacity>
                 </View>
-            <TextInput 
+            {!calendaron && <View>
+                <TextInput 
             placeholder="퍼즐 제목 입력"
             placeholderTextColor={"lightgray"}
+            value={title}
+            onChange={handletitle}
             style={[styles.bar_small, { marginHorizontal: width * 0.07, marginTop: 20 }]}></TextInput>
             <TextInput 
             multiline
+            value={discription}
+            onChange={handlediscription}
             placeholder="내용을 입력하세요"
             placeholderTextColor={"lightgray"}
             style={[styles.bar_large, { marginHorizontal: width * 0.07,marginTop: 10 ,textAlignVertical: 'top',paddingTop:12}]}></TextInput>
+            <TouchableOpacity style={[styles.bar_small,{marginHorizontal: width * 0.07, marginTop: 20,alignItems:"center"}]}>완료</TouchableOpacity>
+                </View>
+
+            }
         </View>
     );
 }
@@ -69,7 +95,7 @@ const styles = StyleSheet.create({
     },
     bar_large: {
         backgroundColor: "white",
-        height: 300,
+        height: 200,
         borderRadius: 10,
         padding: 10
     }
