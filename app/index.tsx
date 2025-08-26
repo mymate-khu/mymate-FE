@@ -9,7 +9,7 @@ type RoutePath = "/onboarding/onboarding1" | "/login" | "/home";
 export default function Index() {
 
   const [fontsLoaded] = useFonts({
-    PretendardSemiBold: require('../assets/fonts/Pretendard-SemiBold.otf'),
+    PretendardSemiBold: require('../assets/fonts/pretendard_semibold.otf'),
   });
 
   const [initialRoute, setInitialRoute] = useState<RoutePath | null>(null);
