@@ -13,7 +13,7 @@ export default function Step4() {
     await AsyncStorage.setItem("onboardingCompleted", "true");
 
     router.dismissAll();                 // (선택) 중첩 스택까지 날리기
-    router.replace("/login");     // 파일 위치에 맞춘 경로
+    router.replace("/login/loginpage");     // 파일 위치에 맞춘 경로
   };
 
   return (
