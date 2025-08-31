@@ -7,6 +7,10 @@ import naverIcon from "@/assets/image/loginpageimg/navericon.png"
 import appleIcon from "@/assets/image/loginpageimg/appleicon.png"
 
 export default function LoginScreen() {
+
+
+  
+
   return (
     <View style={styles.container}>
       <Image source={MainIcon} style={{ marginTop: 76 }}></Image>
@@ -14,14 +18,16 @@ export default function LoginScreen() {
       <View style={styles.logintext}><Text>로그인</Text></View>
       <TextInput style={styles.inputbar} placeholder="ID" placeholderTextColor={"rgba(153, 153, 153, 1)"}></TextInput>
       <TextInput style={styles.inputbar} placeholder="비밀번호" placeholderTextColor={"rgba(153, 153, 153, 1)"}></TextInput>
-      <TouchableOpacity style={styles.loginbtn}><Text>로그인</Text></TouchableOpacity>
+      <TouchableOpacity style={styles.loginbtn}
+        onPress={()=>{router.push("/(tabs)/home")}}
+      ><Text>로그인</Text></TouchableOpacity>
 
       <View style={styles.middlebtn}>
-        <TouchableOpacity><Text>아이디 찾기</Text></TouchableOpacity>
-        <Text>|</Text>
-        <TouchableOpacity><Text>비밀번호 찾기</Text></TouchableOpacity>
-        <Text>|</Text>
-        <TouchableOpacity><Text>회원가입</Text></TouchableOpacity>
+        <TouchableOpacity><Text style={{color: "rgba(121, 121, 121, 1)"}}>아이디 찾기</Text></TouchableOpacity>
+        <Text style={{color: "rgba(121, 121, 121, 1)"}}> | </Text>
+        <TouchableOpacity><Text style={{color: "rgba(121, 121, 121, 1)"}}>비밀번호 찾기</Text></TouchableOpacity>
+        <Text style={{color: "rgba(121, 121, 121, 1)"}}> | </Text>
+        <TouchableOpacity onPress={()=>{router.push("/login/signup1")}}><Text style={{color: "rgba(121, 121, 121, 1)"}}>회원가입</Text></TouchableOpacity>
 
       </View>
 
