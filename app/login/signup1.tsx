@@ -65,7 +65,7 @@ export default function Signup1() {
         </View>
         <View style={{ marginHorizontal: width * 0.07 }}>
             {items.map((item, index) => (
-                <View style={styles.bar}>
+                <View key={index} style={styles.bar}>
                     <Text style={{ color: "#797979" }}>{item}</Text>
                     <TouchableOpacity
                         onPress={() => { btnClick(index) }}
@@ -76,7 +76,9 @@ export default function Signup1() {
             ))}
         </View>
 
-        <TouchableOpacity style={[{ marginHorizontal: width * 0.07},styles.btn]}>
+        <TouchableOpacity 
+        onPress={()=>{router.push("/login/signup2")}}
+        style={[{ marginHorizontal: width * 0.07},styles.btn]}>
             <Text style={{fontFamily:"PretendardSemiBold",fontWeight:500,fontSize:17}}>다음</Text>
         </TouchableOpacity>
     </View>
