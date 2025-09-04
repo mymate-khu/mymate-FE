@@ -7,6 +7,7 @@ import ShopbagIcon from "@/assets/image/adjustmenticon/shopbag_Icon.svg";
 import CheckIcon from "@/assets/image/adjustmenticon/check_Icon.svg";
 import ReceiptImage from "@/assets/image/adjustmenticon/receipt_image.svg";
 
+
 export default function Adjustment() {
   return (
     <SafeAreaView style={s.container}>
@@ -123,7 +124,11 @@ export default function Adjustment() {
           </View>
 
           {/* 더보기 버튼(카드 내부) */}
-          <TouchableOpacity activeOpacity={0.8} style={s.moreBtn}>
+          <TouchableOpacity 
+            activeOpacity={0.8}
+            style={s.moreBtn}
+            onPress={() => router.push("/adjustment_list")}
+          >
             <Text style={s.moreBtnText}>더보기</Text>
           </TouchableOpacity>
 
