@@ -49,7 +49,7 @@ const AddButton = styled.TouchableOpacity`
 const AddButtonBg = styled.Image`
   position: absolute;
   top: 0;
-  left: 0;
+  left: -2;
   width: ${(screenWidth - 80) / 2}px;
   height: 125px;
   border-radius: 15px;

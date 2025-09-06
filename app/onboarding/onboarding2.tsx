@@ -52,7 +52,7 @@ export default function Step2() {
 
       <TouchableOpacity
         style={styles.joinbutton}
-        onPress={() => router.push("/onboarding/onboarding2")}
+        onPress={() => router.push("../(tabs)/rules")}
       >
         <Text style={styles.joinButtonText}>회원가입</Text>
       </TouchableOpacity>
