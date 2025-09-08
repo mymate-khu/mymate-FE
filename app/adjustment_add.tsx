@@ -114,7 +114,7 @@ export default function ExpenseCreate() {
       <View style={s.card}>
         {/* 헤더 */}
         <View style={s.headerRow}>
-          <TouchableOpacity style={s.backIconHit} onPress={() => router.back()} activeOpacity={0.8}>
+          <TouchableOpacity style={s.backIconHit} onPress={() => router.replace("/adjustment")} activeOpacity={0.8}>
             <ArrowLeftIcon width={16} height={16} />
           </TouchableOpacity>
           <Text style={s.headerTitle}>정산 등록하기</Text>

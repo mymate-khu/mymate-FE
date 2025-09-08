@@ -41,7 +41,7 @@ export default function CalendarAdd() {
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={{ fontSize: width * 0.04, fontWeight: 500, fontFamily: "PretendardSemiBold" }}>마이 퍼즐</Text>
-                <Text style={styles.arrow} onPress={() => { router.back() }}>{"<"}</Text>
+                <Text style={styles.arrow} onPress={() => { router.replace("/calendar") }}>{"<"}</Text>
             </View>
             <View
                 style={[styles.bar_small, { marginHorizontal: width * 0.07, marginTop: 30 }]}>

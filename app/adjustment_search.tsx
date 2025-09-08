@@ -24,7 +24,7 @@ export default function AdjustmentSearch() {
     <SafeAreaView style={s.container}>
       {/* 상단 검색어 창 */}
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>   
+        <TouchableOpacity onPress={() => router.replace("/adjustment")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>   
           <ArrowLeftIcon width={20} height={20} />
         </TouchableOpacity>
 
