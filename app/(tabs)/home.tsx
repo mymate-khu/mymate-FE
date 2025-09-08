@@ -1,7 +1,7 @@
 import {View} from "react-native";
 
 export default function Home(){
-    return <View style={{ flex: 1, backgroundColor: 'red',flexDirection:"column" }}>
+    return <View style={{ flex: 1, backgroundColor: 'white',flexDirection:"column" }}>
       
 
         {/*맨위 마이페이지, 알림 : 정빈*/}
