@@ -1,8 +1,7 @@
-import {View} from "react-native";
+import {View,ScrollView} from "react-native";
 
 export default function Home(){
-    return <View style={{ flex: 1, backgroundColor: 'white',flexDirection:"column" }}>
-      
+    return <ScrollView style={{ flex: 1, backgroundColor: 'white',flexDirection:"column",paddingHorizontal:"5%" }}>
 
         {/*맨위 마이페이지, 알림 : 정빈*/}
       <View>
@@ -38,5 +37,5 @@ export default function Home(){
 
 
       </View>
-    </View>
+    </ScrollView>
 }
