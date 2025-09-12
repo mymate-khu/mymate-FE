@@ -1,4 +1,5 @@
 import {View,ScrollView} from "react-native";
+import ChattingComponent from "../home/home_chatting/Chattingcomponent";
 import MateboardComponent from "../home/home_mateboard/Mateboardcomponent";
 
 export default function Home(){
@@ -32,7 +33,7 @@ export default function Home(){
       {/*채팅창 : 승원*/}
 
       <View>
-
+        <ChattingComponent/>
 
       </View>
     </ScrollView>
