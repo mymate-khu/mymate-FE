@@ -10,6 +10,7 @@ export default function Index() {
 
   const [fontsLoaded] = useFonts({
     PretendardSemiBold: require('../assets/fonts/pretendard_semibold.otf'),
+    DonerRegularDisplay: require('../assets/fonts/doner_regulardisplay.otf')
   });
 
   const [initialRoute, setInitialRoute] = useState<RoutePath | null>(null);

@@ -7,7 +7,7 @@ import Chevronup from "@/assets/image/homepage_puzzleimg/chevron-up.svg";
 export default function MateboardComponent() {
   return (
     <View>
-      <View style={{ paddingLeft: 10, marginBottom: 10 }}>
+      <View style={{ marginBottom: 10 }}>
         <Text style={s.title}>MATE BOARD</Text>
       </View>
 
@@ -79,10 +79,11 @@ const s = StyleSheet.create({
     elevation: 2,    // Android 시각/터치 우선
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "400",
     color: "#111",
     marginBottom: 6,
+    fontFamily:"DonerRegularDisplay"
   },
   memoInput: {
     minHeight: 70,
@@ -93,7 +94,8 @@ const s = StyleSheet.create({
     fontSize: 14,
   },
   title: {
-    fontWeight: "500",
+    fontWeight: "400",
     fontSize: 18,
+    fontFamily:"DonerRegularDisplay"
   },
 });

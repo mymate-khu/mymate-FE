@@ -237,7 +237,7 @@ export default function ChatScreen({ fixedHeight = 560 }: { fixedHeight?: number
 }
 
 const styles = StyleSheet.create({
-  safe: { backgroundColor: "#F5F7FA", width: "100%" },
+  safe: { backgroundColor: "white", width: "100%" },
   flex: { flex: 1 },
   container: { flex: 1 },
   header: {
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#DDE3EA",
     backgroundColor: "#FFFFFF",
   },
-  headerTitle: { fontSize: 18, fontWeight: "400" },
+  headerTitle: { fontSize: 18, fontWeight: "400",fontFamily:"DonerRegularDisplay" },
   listContent: { paddingVertical: 12, paddingHorizontal: 12 },
 
   // message row
