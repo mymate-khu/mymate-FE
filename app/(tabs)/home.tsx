@@ -1,4 +1,5 @@
 import {View,ScrollView} from "react-native";
+import ChattingComponent from "../home/home_chatting/Chattingcomponent";
 
 export default function Home(){
     return <ScrollView style={{ flex: 1, backgroundColor: 'white',flexDirection:"column",paddingHorizontal:"5%" }}>
@@ -34,7 +35,7 @@ export default function Home(){
       {/*채팅창 : 승원*/}
 
       <View>
-
+        <ChattingComponent/>
 
       </View>
     </ScrollView>
