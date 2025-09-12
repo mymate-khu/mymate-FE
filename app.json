@@ -4,11 +4,11 @@
     "slug": "my-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/image/onboarding/MyMate.png",
     "userInterfaceStyle": "light",
     "scheme": "my-app",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/image/onboarding/MyMate.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -20,7 +20,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/image/onboarding/MyMate.png",
         "backgroundColor": "#ffffff"
       }
     },
@@ -28,7 +28,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-router"
     ]
   }
 }
