@@ -2,7 +2,7 @@ import { View, StyleSheet, Text, TextInput, TouchableOpacity } from "react-nativ
 import { router } from "expo-router";
 import Mypuzzle from "@/assets/image/homepage_puzzleimg/Mypuzzle.svg";
 import Matepuzzle from "@/assets/image/homepage_puzzleimg/Matepuzzle.svg";
-import Chevronup from "@/assets/image/homepage_puzzleimg/chevron-up.svg";
+import ChevronRight from "@/assets/image/homepage_puzzleimg/chevron-right.svg";
 
 export default function MateboardComponent() {
   return (
@@ -38,7 +38,7 @@ export default function MateboardComponent() {
               style={s.chevron}
               hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
             >
-              <Chevronup width={20} height={20} />
+              <ChevronRight width={20} height={20} />
             </TouchableOpacity>
 
             <Text style={[s.label, { left: 16 }]}>Mate</Text>

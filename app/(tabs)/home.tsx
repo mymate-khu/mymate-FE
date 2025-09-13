@@ -1,6 +1,7 @@
 import {View,ScrollView} from "react-native";
 import ChattingComponent from "../home/home_chatting/Chattingcomponent";
 import MateboardComponent from "../home/home_mateboard/Mateboardcomponent";
+import TodayPuzzleComponent from "../home/home_puzzle/TodayPuzzleComponent";
 
 export default function Home(){
     return <ScrollView style={{ flex: 1, backgroundColor: 'white',flexDirection:"column",paddingHorizontal:"5%" }}>
@@ -23,18 +24,18 @@ export default function Home(){
       <MateboardComponent></MateboardComponent>
 
       {/*투데이퍼즐  : 지민*/}
-
-      <View>
-
-
-      </View>
+      
+      <TodayPuzzleComponent />
+      
 
 
-      {/*채팅창 : 승원*/}
+
+      {/*채팅창 : 승원
 
       <View>
         <ChattingComponent/>
 
       </View>
+      */}
     </ScrollView>
 }
