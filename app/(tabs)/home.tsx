@@ -7,6 +7,7 @@ import {
 
 import ChattingComponent from "@/app/home/home_chatting/Chattingcomponent";
 import MateboardComponent from "@/app//home/home_mateboard/Mateboardcomponent";
+import TodayPuzzleComponent from "../home/home_puzzle/TodayPuzzleComponent";
 
 // 로컬 이미지 리소스
 import HomeHeadercomponent from "@/app/home/home_header/HomeHeadercomponent";
@@ -33,15 +34,20 @@ export default function Home() {
       {/*메이트보드 : 승원*/}
       <MateboardComponent></MateboardComponent>
 
-      {/*투데이퍼즐 : 지민*/}
-      <View></View>
+      {/*투데이퍼즐  : 지민*/}
+      
+      <TodayPuzzleComponent />
+      
 
-      {/*채팅창 : 승원*/}
+
+
+      {/*채팅창 : 승원
 
       <View>
         <ChattingComponent/>
 
       </View>
+      */}
     </ScrollView>
   );
 }
