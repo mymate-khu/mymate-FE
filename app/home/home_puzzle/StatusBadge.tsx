@@ -1,4 +1,4 @@
-// MATE에서 쓰는 상태 배지
+// MATE에서 쓰는 상태 배지 (표시 전용)
 import React from "react";
 import { Text, View, StyleSheet } from "react-native";
 
@@ -14,6 +14,8 @@ export default function StatusBadge({ status }: { status: MateStatus }) {
     </View>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   badge: {

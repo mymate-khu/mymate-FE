@@ -11,7 +11,7 @@ import type { StackItem } from "./TodayPuzzleStack";
 import StatusBadge from "./StatusBadge";
 import type { MateStatus } from "./StatusBadge";
 
-// ── 데모 데이터 ───────────────────────────────────────────────
+// 데모 데이터 ─────────────────────────────────────────────────────
 type Day = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 // ME용 데이터 (노랑)
@@ -22,7 +22,10 @@ const ME_DATA: Record<Day, StackItem[]> = {
     { title: "공과금 내기", desc: "7월 전기세 !!!!!!!!" },
     { title: "빨래하기", desc: "검은색 옷 빨래하는 날" },
   ],
-  2: [{ title: "장보기", desc: "과일/우유" }],
+  2: [
+    { title: "장보기", desc: "과일/우유" },
+    { title: "공과금 내기", desc: "7월 전기세 !!!!!!!!" }
+  ],
   3: [],
   4: [{ title: "운동하기", desc: "하체 루틴" }],
   5: [{ title: "데이트", desc: "영화 보기" }],
@@ -84,6 +87,8 @@ export default function TodayPuzzleComponent() {
     </View>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   headerRow: {

@@ -1,4 +1,4 @@
-// 상단 ME/MATE 토글
+// ME/MATE 토글
 import React from "react";
 import { View, Pressable, Text, StyleSheet } from "react-native";
 
@@ -27,6 +27,8 @@ export default function SegmentedMM({ value, onChange }: {
     </View>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   wrap: { 

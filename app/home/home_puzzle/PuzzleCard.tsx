@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle } from "react-native";
-import PuzzleBox from "./PuzzleBox"; // ← 기존 그대로 사용(노랑/보라/chevron 지원)
+import PuzzleBox from "./PuzzleBox";
 
 import CheckOnIcon from "@/assets/image/homepage_puzzleimg/PuzzleCheckOn.svg";
 import CheckOffIcon from "@/assets/image/homepage_puzzleimg/PuzzleCheckOff.svg";
@@ -22,22 +22,22 @@ interface PuzzleCardProps {
   size?: Size;
   style?: StyleProp<ViewStyle>;
 
-  // 카드 전체 터치(옵션)
+  // 카드 전체 터치
   onPress?: () => void;
 
   // 쉐브론 방향
   chevron?: Chevron;
 
-  // 우하단 액션(옵션)
+  // 수정하기 | 삭제하기
   showActions?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
 
-  // ✓ 토글 (ME 모드에서 사용)
+  // 체크 토글 (ME 모드에서 사용)
   checked?: boolean;
   onToggle?: () => void;
 
-  // ✅ 우상단 커스텀 슬롯 (있으면 토글 대신 표시 / MATE용)
+  // 상태 표시 (MATE용)
   rightSlot?: React.ReactNode;
 }
 

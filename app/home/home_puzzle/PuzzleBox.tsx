@@ -18,7 +18,7 @@ interface PuzzleBoxProps {
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode;
 
-  // 우하단 액션(옵션)
+  // 수정하기 | 삭제하기
   showActions?: boolean;  // 기본 false
   onEdit?: () => void;
   onDelete?: () => void;
@@ -70,12 +70,12 @@ export default function PuzzleBox({
         {children}
       </View>
 
-      {/* 우하단 액션 */}
+      {/* 수정하기 | 삭제하기 */}
       {actionsVisible && (
         <View style={styles.actions}>
           {onEdit && (
             <TouchableOpacity
-              onPress={(e) => { e?.stopPropagation?.(); onEdit(); }} // ⬅️ 전파 방지
+              onPress={(e) => { e?.stopPropagation?.(); onEdit(); }} // 전파 방지
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={styles.actionText}>수정하기</Text>
@@ -84,7 +84,7 @@ export default function PuzzleBox({
           {onEdit && onDelete && <Text style={styles.divider}> | </Text>}
           {onDelete && (
             <TouchableOpacity
-              onPress={(e) => { e?.stopPropagation?.(); onDelete(); }} // ⬅️ 전파 방지
+              onPress={(e) => { e?.stopPropagation?.(); onDelete(); }} // 전파 방지
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={styles.actionText}>삭제하기</Text>
@@ -104,6 +104,8 @@ export default function PuzzleBox({
   );
 }
 
+
+
 const styles = StyleSheet.create({
   card: {
     position: "relative",
@@ -121,7 +123,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   innerWithActions: {
-    paddingBottom: 48, // 액션 표시 시에만 여유 공간 추가
+    paddingBottom: 48,
   },
   nubWrap: {
     position: "absolute",
