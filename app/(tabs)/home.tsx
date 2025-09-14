@@ -11,6 +11,9 @@ import {
 import { router } from "expo-router";
 import { useState, useEffect } from 'react';
 
+import ChattingComponent from "../home/home_chatting/Chattingcomponent";
+import MateboardComponent from "../home/home_mateboard/Mateboardcomponent";
+
 // 로컬 이미지 리소스
 import profileBasic from "../../assets/image/home/home_profile_basic.png";
 import alarmBasic from "../../assets/image/home/home_alarm_basic.png";
@@ -103,13 +106,17 @@ export default function Home() {
       </View>
 
       {/*메이트보드 : 승원*/}
-      <View></View>
+      <MateboardComponent></MateboardComponent>
 
       {/*투데이퍼즐 : 지민*/}
       <View></View>
 
       {/*채팅창 : 승원*/}
-      <View></View>
+
+      <View>
+        <ChattingComponent/>
+
+      </View>
     </ScrollView>
   );
 }
