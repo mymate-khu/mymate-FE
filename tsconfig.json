@@ -1,8 +1,23 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "paths": { "@/*": ["./*"] },
-    "types": ["expo-router"]
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "types": [
+      "react",
+      "react-native",
+      "react-dom",
+      "expo"
+    ]
   },
   "extends": "expo/tsconfig.base"
 }
