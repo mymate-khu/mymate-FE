@@ -60,7 +60,7 @@ export default function Step4() {
 
       <TouchableOpacity
         style={styles.loginbutton}
-        onPress={() => router.push("../login")}
+        onPress={() => router.push("/login/loginpage")}
         >
         <Text style={styles.loginButtonText}>로그인</Text>
         </TouchableOpacity>

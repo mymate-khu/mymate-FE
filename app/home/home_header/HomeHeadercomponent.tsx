@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useState, useEffect } from 'react';
-
 // 로컬 이미지 리소스
 import profileBasic from "@/assets/image/home/home_profile_basic.png";
 import alarmBasic from "@/assets/image/home/home_alarm_basic.png";
@@ -19,9 +18,11 @@ import myPageArrow from "@/assets/image/home/home_arr_head.png";
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
 
+type User = { name: string; profileImage: string | null };
+
 export default function HomeHeadercomponent(){
 
-    const [userProfile, setUserProfile] = useState(null);
+    const [userProfile, setUserProfile] = useState<User | null>(null);;
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -58,7 +59,7 @@ export default function HomeHeadercomponent(){
   }
 
   // 프로필 이미지가 있을 경우 해당 URL을, 없을 경우 기본 이미지를 사용
-  const profileImageSource = userProfile.profileImage ? { uri: userProfile.profileImage } : profileBasic;
+  const profileImageSource = userProfile?.profileImage ? { uri: userProfile.profileImage } : profileBasic;
 
     return<View style={styles.topSection}>
           <TouchableOpacity

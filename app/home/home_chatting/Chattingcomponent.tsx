@@ -15,6 +15,7 @@ import {
   InteractionManager,
 } from "react-native";
 import * as Clipboard from "expo-clipboard"; // expo install expo-clipboard
+import {API_URL} from "@env"
 import Vector from "@/assets/image/home_chattingimg/Vector.svg"
 
 /**

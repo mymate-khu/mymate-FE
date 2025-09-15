@@ -38,16 +38,9 @@ export default function Home() {
       
       <TodayPuzzleComponent />
       
+      <ChattingComponent/>
 
 
-
-      {/*채팅창 : 승원
-
-      <View>
-        <ChattingComponent/>
-
-      </View>
-      */}
     </ScrollView>
   );
 }

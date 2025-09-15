@@ -1,19 +1,29 @@
-// babel.config.js (CommonJS)
+// babel.config.js
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ["babel-preset-expo"],
+    presets: ['babel-preset-expo'],
     plugins: [
-      "expo-router/babel", // expo-router 사용 시 권장
       [
-        "module-resolver",
+        'module-resolver',
         {
-          root: ["."],            // 루트 기준
-          alias: { "@": "." },    // "@/..." 별칭
-          extensions: [".ts", ".tsx", ".js", ".jsx", ".json", ".svg"],
+          root: ['.'],
+          extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+          alias: { '@': './' }
+        }
+      ],
+      [
+        "module:react-native-dotenv",
+        {
+          envName:"API_URL",
+          moduleName: "@env",
+          path: ".env",
+          blacklist: null,
+          whitelist: null,
+          safe: false,
+          allowUndefined: true,
         },
       ],
-      // "react-native-reanimated/plugin", // Reanimated 쓰면 맨 마지막에 추가
-    ],
+    ]
   };
 };

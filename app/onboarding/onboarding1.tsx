@@ -173,14 +173,14 @@ export default function Onboarding() {
 
       <TouchableOpacity
         style={styles.joinbutton}
-        onPress={() => router.push("../(tabs)/home")}
+        onPress={() => router.push("/login/signup1")}
       >
         <Text style={styles.joinButtonText}>회원가입</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.loginbutton}
-        onPress={() => router.push("../login")}
+        onPress={() => router.push("login/loginpage")}
       >
         <Text style={styles.loginButtonText}>로그인</Text>
       </TouchableOpacity>

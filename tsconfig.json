@@ -1,23 +1,16 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    },
+    "paths": { "@/*": ["./*"] },
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "target": "ESNext",
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "strict": true,
-    "types": [
-      "react",
-      "react-native",
-      "react-dom",
-      "expo"
-    ]
+    "lib": ["ESNext", "DOM"]
   },
-  "extends": "expo/tsconfig.base"
+  "include": ["app", "App.tsx", "env.d.ts"]
+  // 또는: "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"]
 }
