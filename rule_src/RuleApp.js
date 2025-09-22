@@ -1,7 +1,6 @@
-import React, { useState } from "react";
-import { Dimensions, StatusBar, Modal } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Dimensions, StatusBar, Modal, ActivityIndicator, Alert } from "react-native";
 import styled from "styled-components/native";
-import RuleInput from "./RuleInput";
 import PuzzleCard from "./PuzzleCard";
 import RuleModal from "./RuleModal";
 
@@ -14,13 +13,18 @@ const Container = styled.SafeAreaView`
   justify-content: flex-start;
 `;
 
+const LoadingContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+`;
+
 const Title = styled.Text`
   font-size: 24px;
   font-weight: 600;
   color: #333333;
   text-align: left;
   margin: 50px 100px 30px 20px;
-
   font-family: "Pretendard Bold";
 `;
 
@@ -70,114 +74,149 @@ const AddButtonLabel = styled.Text`
   z-index: 10;
 `;
 
+// API 호출을 위한 기본 URL (실제 서버 URL로 변경해주세요!)
+const BASE_URL = "https://your-api-server.com/api";
+
 const RuleApp = () => {
-  const [newTask, setNewTask] = useState("");
-  const [showInput, setShowInput] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const [tasks, setTasks] = useState({});
+  const [tasks, setTasks] = useState([]);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const addTask = () => {
-    if (newTask.trim()) {
-      const ID = Date.now().toString();
-      const newTaskObject = {
-        [ID]: {
-          id: ID,
-          text: newTask,
-          description: newDescription,
-          completed: false,
-        },
-      };
-      setNewTask("");
-      setNewDescription("");
-      setTasks({ ...tasks, ...newTaskObject });
-      setShowInput(false);
-      setShowModal(false);
+  // 규칙 목록을 서버에서 가져오는 함수
+  const fetchRules = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${BASE_URL}/RuleBook`, {
+        method: 'GET'
+      });
+      if (!response.ok) {
+        throw new Error("규칙 목록을 가져오는 데 실패했습니다.");
+      }
+      const data = await response.json();
+      setTasks(data); // API 응답이 규칙 목록 배열이라고 가정
+    } catch (error) {
+      console.error("규칙 불러오기 실패:", error);
+      Alert.alert("오류", "규칙 목록을 불러오는 데 실패했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const deleteTask = (id) => {
-    const currentTask = { ...tasks };
-    delete currentTask[id];
-    setTasks(currentTask);
+  useEffect(() => {
+    fetchRules();
+  }, []);
+
+  const addRule = async () => {
+    if (newTaskTitle.trim()) {
+      try {
+        const response = await fetch(`${BASE_URL}/RuleBook`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: newTaskTitle,
+            content: newDescription,
+            // 기타 필요한 필드 추가
+          }),
+        });
+        if (!response.ok) {
+          throw new Error("규칙 추가에 실패했습니다.");
+        }
+        await fetchRules(); // 성공 시 목록을 다시 불러와 화면 업데이트
+        closeModal();
+      } catch (error) {
+        console.error("규칙 추가 실패:", error);
+        Alert.alert("오류", "규칙을 추가하는 데 실패했습니다.");
+      }
+    }
   };
 
-  const updateTask = (item) => {
-    const currentTask = { ...tasks };
-    currentTask[item.id] = item;
-    setTasks(currentTask);
-    setShowModal(false);
-    setEditingTask(null);
+  const updateRule = async (id) => {
+    if (newTaskTitle.trim()) {
+      try {
+        const response = await fetch(`${BASE_URL}/RuleBook`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: newTaskTitle,
+            content: newDescription,
+            // 기타 필요한 필드 추가
+          }),
+        });
+        if (!response.ok) {
+          throw new Error("규칙 수정에 실패했습니다.");
+        }
+        await fetchRules();
+        closeModal();
+      } catch (error) {
+        console.error("규칙 수정 실패:", error);
+        Alert.alert("오류", "규칙을 수정하는 데 실패했습니다.");
+      }
+    }
   };
 
-  const handleTextChange = (text) => {
-    setNewTask(text);
-  };
-
-  const onBlur = () => {
-    setNewTask("");
-    setShowInput(false);
-  };
-
-  const showAddInput = () => {
-    setEditingTask(null);
-    setNewTask("");
-    setNewDescription("");
-    setShowModal(true);
+  const deleteRule = async (id) => {
+    try {
+      const response = await fetch(`${BASE_URL}/RuleBook`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            ruleId: id
+        }),
+      });
+      if (!response.ok) {
+        throw new Error("규칙 삭제에 실패했습니다.");
+      }
+      await fetchRules();
+    } catch (error) {
+      console.error("규칙 삭제 실패:", error);
+      Alert.alert("오류", "규칙을 삭제하는 데 실패했습니다.");
+    }
   };
 
   const handleCardEdit = (task) => {
     setEditingTask(task);
-    setNewTask(task.text);
-    setNewDescription(task.description || "");
+    setNewTaskTitle(task.title);
+    setNewDescription(task.content || "");
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingTask(null);
-    setNewTask("");
+    setNewTaskTitle("");
     setNewDescription("");
   };
 
   const handleModalSave = () => {
     if (editingTask) {
-      // 기존 규칙 수정
-      const updatedTask = {
-        ...editingTask,
-        text: newTask,
-        description: newDescription,
-      };
-      updateTask(updatedTask);
+      updateRule(editingTask.id);
     } else {
-      // 새 규칙 추가
-      addTask();
+      addRule();
     }
   };
 
-  // 태스크를 행으로 그룹화
   const taskArray = Object.values(tasks);
   const rows = [];
   for (let i = 0; i < taskArray.length; i += 2) {
     rows.push(taskArray.slice(i, i + 2));
+  }
+  
+  if (isLoading) {
+    return (
+      <LoadingContainer>
+        <ActivityIndicator size="large" color="#FFD700" />
+      </LoadingContainer>
+    );
   }
 
   return (
     <Container>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <Title>규칙은 딱 필요한 만큼만,{"\n"}서로 편하게</Title>
-
-      {showInput && (
-        <RuleInput
-          placeholder="새 태스크 추가"
-          value={newTask}
-          onChangeText={handleTextChange}
-          onSubmitEditing={addTask}
-          onBlur={onBlur}
-        />
-      )}
-
+      
       <PuzzleContainer showsVerticalScrollIndicator={false}>
         {rows.map((row, rowIndex) => (
           <Row key={rowIndex}>
@@ -189,16 +228,15 @@ const RuleApp = () => {
                   item={item}
                   taskNumber={taskIndex}
                   isYellow={(rowIndex + colIndex) % 2 === 0}
-                  deleteTask={deleteTask}
-                  updateTask={updateTask}
+                  deleteTask={deleteRule}
+                  updateTask={() => {}} // API 연동으로 이 함수는 사용하지 않게 됨
                   onEdit={handleCardEdit}
                   cardWidth={(screenWidth - 70) / 2}
                 />
               );
             })}
-            {/* 홀수 개의 아이템이 있을 때 빈 공간 채우기 */}
             {row.length === 1 && (
-              <AddButton onPress={showAddInput}>
+              <AddButton onPress={() => setShowModal(true)}>
                 <AddButtonBg source={require("./rule_g.png")} />
                 <AddButtonIcon source={require("./plus.png")} />
                 <AddButtonLabel>규칙 추가하기</AddButtonLabel>
@@ -206,11 +244,9 @@ const RuleApp = () => {
             )}
           </Row>
         ))}
-
-        {/* 새 행에 추가 버튼 표시 (짝수 개의 아이템일 때) */}
         {taskArray.length % 2 === 0 && (
           <Row>
-            <AddButton onPress={showAddInput}>
+            <AddButton onPress={() => setShowModal(true)}>
               <AddButtonBg source={require("./rule_g.png")} />
               <AddButtonIcon source={require("./plus.png")} />
               <AddButtonLabel>규칙 추가하기</AddButtonLabel>
@@ -223,10 +259,10 @@ const RuleApp = () => {
         visible={showModal}
         onClose={closeModal}
         onSave={handleModalSave}
-        value={newTask}
-        onChangeText={setNewTask}
-        description={newDescription} // 추가
-        onDescriptionChange={setNewDescription} // 추가
+        value={newTaskTitle}
+        onChangeText={setNewTaskTitle}
+        description={newDescription}
+        onDescriptionChange={setNewDescription}
         isEdit={!!editingTask}
       />
     </Container>
