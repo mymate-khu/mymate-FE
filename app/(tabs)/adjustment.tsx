@@ -58,7 +58,7 @@ export default function Adjustment() {
         </View>
       </View>
 
-      {/* 미정산 */}
+      {/* 미정산 박스 */}
       <View style={s.section}>
         <Text style={s.title}>아직 정산되지 않은 항목이 {UNPAID.length}건 있어요</Text>
         <UnpaidCarousel
@@ -67,7 +67,7 @@ export default function Adjustment() {
         />
       </View>
 
-      {/* 정산내역 */}
+      {/* 정산내역 박스 */}
       <View style={s.sectionRow}>
         <Text style={s.title}>정산내역</Text>
         <TouchableOpacity onPress={() => router.push("/adjustment/adjustment_list")}>
@@ -130,6 +130,7 @@ const s = StyleSheet.create({
     color: "#111" 
     },
 
+    // 인포 박스
   infoBox: {
     flexDirection: "row", 
     justifyContent: "space-between",
@@ -163,6 +164,7 @@ const s = StyleSheet.create({
     marginRight: 17  
     },
 
+    // 정산/미정산 박스
   section: { 
     marginTop: 32 
    },
