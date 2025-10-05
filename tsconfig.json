@@ -1,8 +1,8 @@
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": { "@/*": ["./*"] },
+    "types": ["expo-router"],
     "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "target": "ESNext",
@@ -11,6 +11,6 @@
     "strict": true,
     "lib": ["ESNext", "DOM"]
   },
-  "include": ["app", "App.tsx", "env.d.ts"]
-  // 또는: "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"]
+  "extends": "expo/tsconfig.base",
+  "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"]
 }
