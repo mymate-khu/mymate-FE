@@ -2,8 +2,21 @@
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Slot } from "expo-router";
 import { StatusBar } from "react-native";
+import { useEffect } from "react";
+import FCMService from "../components/firebase/FCMService";
 
 export default function Layout() {
+  useEffect(() => {
+    // 앱 시작 시 FCM 서비스 초기화
+    const initializeFCM = async () => {
+      const fcmService = FCMService.getInstance();
+      await fcmService.initialize();
+      await fcmService.createNotificationChannel();
+    };
+
+    initializeFCM();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" />

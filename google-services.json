@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "103303451287",
+    "project_id": "mymate-khu",
+    "storage_bucket": "mymate-khu.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:103303451287:android:4b7788b6972f1e2f664fd2",
+        "android_client_info": {
+          "package_name": "com.mymate.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZcZX85GahfPj3cErWEff0iAL0giPWpuE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
