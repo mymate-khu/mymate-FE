@@ -3,9 +3,12 @@ import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import FirebaseConfig from './FirebaseConfig';
 
+const ANDROID_CHANNEL_ID = 'default';
+
 class FCMService {
   private static instance: FCMService;
   private fcmToken: string | null = null;
+  private listenersRegistered: boolean = false;
 
   private constructor() {}
 
@@ -149,6 +152,16 @@ class FCMService {
     try {
       console.log('🚀 FCM 서비스 초기화 시작...');
       
+      // Firebase 먼저 초기화 (토큰 새로고침/메시징 사용을 위해 필수)
+      try {
+        const firebaseOk = await FirebaseConfig.getInstance().initialize();
+        if (!firebaseOk) {
+          console.warn('⚠️ Firebase 초기화 실패: 메시징 기능이 제한될 수 있습니다');
+        }
+      } catch (e) {
+        console.warn('⚠️ Firebase 초기화 예외:', e);
+      }
+
       // 프로젝트 ID 로그 출력
       const projectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
       console.log('📋 프로젝트 ID:', projectId);
@@ -169,6 +182,7 @@ class FCMService {
       const token = await this.getFCMToken();
       
       if (token) {
+        console.log('🪪 서버 전송 예정 토큰(Expo/FCM):', token);
         // 서버에 토큰 전송
         await this.sendTokenToServer(token);
       }
@@ -185,17 +199,8 @@ class FCMService {
    */
   async setupExpoNotifications(): Promise<void> {
     try {
-      // 알림 핸들러 설정
-      Notifications.setNotificationHandler({
-        handleNotification: async () => ({
-          shouldShowAlert: true,
-          shouldPlaySound: true,
-          shouldSetBadge: false,
-        }),
-      });
-
-      console.log('✅ Expo Notifications 설정 완료');
-      await FCMService.getInstance().displayNotification('테스트', '표시 형태 점검');
+      // 전역(App 루트)에서 setNotificationHandler를 1회만 등록합니다.
+      console.log('✅ Expo Notifications 기본 설정 확인');
     } catch (error) {
       console.error('Expo Notifications 설정 중 오류 발생:', error);
     }
@@ -206,9 +211,26 @@ class FCMService {
    */
   async setupMessageListeners(): Promise<void> {
     try {
+      if (this.listenersRegistered) {
+        console.log('ℹ️ 알림 리스너가 이미 등록되어 있습니다');
+        return;
+      }
       // Expo Notifications 리스너 설정
-      const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      const notificationListener = Notifications.addNotificationReceivedListener(async (notification) => {
         console.log('📱 알림 수신:', notification);
+        // 앱이 포그라운드인 경우 배너가 안 뜨는 기기/환경을 대비해 즉시 표시
+        try {
+          const content = notification.request?.content ?? {} as any;
+          await Notifications.presentNotificationAsync({
+            title: content.title ?? '알림',
+            body: content.body ?? (content.data ? JSON.stringify(content.data) : ''),
+            sound: true,
+            // Android 채널 강제 지정
+            channelId: ANDROID_CHANNEL_ID,
+          } as any);
+        } catch (e) {
+          console.warn('포그라운드 재표시 실패:', e);
+        }
       });
 
       const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
@@ -216,6 +238,7 @@ class FCMService {
       });
 
       console.log('✅ Expo Notifications 리스너 설정 완료');
+      this.listenersRegistered = true;
       
       // 컴포넌트 언마운트 시 리스너 정리 (선택사항)
       return () => {
@@ -233,13 +256,16 @@ class FCMService {
   async createNotificationChannel(): Promise<void> {
     try {
       if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('default', {
-          name: '기본 알림',
+        await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+          name: '기본 알림(High)',
           description: '앱의 기본 알림 채널입니다',
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#FF231F7C',
-        });
+          sound: 'default',
+          enableVibrate: true,
+          enableLights: true,
+        } as any);
         console.log('✅ 알림 채널 생성 완료');
       }
     } catch (error) {
@@ -253,7 +279,7 @@ class FCMService {
   async displayNotification(title: string, body: string): Promise<void> {
     try {
       const trigger = Platform.OS === 'android'
-        ? { channelId: 'default' as const }
+        ? { channelId: ANDROID_CHANNEL_ID as const }
         : null;
 
       await Notifications.scheduleNotificationAsync({
