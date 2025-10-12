@@ -62,3 +62,52 @@ export const createAccount = async (payload: CreateAccountReq) => {
     throw new Error(msg);
   }
 };
+
+
+
+
+// 서버가 목록에서 내려주는 아이템 타입
+export type AccountItem = {
+  id: number;
+  title: string;
+  description: string;
+  expenseDate: string;          // "YYYY-MM-DD"
+  category: string;
+  imageUrl: string | null;
+  totalAmount: number;
+  receiveAmount: number;
+  status: "PENDING" | "COMPLETED" | string;
+  groupId: number;
+  createdBy: number;
+  participants: any[];          // 필요하면 세부 타입 정의 가능
+  createdAt: string;
+  updatedAt: string;
+};
+
+// 페이지네이션 응답 타입
+export type AccountsPage = {
+  accounts: AccountItem[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+};
+
+/** 정산 목록 조회 (GET /api/accounts)
+ *  - params.page / params.size 로 페이지네이션 제어 가능
+ */
+export const fetchAccounts = async (params?: { page?: number; size?: number }) => {
+  const res = await TokenReq.get<{
+    isSuccess: boolean;
+    code?: string;
+    message?: string;
+    data: AccountsPage;
+  }>("/api/accounts", { params });
+
+  if (!res.data?.isSuccess) {
+    throw new Error(res.data?.message || "정산 목록 조회 실패");
+  }
+  return res.data.data; // AccountsPage 반환
+};
