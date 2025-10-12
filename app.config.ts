@@ -21,7 +21,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       },
     },
     android: {
-      package: isPreview ? 'com.kimseungwon.mymate.preview' : 'com.kimseungwon.mymate',
+      package: 'com.mymate.app',
       versionCode: isPreview ? 1 : 1,
       // ⛔ 여기엔 usesCleartextTraffic 직접 넣지 마세요(타입 에러 원인)
     },
@@ -37,4 +37,5 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ],
     ],
   };
+
 };
