@@ -24,7 +24,7 @@ export default function UnpaidCarousel({
       showsHorizontalScrollIndicator={false}
       snapToInterval={354 + 12} // 카드폭 + 간격
       decelerationRate="fast"
-      contentContainerStyle={{ paddingHorizontal: 16 }}
+      contentContainerStyle={{ paddingHorizontal: 0 }}
       ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
       renderItem={({ item }) => (
         <TouchableOpacity
