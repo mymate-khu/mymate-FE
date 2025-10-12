@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   // 화면 전체 높이의 약 40%
   puzzleSection: {
     height: screenHeight * 0.4,
-    backgroundColor: "#fbd0d0ff", // 구역 시각화를 위한 임시 색상
+    backgroundColor: "", // 구역 시각화를 위한 임시 색상
   },
   profileContainer: {
     flexDirection: "row",

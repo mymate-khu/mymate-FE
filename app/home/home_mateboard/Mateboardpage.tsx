@@ -92,7 +92,7 @@ const s = StyleSheet.create({
   // 각 퍼즐 카드 컨테이너
   item: {
     position: "relative",
-    width: "100%",         // viewBox 높이에 맞춤
+    minWidth:300   // viewBox 높이에 맞춤
     // 또는 비율 고정 원하면: aspectRatio: 370 / 170, height 제거
   },
 

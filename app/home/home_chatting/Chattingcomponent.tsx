@@ -240,7 +240,7 @@ export default function ChatScreen({ fixedHeight = 560 }: { fixedHeight?: number
 const styles = StyleSheet.create({
   safe: { backgroundColor: "white", width: "100%" },
   flex: { flex: 1 },
-  container: { flex: 1 },
+  container: { flex: 1},
   header: {
     height: 52,
     justifyContent: "center",
