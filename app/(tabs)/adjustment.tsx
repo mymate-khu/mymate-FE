@@ -173,9 +173,9 @@ const s = StyleSheet.create({
 
   // 공통 섹션 카드
   sectionBox: {
-    marginTop: 24,
+    marginTop: 35,
     marginHorizontal: 24,
-    paddingVertical: 14,
+    //paddingVertical: 14,
     //backgroundColor: "lightblue",
   },
   sectionHeader: {
