@@ -107,37 +107,49 @@ export default function Onboarding() {
     
     // 온보딩 스택을 제거하고 로그인 페이지로 이동
     router.dismissAll();
-    router.replace("../login");
+    router.replace("../login/loginpage");
   };
 
-  const goToNextPage = () => {
-    if (currentPage < TOTAL_PAGES - 1) {
-      pagerViewRef.current?.setPage(currentPage + 1);
-    } else {
-      finishOnboarding();
-    }
-  };
+  // const goToNextPage = () => {
+  //   if (currentPage < TOTAL_PAGES - 1) {
+  //     pagerViewRef.current?.setPage(currentPage + 1);
+  //   } else {
+  //     finishOnboarding();
+  //   }
+  // };
 
-  const goToPrevPage = () => {
-    if (currentPage > 0) {
-      pagerViewRef.current?.setPage(currentPage - 1);
-    }
-  };
+  // const goToPrevPage = () => {
+  //   if (currentPage > 0) {
+  //     pagerViewRef.current?.setPage(currentPage - 1);
+  //   }
+  // };
 
   return (
+    // <SafeAreaView style={styles.container}>
+    //   <View style={styles.topBar}>
+    //     {currentPage > 0 && (
+    //       <TouchableOpacity onPress={goToPrevPage}>
+    //         <Text style={styles.textPrev}>이전</Text>
+    //       </TouchableOpacity>
+    //     )}
+    //     <TouchableOpacity
+    //       onPress={goToNextPage}
+    //       style={{ marginLeft: currentPage === 0 ? "auto" : 0 }}
+    //     >
+    //       <Text style={styles.textNext}>
+    //         {currentPage < TOTAL_PAGES - 1 ? "다음" : "시작하기"}
+    //       </Text>
+    //     </TouchableOpacity>
+    //   </View>
+
     <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
-        {currentPage > 0 && (
-          <TouchableOpacity onPress={goToPrevPage}>
-            <Text style={styles.textPrev}>이전</Text>
-          </TouchableOpacity>
-        )}
         <TouchableOpacity
-          onPress={goToNextPage}
+          onPress={finishOnboarding}
           style={{ marginLeft: currentPage === 0 ? "auto" : 0 }}
         >
           <Text style={styles.textNext}>
-            {currentPage < TOTAL_PAGES - 1 ? "다음" : "시작하기"}
+            스킵하기
           </Text>
         </TouchableOpacity>
       </View>
