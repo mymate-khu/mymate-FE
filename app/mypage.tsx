@@ -7,6 +7,7 @@ import {
   Image,
   Text,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -31,6 +32,9 @@ import exitImage from "../assets/image/mypage/Exit.png";
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
 
+// API 기본 URL 설정 (member-controller의 Get My Profile 엔드포인트를 가정합니다.)
+const BASE_URL = "http://13.209.214.254:8080";
+
 // 프로필 섹션을 별도 컴포넌트로 분리
 const ProfileSection = ({ userProfile, onEdit }) => {
   const source = userProfile.profileImage ? { uri: userProfile.profileImage } : profileImage;
@@ -43,30 +47,73 @@ const ProfileSection = ({ userProfile, onEdit }) => {
         </TouchableOpacity>
       </View>
       <Text style={styles.profileTextName}>{userProfile.name}</Text>
-      <Text style={styles.profileTextId}>ID : {userProfile.id}</Text>
+      <Text style={styles.profileTextId}>{userProfile.id}</Text>
       <Image source={line1} style={styles.line} />
     </View>
   );
 };
 
+interface UserProfile {
+  name: string;
+  id: string;
+  profileImage: string | null;
+}
+
 export default function MyPage() {
-  const [userProfile, setUserProfile] = useState(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 컴포넌트가 마운트될 때 프로필 데이터를 불러오는 로직
-  useEffect(() => {
-    // 실제 API 호출을 시뮬레이션
-    // 백엔드 통신 후 받은 데이터를 setUserProfile로 업데이트하면 됩니다.
-    setTimeout(() => {
-      const fetchedProfile = {
-        profileImage: null, // 프로필 이미지가 없는 경우를 가정
-        // profileImage: "https://placehold.co/100x100/A0C4FF/ffffff?text=User", // 프로필 이미지가 있는 경우를 가정
-        name: "이름",
-        id: "SZZYDE770",
-      };
-      setUserProfile(fetchedProfile);
+    const fetchUserProfile = async () => {
+    try {
+      // API 명세서에서 'Get My Profile'에 해당하는 정확한 URL로 대체해야 합니다.
+      // 현재는 스웨거 주소와 응답 구조를 기반으로 유추하여 '/member-controller/getMyProfile'로 가정합니다.
+      const response = await fetch(`${BASE_URL}/member-controller/getMyProfile`, {
+        method: 'GET',
+        headers: {
+          // 인증 토큰이 필요하다면 여기에 'Authorization': 'Bearer YOUR_TOKEN' 추가
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const jsonResponse = await response.json();
+
+      if (jsonResponse.isSuccess && jsonResponse.data) {
+        const data = jsonResponse.data;
+        
+        // API 응답 데이터(data)를 프론트엔드 상태(userProfile)에 맞게 매핑
+        const fetchedProfile = {
+          // 서버 응답의 'nickname'을 'name'으로 사용
+          name: data.nickname || data.username || "사용자",
+          // 서버 응답의 'memberId'를 'id'로 사용하거나, 사용자 식별 ID가 있다면 그것을 사용
+          id: data.memberId ? String(data.memberId) : "ID 정보 없음",
+          // 서버 응답의 'profileImageUrl'을 사용
+          profileImage: data.profileImageUrl || null,
+        };
+        
+        setUserProfile(fetchedProfile);
+      } else {
+        // API에서 isSuccess가 false인 경우 처리
+        Alert.alert("프로필 로드 오류", jsonResponse.message || "프로필을 불러오는데 실패했습니다.");
+        // 기본값으로 설정
+        setUserProfile({ name: "알 수 없는 사용자", id: "ID: ?", profileImage: null });
+      }
+
+    } catch (error) {
+      console.error("프로필 API 호출 중 오류 발생:", error);
+      Alert.alert("네트워크 오류", "서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      // 오류 발생 시 기본값으로 설정
+      setUserProfile({ name: "로딩 실패", id: "ID: ERROR", profileImage: null });
+    } finally {
       setIsLoading(false);
-    }, 1500); // 1.5초 로딩 지연
+    }
+  };
+
+  useEffect(() => {
+    fetchUserProfile();
   }, []);
 
   const handleEdit = () => {
