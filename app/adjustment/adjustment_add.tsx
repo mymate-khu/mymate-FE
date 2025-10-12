@@ -127,7 +127,7 @@ export default function ExpenseCreate() {
 
     try {
       const res = await createAccount(body);
-      alert("✅ 정산이 성공적으로 등록되었습니다!");
+      alert("정산이 성공적으로 등록되었습니다!");
       console.log("정산 등록 성공:", res);
       router.replace("/adjustment");
     } catch (err: any) {
