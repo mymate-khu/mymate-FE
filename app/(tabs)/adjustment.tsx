@@ -1,5 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, StyleSheet, StatusBar } from "react-native";
 import { router } from "expo-router";
+import { ChevronRight } from "lucide-react-native";
 
 import SearchIcon from "@/assets/image/adjustmenticon/search_Icon.svg";
 import AdjustIllustration from "@/assets/image/adjustmenticon/adjustment_Illustration.svg";
@@ -7,7 +8,6 @@ import UnpaidCarousel, { UnpaidItem } from "../adjustment/UnpaidCarousel";
 import PaidCarousel, { PaidItem } from "../adjustment/PaidCarousel";
 
 export default function Adjustment() {
-  // 데모 데이터
   const UNPAID: UnpaidItem[] = [
     { id: "u1", title: "휴지", amount: "-₩21,000" },
     { id: "u2", title: "주방세제", amount: "-₩8,400" },
@@ -59,27 +59,33 @@ export default function Adjustment() {
         </View>
       </View>
 
-      {/* 미정산 박스 */}
-      <View style={s.section}>
-        <Text style={s.title}>아직 정산되지 않은 항목이 {UNPAID.length}건 있어요</Text>
+      {/* 섹션: 미정산 */}
+      <View style={s.sectionBox}>
+        <View style={s.sectionHeader}>
+          <Text style={s.title}>아직 정산되지 않은 항목이 {UNPAID.length}건 있어요</Text>
+        </View>
         <UnpaidCarousel
           data={UNPAID}
           onPressItem={(item) => console.log("unpaid press:", item)}
         />
       </View>
 
-      {/* 정산내역 박스 */}
-      <View style={s.sectionRow}>
-        <Text style={s.title}>정산내역</Text>
-        <TouchableOpacity onPress={() => router.push("/adjustment/adjustment_list")}>
-          <Text style={s.moreLink}>더보기  ›</Text>
-        </TouchableOpacity>
+      {/* 섹션: 정산내역 */}
+      <View style={s.sectionBox}>
+        <View style={s.sectionHeader}>
+          <Text style={s.title}>정산내역</Text>
+          <TouchableOpacity onPress={() => router.push("/adjustment/adjustment_list")}
+            style={s.moreWrap}>
+            <Text style={s.moreLink}>더보기</Text>
+            <ChevronRight size={16} color="#707070" />
+          </TouchableOpacity>
+        </View>
+        <PaidCarousel
+          data={PAID}
+          onPressItem={(item) => console.log("paid press:", item)}
+          onPressMore={() => router.push("/adjustment/adjustment_list")}
+        />
       </View>
-      <PaidCarousel
-        data={PAID}
-        onPressItem={(item) => console.log("paid press:", item)}
-        onPressMore={(item) => router.push("/adjustment/adjustment_list")}
-      />
     </SafeAreaView>
   );
 }
@@ -88,103 +94,111 @@ const s = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: "#FFFFFF" 
-    },
+  },
 
-  header: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    paddingHorizontal: 24, 
-    paddingTop: 8 
-    },
-  searchBox: {
-    flex: 1, 
-    flexDirection: "row", 
+  header: {
+    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F0F0F0", 
-    borderRadius: 14, 
-    paddingHorizontal: 12, 
-    height: 44, 
+    paddingHorizontal: 24,
+    paddingTop: 8,
+  },
+  searchBox: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F0F0",
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    height: 44,
     marginRight: 8,
-    },
-  searchIcon: {
+  },
+  searchIcon: { 
     width: 20, 
     height: 20 
-    },
+  },
   searchInput: { 
     flex: 1, 
     height: 48, 
     borderRadius: 12, 
     paddingHorizontal: 12, 
     color: "#111" 
-    },
-  addBtn: { 
+  },
+  addBtn: {
     width: 40, 
     height: 40, 
-    borderRadius: 20, 
-    backgroundColor: "#FFE600", 
+    borderRadius: 20,
+    backgroundColor: "#FFE600",
     alignItems: "center", 
-    justifyContent: "center" 
-    },
+    justifyContent: "center",
+  },
   addBtnText: { 
     fontSize: 26, 
     lineHeight: 26, 
     color: "#111" 
-    },
+  },
 
-    // 인포 박스
+  // 인포 박스
   infoBox: {
-    flexDirection: "row", 
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#F0F0F0", 
-    height: 124, 
-    borderRadius: 24, 
+    backgroundColor: "#F0F0F0",
+    height: 124,
+    borderRadius: 24,
     padding: 16,
-    marginHorizontal: 15, 
+    marginHorizontal: 16,
     marginTop: 20,
-    },
+  },
   infoTextBox: { 
     flex: 1, 
     marginHorizontal: 10 
-    },
+  },
   infoTitle: { 
     fontSize: 19, 
     fontWeight: "600", 
     color: "#000" 
-    },
+  },
   infoSub: { 
     fontSize: 13, 
     color: "#797979", 
     marginTop: 8 
-    },
+  },
   infoImageBox: { 
     width: 115, 
     height: 113, 
     justifyContent: "center", 
     alignItems: "center", 
-    marginRight: 17  
-    },
+    marginRight: 12 
+  },
 
-    // 정산/미정산 박스
-  section: { 
-    marginTop: 32 
-   },
-  sectionRow: {
-    marginTop: 32, 
-    paddingHorizontal: 24,
-    flexDirection: "row", 
-    alignItems: "center", 
+  // 공통 섹션 카드
+  sectionBox: {
+    marginTop: 35,
+    marginHorizontal: 24,
+    //paddingVertical: 14,
+    //backgroundColor: "lightblue",
+  },
+  sectionHeader: {
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    },
+    //backgroundColor: "lightgreen",
+  },
+  moreWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    //backgroundColor: "red",
+    //paddingHorizontal: 2,
+  },
   title: { 
-    paddingHorizontal: 24, 
     fontSize: 16, 
-    fontWeight: "800", 
-    marginBottom: 12, 
-    color: "#000" 
-    },
+    fontWeight: "700", 
+    color: "#111" 
+  },
   moreLink: { 
-    fontSize: 16, 
-    color: "#9A9A9A" 
-    },
+    fontSize: 14, 
+    color: "#707070" 
+  },
 });
