@@ -16,3 +16,9 @@ export const storage = {
     await AsyncStorage.removeItem(key);
   },
 };
+
+// 사용자 ID 가져오기 (없으면 null 반환)
+export const getMyId = async (): Promise<number | null> => {
+  const value = await storage.getItem("userId");
+  return value ? Number(value) : null;
+};
