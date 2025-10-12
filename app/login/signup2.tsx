@@ -3,9 +3,24 @@ import { Text, TextInput, View, TouchableOpacity, StyleSheet, ScrollView, useWin
 import { router } from "expo-router"
 import { useState } from "react";
 import { Calendar, DateData, LocaleConfig } from 'react-native-calendars';
+import {TokenReq} from "@/components/apis/axiosInstance"
 
 import CalendarIcon from '@/assets/image/Calendar.png';
 import Profileimg from "@/assets/image/signupcheckimg/profileuploadimg.png"
+
+type User = {
+  userId: String,
+  passwordEncrypted: String,
+  email: String,
+  name: String,
+  phone: String,
+  agreeService: true,
+  agreePrivacy: true,
+  agreeAgeOver14: true,
+  agreeThirdParty: true,
+  agreeMarketing: true,
+  token: String
+}
 
 
 export default function Signup2() {
@@ -25,6 +40,29 @@ export default function Signup2() {
     const [authorization,setauthorization] = useState(false)
 
     const [passwordmsg,setpasswordmsg] = useState(false)
+
+    const [formname , setformname] = useState("")
+    const [formgender , setformgender] = useState("")
+    const [formphonenumber , setformphonenumber] = useState("")
+
+
+    const handlephonenumber = (e : any)=>{
+        setformphonenumber(e.target.value)
+        console.log(formphonenumber)
+    }
+
+    const sendphonenumber = async()=>{
+        try{
+            const res =  await TokenReq.post("/api/auth/phone/request-code",{
+            phone : formphonenumber
+        })
+        console.log(res.data)
+        }
+        catch{
+            console.error("에러")
+        }
+    }
+
 
 
     return <ScrollView style={styles.container}>
@@ -49,10 +87,12 @@ export default function Signup2() {
             <View style={{ flexDirection: "row", marginTop: 20, height: 50, justifyContent: "center" }}>
                 <TouchableOpacity
                     onPress={() => { setselected(true) }}
-                    style={[styles.btn1, { backgroundColor: selected ? "rgba(255, 230, 0, 1)" : "rgba(153, 153, 153, 0.1)" }]}>여</TouchableOpacity>
+                    style={[styles.btn1, { backgroundColor: selected ? "rgba(255, 230, 0, 1)" : "rgba(153, 153, 153, 0.1)" }]}><Text>여</Text></TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => { setselected(false) }}
-                    style={[styles.btn1, { backgroundColor: !selected ? "rgba(255, 230, 0, 1)" : "rgba(153, 153, 153, 0.1)", marginLeft: "3%" }]}>남</TouchableOpacity>
+                    style={[styles.btn1, { backgroundColor: !selected ? "rgba(255, 230, 0, 1)" : "rgba(153, 153, 153, 0.1)", marginLeft: "3%" }]}>
+                        <Text>남</Text>
+                    </TouchableOpacity>
             </View>
 
             <View style={[{ marginTop: 20 }, styles.bar1]}>
@@ -90,8 +130,8 @@ export default function Signup2() {
                 <Text style={{ fontFamily: "PretendardSemiBold", fontWeight: 600, left: 12 }}>전화번호</Text>
             </View>
             <View style={{ flexDirection: "row" }}>
-                <TextInput style={styles.bar2_short} placeholder="전화번호" placeholderTextColor={"#797979"}></TextInput>
-                <TouchableOpacity onPress={() => {setauthorization(true) }} style={styles.bar2_short_btn}>발송</TouchableOpacity>
+                <TextInput value={formphonenumber } onChange={handlephonenumber} style={styles.bar2_short} placeholder="전화번호" placeholderTextColor={"#797979"}></TextInput>
+                <TouchableOpacity onPress={() => {sendphonenumber()}} style={styles.bar2_short_btn}>발송</TouchableOpacity>
             </View>
 
             <View style={{ flexDirection: "row" }}>

@@ -28,7 +28,7 @@ export default function PaidCarousel({
       showsHorizontalScrollIndicator={false}
       snapToInterval={280 + 14}
       decelerationRate="fast"
-      contentContainerStyle={{ paddingHorizontal: 16 }}
+      contentContainerStyle={{ paddingHorizontal: 0 }}
       ItemSeparatorComponent={() => <View style={{ width: 14 }} />}
       renderItem={({ item }) => {
         const isYellow = item.color !== "purple";
@@ -70,7 +70,8 @@ export default function PaidCarousel({
 
 const styles = StyleSheet.create({
   card: {
-    width: 280,
+    width: 164,
+    height: 320,
     borderRadius: 24,
     padding: 16,
     shadowColor: "#000",
@@ -88,7 +89,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   iconYellow: { backgroundColor: "#FFD51C" },
-  iconPurple: { backgroundColor: "#E7C9FF" },
+  iconPurple: { backgroundColor: "#C188FF" },
 
   imageWrap: {
     width: "100%",
