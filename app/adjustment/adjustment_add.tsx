@@ -6,6 +6,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
+import { createAccount } from "@/components/apis/account";
 
 import CalendarCard from "@/components/CalendarCard";
 
@@ -39,6 +40,10 @@ function formatCurrency(value: string) {
   }).format(num);
 }
 const slashToDash = (s: string) => s.replace(/\s*\/\s*/g, "-");
+
+// "₩12,312" 같은 문자열을 숫자 12312로 바꿔주는 함수
+const parseCurrencyToNumber = (v: string) =>
+  Number(v.replace(/[^0-9]/g, "")) || 0;
 
 const CATEGORIES = [
   { key: "food", label: "식비", Icon: CutleryIcon },
@@ -98,12 +103,40 @@ export default function ExpenseCreate() {
     Number(receiveAmount.replace(/[^0-9]/g, "")) >= 0 &&
     selectedPeople.length > 0;
 
-  const onSubmit = () => {
-    if (!isValid) return;
-    const payload = { date, category, item, totalAmount, receiveAmount, people: selectedPeople, image: imageUri };
-    console.log("submit:", payload);
+
+  // ✅ 수정된 onSubmit
+  const onSubmit = async () => {
+    if (!isValid) {
+      alert("모든 입력값을 확인해주세요.");
+      return;
+    }
+
+    // 임시로 선택한 사람 id를 숫자 배열로 변환
+    const participantIds = selectedPeople.map((_, i) => i + 1);
+
+    const body = {
+      title: item.trim(),
+      description: `${item.trim()} 정산`,
+      expenseDate: slashToDash(date),
+      category,
+      imageUrl: imageUri ?? null,
+      totalAmount: parseCurrencyToNumber(totalAmount),
+      receiveAmount: parseCurrencyToNumber(receiveAmount),
+      participantIds,
+    };
+
+    try {
+      const res = await createAccount(body);
+      alert("✅ 정산이 성공적으로 등록되었습니다!");
+      console.log("정산 등록 성공:", res);
+      router.replace("/adjustment");
+    } catch (err: any) {
+      console.error("[정산 등록 실패]", err);
+      alert(err?.message || "서버와의 통신 중 오류가 발생했습니다.");
+    }
   };
 
+  
   // 공통 placeholder 색
   const commonInputProps = { placeholderTextColor: "#999999" };
 
