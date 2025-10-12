@@ -7,6 +7,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { createAccount } from "@/components/apis/account";
+import { TokenReq } from "@/components/apis/axiosInstance";
 
 import CalendarCard from "@/components/CalendarCard";
 
@@ -104,32 +105,50 @@ export default function ExpenseCreate() {
     selectedPeople.length > 0;
 
 
-  // ✅ 수정된 onSubmit
+ 
+
+    // ✅ 수정된 onSubmit
   const onSubmit = async () => {
     if (!isValid) {
       alert("모든 입력값을 확인해주세요.");
       return;
     }
 
-    // 임시로 선택한 사람 id를 숫자 배열로 변환
-    const participantIds = selectedPeople.map((_, i) => i + 1);
-
-    const body = {
-      title: item.trim(),
-      description: `${item.trim()} 정산`,
-      expenseDate: slashToDash(date),
-      category,
-      imageUrl: imageUri ?? null,
-      totalAmount: parseCurrencyToNumber(totalAmount),
-      receiveAmount: parseCurrencyToNumber(receiveAmount),
-      participantIds,
-    };
-
     try {
+      // ✅ 1️⃣ 현재 로그인한 사용자의 그룹 목록 가져오기
+      const groupRes = await TokenReq.get("/api/groups/me");
+      const groups = groupRes.data;
+
+      if (!groups || groups.length === 0) {
+        alert("소속된 그룹이 없습니다. 먼저 그룹을 생성하세요!");
+        return;
+      }
+
+      // ✅ 2️⃣ 첫 번째 그룹의 id 사용 (또는 나중에 선택 가능)
+      const groupId = groups[0].id;
+
+      // ✅ 3️⃣ 선택한 사람 id를 숫자 배열로 변환
+      const participantIds = selectedPeople.map((_, i) => i + 1);
+
+      // ✅ 4️⃣ groupId를 body에 추가
+      const body = {
+        groupId,
+        title: item.trim(),
+        description: `${item.trim()} 정산`,
+        expenseDate: slashToDash(date),
+        category,
+        imageUrl: imageUri ?? null,
+        totalAmount: parseCurrencyToNumber(totalAmount),
+        receiveAmount: parseCurrencyToNumber(receiveAmount),
+        participantIds,
+      };
+
+      // ✅ 5️⃣ 서버로 전송
       const res = await createAccount(body);
       alert("정산이 성공적으로 등록되었습니다!");
       console.log("정산 등록 성공:", res);
       router.replace("/adjustment");
+
     } catch (err: any) {
       console.error("[정산 등록 실패]", err);
       alert(err?.message || "서버와의 통신 중 오류가 발생했습니다.");
