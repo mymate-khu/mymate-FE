@@ -1,56 +1,36 @@
-// components/BackHeader.tsx
 import React from "react";
 import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
 import { router } from "expo-router";
 import ArrowLeftIcon from "@/assets/image/adjustmenticon/arrow_left_Icon.svg";
 
 type Props = {
-  title?: string;
-  /** 기본: router.back() */
-  onBack?: () => void;
-  /** 배경색 (기본 흰색) */
-  backgroundColor?: string;
-  /** 타이틀/아이콘 색 (기본 #111) */
-  color?: string;
-  /** 중앙 정렬 여부 (기본 true) */
-  centerTitle?: boolean;
-  /** 오른쪽 영역 커스텀 슬롯 */
-  rightSlot?: React.ReactNode;
-  /** 바닥 헤어라인 표시 */
-  showDivider?: boolean;
-  /** 컨테이너 추가 스타일 */
-  style?: ViewStyle;
-  /** 높이 (기본 56) */
-  height?: number;
-  /** 살짝 그림자 줄지 여부 */
-  shadow?: boolean;
+  title?: string;                 // 기본 타이틀
+  onBack?: () => void;            // 기본: router.back()
+  color?: string;                 // 타이틀/아이콘 색 (기본 #111)
+  backgroundColor?: string;       // 배경색 (기본 'transparent'로 둬도 됨)
+  height?: number;                // 바 높이 (기본 56)
+  style?: ViewStyle;              // 컨테이너 추가 스타일
+
+  // 커스터마이즈 슬롯
+  centerSlot?: React.ReactNode;   // 센터 영역 전체를 대체 (드롭다운 버튼 등)
+  rightSlot?: React.ReactNode;    // 오른쪽 영역 (검색 아이콘 등)
 };
 
 export default function BackHeader({
   title,
   onBack,
-  backgroundColor = "#FFFFFF",
   color = "#111",
-  centerTitle = true,
-  rightSlot,
-  showDivider = false,
-  style,
+  backgroundColor = "transparent",
   height = 56,
-  shadow = false,
+  style,
+  centerSlot,
+  rightSlot,
 }: Props) {
   const onPressBack = () => (onBack ? onBack() : router.back());
 
   return (
-    <SafeAreaView style={[{ backgroundColor }]}>
-      <View
-        style={[
-          s.row,
-          { height, backgroundColor },
-          shadow && s.shadow,
-          showDivider && s.divider,
-          style,
-        ]}
-      >
+    <SafeAreaView style={{ backgroundColor }}>
+      <View style={[s.row, { height, backgroundColor }, style]}>
         {/* Left: Back */}
         <TouchableOpacity
           onPress={onPressBack}
@@ -61,9 +41,13 @@ export default function BackHeader({
           <ArrowLeftIcon width={20} height={20} />
         </TouchableOpacity>
 
-        {/* Title */}
-        <View style={[s.center, !centerTitle && { alignItems: "flex-start" }]}>
-          {!!title && <Text style={[s.title, { color }]} numberOfLines={1}>{title}</Text>}
+        {/* Center */}
+        <View style={s.center}>
+          {centerSlot ? (
+            centerSlot
+          ) : !!title ? (
+            <Text style={[s.title, { color }]} numberOfLines={1}>{title}</Text>
+          ) : null}
         </View>
 
         {/* Right */}
@@ -97,16 +81,5 @@ const s = StyleSheet.create({
     width: 44,
     alignItems: "flex-end",
     justifyContent: "center",
-  },
-  divider: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E5E7EB",
-  },
-  shadow: {
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
-    elevation: 2,
   },
 });

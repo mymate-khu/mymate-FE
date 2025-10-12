@@ -12,14 +12,15 @@ import {
   Modal,
   Platform,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker"; // ✅ 사진 선택
 import { router } from "expo-router";
 import { Calendar, DateData, LocaleConfig } from "react-native-calendars";
 
-import ArrowLeftIcon from "@/assets/image/adjustmenticon/arrow_left_Icon.svg";
 import CalendarIcon from "@/assets/image/adjustmenticon/calendar_Icon.svg";
 import CameraIcon from "@/assets/image/adjustmenticon/camera_Icon.svg";
 import DropDownIcon from "@/assets/image/adjustmenticon/arrow_drop_down.svg";
 import CheckIcon from "@/assets/image/adjustmenticon/check_Icon.svg";
+import BackHeader from "@/components/BackHeader";
 
 /* ====== 캘린더 한글 ====== */
 LocaleConfig.locales["ko"] = {
@@ -69,6 +70,27 @@ export default function ExpenseCreate() {
   const [totalAmount, setTotalAmount] = useState("");
   const [receiveAmount, setReceiveAmount] = useState("");
 
+  // ✅ 업로드된 사진 미리보기
+  const [imageUri, setImageUri] = useState<string | null>(null);
+
+  // 사진 선택 (갤러리)
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      alert("사진 접근 권한을 허용해주세요.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.9,
+    });
+    if (!result.canceled && result.assets?.length) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
   const people = useMemo(
     () => [
       { id: "u1", name: "A", uri: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240" },
@@ -78,6 +100,7 @@ export default function ExpenseCreate() {
     ],
     []
   );
+
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
   const togglePerson = (id: string) =>
     setSelectedPeople(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
@@ -98,31 +121,27 @@ export default function ExpenseCreate() {
       totalAmount: Number(totalAmount.replace(/[^0-9]/g, "")),
       receiveAmount: Number(receiveAmount.replace(/[^0-9]/g, "")),
       people: selectedPeople,
+      image: imageUri, // ✅ 선택된 이미지 URI
     };
     console.log("submit:", payload);
+    // TODO: 서버 업로드/저장 후 이동
   };
 
   return (
     <SafeAreaView style={s.container}>
       <StatusBar barStyle="dark-content" />
 
-      <View style={s.card}>
-        {/* 헤더 */}
-        <View style={s.headerRow}>
-          <TouchableOpacity
-            style={s.backIconHit}
-            onPress={() => router.replace("/adjustment")}
-            activeOpacity={0.8}
-          >
-            <ArrowLeftIcon width={16} height={16} />
-          </TouchableOpacity>
-          <Text style={s.headerTitle}>정산 등록하기</Text>
-          <View style={{ width: 32 }} />
-        </View>
+      {/* 공용 백헤더 */}
+      <BackHeader title="정산 등록하기" color="#111" onBack={() => router.replace("/adjustment")} />
 
-        {/* 사진 등록 */}
-        <TouchableOpacity style={s.photoBox} activeOpacity={0.8} onPress={() => {}}>
-          <CameraIcon width={28} height={28} />
+      <View style={s.card}>
+        {/* ✅ 사진 등록 */}
+        <TouchableOpacity style={s.photoBox} activeOpacity={0.8} onPress={pickImage}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={s.photoPreview} />
+          ) : (
+            <CameraIcon width={28} height={28} />
+          )}
         </TouchableOpacity>
 
         {/* 날짜 입력 */}
@@ -230,7 +249,7 @@ export default function ExpenseCreate() {
         </TouchableOpacity>
       </View>
 
-      {/* === 달력 모달 (배경 어둡지 않게) === */}
+      {/* === 달력 모달 (배경 투명) === */}
       <Modal
         visible={calendarOpen}
         transparent
@@ -239,11 +258,7 @@ export default function ExpenseCreate() {
       >
         <View style={s.modalRoot}>
           {/* 바깥 터치 시 닫기 */}
-          <TouchableOpacity
-            style={s.backdrop}
-            activeOpacity={1}
-            onPress={() => setCalendarOpen(false)}
-          />
+          <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={() => setCalendarOpen(false)} />
           {/* 캘린더 패널 */}
           <View style={s.modalPanel}>
             <Calendar
@@ -293,18 +308,6 @@ const s = StyleSheet.create({
     overflow: "hidden",
   },
 
-  headerRow: { height: 44, alignItems: "center", justifyContent: "center" },
-  backIconHit: {
-    position: "absolute",
-    left: 4,
-    top: 8,
-    width: 32,
-    height: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: { textAlign: "center", fontSize: 18, fontWeight: "700", color: "#111" },
-
   photoBox: {
     width: 96,
     height: 96,
@@ -314,6 +317,12 @@ const s = StyleSheet.create({
     justifyContent: "center",
     marginTop: 8,
     marginBottom: 12,
+    overflow: "hidden",
+  },
+  photoPreview: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 12,
   },
 
   inputRow: {
@@ -397,21 +406,14 @@ const s = StyleSheet.create({
   submitText: { color: "#FFF", fontWeight: "700", fontSize: 16 },
   submitTextDisabled: { color: "#9E9E9E" },
 
-  /* === 달력 모달 (배경 투명) === */
-  modalRoot: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "transparent", // ✅ 배경 어둡지 않게 변경
-  },
+  /* === 달력 모달 === */
+  modalRoot: { flex: 1, alignItems: "center", justifyContent: "center" },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "transparent" },
   modalPanel: {
-    width: "92%",
+    width: "97%",
     borderRadius: 20,
     backgroundColor: "#fff",
-    paddingVertical: 8,
+    paddingVertical: 15,
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: 4 },
