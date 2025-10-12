@@ -12,9 +12,10 @@ import {
   Modal,
   Platform,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker"; // ✅ 사진 선택
+import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import { Calendar, DateData, LocaleConfig } from "react-native-calendars";
+
+import CalendarCard from "@/components/CalendarCard"; // toDash는 여기서 안 써도 됨
 
 import CalendarIcon from "@/assets/image/adjustmenticon/calendar_Icon.svg";
 import CameraIcon from "@/assets/image/adjustmenticon/camera_Icon.svg";
@@ -22,25 +23,7 @@ import DropDownIcon from "@/assets/image/adjustmenticon/arrow_drop_down.svg";
 import CheckIcon from "@/assets/image/adjustmenticon/check_Icon.svg";
 import BackHeader from "@/components/BackHeader";
 
-/* ====== 캘린더 한글 ====== */
-LocaleConfig.locales["ko"] = {
-  monthNames: ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"],
-  monthNamesShort: ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"],
-  dayNames: ["일요일","월요일","화요일","수요일","목요일","금요일","토요일"],
-  dayNamesShort: ["일","월","화","수","목","금","토"],
-  today: "오늘",
-};
-LocaleConfig.defaultLocale = "ko";
-
-/* ====== 날짜/금액 유틸 ====== */
-function toDash(slash: string) {
-  const m = slash.match(/(\d{4})\s*\/\s*(\d{2})\s*\/\s*(\d{2})/);
-  return m ? `${m[1]}-${m[2]}-${m[3]}` : slash;
-}
-function toSlash(dash: string) {
-  const [y, m, d] = dash.split("-");
-  return y && m && d ? `${y} / ${m} / ${d}` : dash;
-}
+/* ====== 유틸 ====== */
 function todayStrSlash() {
   const d = new Date();
   const y = d.getFullYear();
@@ -57,12 +40,12 @@ function formatCurrency(value: string) {
     maximumFractionDigits: 0,
   }).format(num);
 }
+// "YYYY / MM / DD" -> "YYYY-MM-DD"
+const slashToDash = (s: string) => s.replace(/\s*\/\s*/g, "-");
 
-/* ====== 컴포넌트 ====== */
 export default function ExpenseCreate() {
   const [date, setDate] = useState<string>(todayStrSlash());
   const [calendarOpen, setCalendarOpen] = useState(false);
-
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [category, setCategory] = useState<string>("카테고리");
 
@@ -70,10 +53,9 @@ export default function ExpenseCreate() {
   const [totalAmount, setTotalAmount] = useState("");
   const [receiveAmount, setReceiveAmount] = useState("");
 
-  // ✅ 업로드된 사진 미리보기
   const [imageUri, setImageUri] = useState<string | null>(null);
 
-  // 사진 선택 (갤러리)
+  // ✅ 사진 선택
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -91,6 +73,7 @@ export default function ExpenseCreate() {
     }
   };
 
+  // ✅ 정산 인원 샘플
   const people = useMemo(
     () => [
       { id: "u1", name: "A", uri: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240" },
@@ -103,7 +86,7 @@ export default function ExpenseCreate() {
 
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
   const togglePerson = (id: string) =>
-    setSelectedPeople(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
+    setSelectedPeople((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const isValid =
     item.trim().length > 0 &&
@@ -121,27 +104,21 @@ export default function ExpenseCreate() {
       totalAmount: Number(totalAmount.replace(/[^0-9]/g, "")),
       receiveAmount: Number(receiveAmount.replace(/[^0-9]/g, "")),
       people: selectedPeople,
-      image: imageUri, // ✅ 선택된 이미지 URI
+      image: imageUri,
     };
     console.log("submit:", payload);
-    // TODO: 서버 업로드/저장 후 이동
   };
 
   return (
     <SafeAreaView style={s.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* 공용 백헤더 */}
       <BackHeader title="정산 등록하기" color="#111" onBack={() => router.replace("/adjustment")} />
 
       <View style={s.card}>
         {/* ✅ 사진 등록 */}
         <TouchableOpacity style={s.photoBox} activeOpacity={0.8} onPress={pickImage}>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={s.photoPreview} />
-          ) : (
-            <CameraIcon width={28} height={28} />
-          )}
+          {imageUri ? <Image source={{ uri: imageUri }} style={s.photoPreview} /> : <CameraIcon width={28} height={28} />}
         </TouchableOpacity>
 
         {/* 날짜 입력 */}
@@ -158,16 +135,16 @@ export default function ExpenseCreate() {
           </TouchableOpacity>
         </View>
 
-        {/* 카테고리 드롭다운 */}
+        {/* 카테고리 */}
         <View style={{ position: "relative" }}>
-          <TouchableOpacity style={s.inputRow} onPress={() => setCategoryOpen(v => !v)} activeOpacity={0.8}>
+          <TouchableOpacity style={s.inputRow} onPress={() => setCategoryOpen((v) => !v)} activeOpacity={0.8}>
             <Text style={[s.inputText, category === "카테고리" && { color: "#B0B0B0" }]}>{category}</Text>
             <DropDownIcon width={16} height={16} />
           </TouchableOpacity>
 
           {categoryOpen && (
             <View style={s.dropdown}>
-              {["식비", "생활용품", "교통", "문화", "기타"].map(opt => (
+              {["식비", "생활용품", "교통", "문화", "기타"].map((opt) => (
                 <TouchableOpacity
                   key={opt}
                   style={s.dropdownItem}
@@ -198,7 +175,7 @@ export default function ExpenseCreate() {
           placeholder="총 금액을 입력하세요"
           placeholderTextColor="#B0B0B0"
           value={totalAmount}
-          onChangeText={text => setTotalAmount(formatCurrency(text))}
+          onChangeText={(text) => setTotalAmount(formatCurrency(text))}
           keyboardType="number-pad"
         />
 
@@ -208,7 +185,7 @@ export default function ExpenseCreate() {
           placeholder="받을 금액을 입력하세요"
           placeholderTextColor="#B0B0B0"
           value={receiveAmount}
-          onChangeText={text => setReceiveAmount(formatCurrency(text))}
+          onChangeText={(text) => setReceiveAmount(formatCurrency(text))}
           keyboardType="number-pad"
         />
 
@@ -216,7 +193,7 @@ export default function ExpenseCreate() {
         <View style={s.peopleBox}>
           <Text style={s.peopleLabel}>정산 할 사람을 선택하세요</Text>
           <View style={s.peopleRow}>
-            {people.map(p => {
+            {people.map((p) => {
               const on = selectedPeople.includes(p.id);
               return (
                 <TouchableOpacity
@@ -249,45 +226,19 @@ export default function ExpenseCreate() {
         </TouchableOpacity>
       </View>
 
-      {/* === 달력 모달 (배경 투명) === */}
-      <Modal
-        visible={calendarOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCalendarOpen(false)}
-      >
+      {/* ✅ CalendarCard 모달 */}
+      <Modal visible={calendarOpen} transparent animationType="fade" onRequestClose={() => setCalendarOpen(false)}>
         <View style={s.modalRoot}>
-          {/* 바깥 터치 시 닫기 */}
           <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={() => setCalendarOpen(false)} />
-          {/* 캘린더 패널 */}
           <View style={s.modalPanel}>
-            <Calendar
-              current={toDash(date)}
-              initialDate={toDash(date)}
-              markedDates={{
-                [toDash(date)]: { selected: true, selectedColor: "#111", selectedTextColor: "#fff" },
-              }}
-              enableSwipeMonths
-              onDayPress={(d: DateData) => {
-                setDate(toSlash(d.dateString));
+            <CalendarCard
+              value={slashToDash(date)} // "YYYY / MM / DD" -> "YYYY-MM-DD"
+              onChange={(newDate) => {
+                const [y, m, d] = newDate.split("-");
+                setDate(`${y} / ${m} / ${d}`);
                 setCalendarOpen(false);
               }}
-              onPressArrowLeft={(sub) => sub()}
-              onPressArrowRight={(add) => add()}
-              theme={{
-                textMonthFontSize: 28,
-                textMonthFontWeight: "800",
-                monthTextColor: "#111",
-                textSectionTitleColor: "#8A8A8A",
-                dayTextColor: "#111",
-                selectedDayBackgroundColor: "#111",
-                selectedDayTextColor: "#fff",
-                todayTextColor: "#1e90ff",
-                textDayFontWeight: "500",
-                textDayFontSize: 16,
-                arrowColor: "#111",
-              }}
-              style={{ borderRadius: 20 }}
+              style={{ borderRadius: 16 }}
             />
           </View>
         </View>
@@ -299,7 +250,6 @@ export default function ExpenseCreate() {
 /* ====== styles ====== */
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
-
   card: {
     backgroundColor: "#FFE300",
     borderRadius: 24,
@@ -307,7 +257,6 @@ const s = StyleSheet.create({
     marginTop: 8,
     overflow: "hidden",
   },
-
   photoBox: {
     width: 96,
     height: 96,
@@ -319,12 +268,7 @@ const s = StyleSheet.create({
     marginBottom: 12,
     overflow: "hidden",
   },
-  photoPreview: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 12,
-  },
-
+  photoPreview: { width: "100%", height: "100%", borderRadius: 12 },
   inputRow: {
     height: 48,
     borderRadius: 12,
@@ -337,7 +281,6 @@ const s = StyleSheet.create({
   trailingIcon: { marginLeft: "auto" },
   input: { flex: 1, color: "#111" },
   inputText: { flex: 1, color: "#111", fontSize: 16 },
-
   inputSolo: {
     height: 48,
     borderRadius: 12,
@@ -346,7 +289,6 @@ const s = StyleSheet.create({
     marginBottom: 12,
     color: "#111",
   },
-
   dropdown: {
     position: "absolute",
     top: 50,
@@ -361,7 +303,6 @@ const s = StyleSheet.create({
   },
   dropdownItem: { paddingVertical: 12, paddingHorizontal: 14 },
   dropdownText: { fontSize: 15, color: "#111" },
-
   peopleBox: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
@@ -370,7 +311,6 @@ const s = StyleSheet.create({
   },
   peopleLabel: { fontSize: 14, color: "#666", marginBottom: 8 },
   peopleRow: { flexDirection: "row", gap: 12 },
-
   avatarWrap: {
     width: 72,
     height: 72,
@@ -384,16 +324,7 @@ const s = StyleSheet.create({
   avatarWrapActive: { borderColor: "#FFD51C" },
   avatar: { width: "100%", height: "100%", borderRadius: 36 },
   avatarDim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.45)" },
-  checkWrap: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
+  checkWrap: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
   submitBtn: {
     height: 50,
     borderRadius: 12,
@@ -405,9 +336,7 @@ const s = StyleSheet.create({
   submitBtnDisabled: { backgroundColor: "#E6E6E6" },
   submitText: { color: "#FFF", fontWeight: "700", fontSize: 16 },
   submitTextDisabled: { color: "#9E9E9E" },
-
-  /* === 달력 모달 === */
-  modalRoot: { flex: 1, alignItems: "center", justifyContent: "center" },
+  modalRoot: { flex: 1, alignItems: "center", paddingTop: 250 },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "transparent" },
   modalPanel: {
     width: "97%",
