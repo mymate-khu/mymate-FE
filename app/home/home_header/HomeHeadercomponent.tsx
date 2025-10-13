@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
+import { router } from "expo-router"; // ✅ 추가
 import AlarmIcon from "@/assets/image/home/alarm_basic.svg";
 import ChevronRight from "@/assets/image/adjustmenticon/arrow_right_Icon.svg";
 import GradientAvatar from "@/components/GradientAvatar";
@@ -8,7 +9,7 @@ type Props = {
   style?: ViewStyle;
   profileImage?: string;
   profileLabel?: string;
-  onPressProfile?: () => void;
+  onPressProfile?: () => void;  // 외부로도 커스터마이즈 가능
   unreadCount?: number;
   onPressBell?: () => void;
 };
@@ -23,13 +24,19 @@ export default function HomeHeadercomponent({
 }: Props) {
   const hasUnread = unreadCount > 0;
 
+  // ✅ 내 계정 클릭 시 이동
+  const handlePressProfile = () => {
+    if (onPressProfile) return onPressProfile(); // 커스텀 함수가 있다면 우선
+    router.push("/home/home_header/MyPage/MyPage"); // 기본 동작
+  };
+
   return (
     <View style={[s.container, style]}>
       {/* 좌측 프로필 */}
       <TouchableOpacity
         activeOpacity={0.85}
         style={s.profileBtn}
-        onPress={onPressProfile}
+        onPress={handlePressProfile}
       >
         <GradientAvatar uri={profileImage} size={40} />
         <Text style={s.profileText}>{profileLabel}</Text>
@@ -54,15 +61,21 @@ export default function HomeHeadercomponent({
 const s = StyleSheet.create({
   container: {
     height: 56,
-    //backgroundColor: "pink",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    //paddingHorizontal: 16,
   },
-  profileBtn: { flexDirection: "row", alignItems: "center", gap: 10 },
-  profileText: { fontSize: 14, fontWeight: "600", color: "#222", marginRight: 2 },
-
+  profileBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  profileText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#222",
+    marginRight: 2,
+  },
   bellWrap: {},
   bellCircle: {
     width: 40,
