@@ -31,7 +31,7 @@ export default function AdjustmentSearch() {
       {/* 상단 검색어 창 */}
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.replace("/adjustment")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>   
-          <ArrowLeftIcon width={12} height={12} />
+          <ArrowLeftIcon width={13} height={13} />
         </TouchableOpacity>
 
 

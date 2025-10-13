@@ -4,19 +4,19 @@ import {
   SafeAreaView,
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   StatusBar,
   RefreshControl,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
 
-import ArrowLeftIcon from "@/assets/image/adjustmenticon/arrow_left_Icon.svg";
 import SearchBlackIcon from "@/assets/image/adjustmenticon/searchblack_Icon.svg";
 import DropDownIcon from "@/assets/image/adjustmenticon/dropdown_Icon.svg";
 
+import BackHeader from "@/components/BackHeader"; // ✅ 공용 헤더 추가
 import AdjustmentListStack from "./AdjustmentListStack";
 import type { SettlementStatus, AdjustmentCardItem } from "./AdjustmentListCard";
 
@@ -32,7 +32,7 @@ const formatKRW = (n: number) =>
   }).format(n);
 
 export default function AdjustmentList() {
-  const monthLabel = "이번 달";
+  const monthLabel = "2025년 10월";
 
   const [items, setItems] = useState<(AdjustmentCardItem & { status: SettlementStatus })[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -69,10 +69,6 @@ export default function AdjustmentList() {
     load();
   }, [load]);
 
-  const onPressBack = () => router.back();
-  const onPressMonth = () => console.log("open month picker");
-  const onPressSearch = () => console.log("go search");
-
   const handleChangeStatus = (id: string, next: SettlementStatus) => {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, status: next } : it)));
   };
@@ -81,7 +77,9 @@ export default function AdjustmentList() {
     router.push(`/adjustment/adjustment_edit?accountId=${id}`);
   };
 
-  // 🗑️ 삭제: 서버 삭제 후 자동 갱신(서버 재조회)
+
+
+    // 🗑️ 삭제: 서버 삭제 후 자동 갱신(서버 재조회)
   /*const handleDelete = (id: string) => {
     Alert.alert("삭제 확인", "정말 이 정산을 삭제하시겠습니까?", [
       { text: "취소", style: "cancel" },
@@ -111,6 +109,9 @@ export default function AdjustmentList() {
   */
 
 
+
+
+
   const handleDelete = async (id: string) => {
     console.log("[STACK onDelete]", id);
     if (typeof window !== "undefined") {
@@ -133,38 +134,36 @@ export default function AdjustmentList() {
     }
   };
 
+  const onPressMonth = () => console.log("open month picker");
+  const onPressSearch = () => console.log("go search");
 
   return (
     <SafeAreaView style={s.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* 헤더 */}
-      <View style={s.header}>
-        <TouchableOpacity
-          onPress={onPressBack}
-          style={s.iconLeft}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          activeOpacity={0.7}
-        >
-          <ArrowLeftIcon width={20} height={20} />
-        </TouchableOpacity>
-        <TouchableOpacity style={s.monthButton} onPress={onPressMonth} activeOpacity={0.7}>
-          <Text style={s.monthText}>{monthLabel}</Text>
-          <DropDownIcon width={16} height={16} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={onPressSearch}
-          style={s.iconRight}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          activeOpacity={0.7}
-        >
-          <SearchBlackIcon width={20} height={20} />
-        </TouchableOpacity>
-      </View>
+      {/* ✅ 공용 백헤더 사용 */}
+      <BackHeader
+        backgroundColor="#F8F8F8"
+        centerSlot={
+          <TouchableOpacity style={s.monthButton} onPress={onPressMonth} activeOpacity={0.7}>
+            <Text style={s.monthText}>{monthLabel}</Text>
+            <DropDownIcon width={24} height={24} />
+          </TouchableOpacity>
+        }
+        rightSlot={
+          <TouchableOpacity
+            onPress={onPressSearch}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <SearchBlackIcon width={20} height={20} />
+          </TouchableOpacity>
+        }
+      />
 
       {/* Total */}
       <View style={s.revenueBox}>
-        <Text style={s.revenueLabel}>Total Receive</Text>
+        <Text style={s.revenueLabel}>Total Revenue</Text>
         <Text style={s.revenueAmount}>{formatKRW(totalReceive)}</Text>
       </View>
 
@@ -177,7 +176,10 @@ export default function AdjustmentList() {
           items={items}
           onChangeStatus={handleChangeStatus}
           onEdit={handleEdit}
-          onDelete={(id) => { console.log("[STACK onDelete]", id); handleDelete(id); }}
+          onDelete={(id) => {
+            console.log("[STACK onDelete]", id);
+            handleDelete(id);
+          }}
         />
       </ScrollView>
     </SafeAreaView>
@@ -187,11 +189,9 @@ export default function AdjustmentList() {
 /* ---------- 스타일 ---------- */
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F8F8" },
-  header: { height: 56, justifyContent: "center", alignItems: "center", paddingHorizontal: 16 },
-  iconLeft: { position: "absolute", left: 16, height: 56, justifyContent: "center" },
-  iconRight: { position: "absolute", right: 16, height: 56, justifyContent: "center" },
+
   monthButton: { flexDirection: "row", alignItems: "center", gap: 6 },
-  monthText: { fontSize: 18, fontWeight: "600", color: "#111" },
+  monthText: { fontSize: 18, fontWeight: "500", color: "#111" },
 
   revenueBox: { paddingHorizontal: 24, marginBottom: 25, marginTop: 15 },
   revenueLabel: { fontSize: 18, color: "#707070", fontWeight: "600", marginBottom: 8 },

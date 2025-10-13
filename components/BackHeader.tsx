@@ -38,7 +38,7 @@ export default function BackHeader({
           style={s.left}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <ArrowLeftIcon width={20} height={20} />
+          <ArrowLeftIcon width={15} height={15} />
         </TouchableOpacity>
 
         {/* Center */}
@@ -74,8 +74,8 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "600",
   },
   right: {
     width: 44,
