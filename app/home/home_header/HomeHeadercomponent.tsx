@@ -1,174 +1,85 @@
-import {
-  View,
-  ScrollView,
-  Dimensions,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Text,
-  ActivityIndicator,
-} from "react-native";
-import { router } from "expo-router";
-import { useState, useEffect } from 'react';
-// 로컬 이미지 리소스
-import profileBasic from "@/assets/image/home/home_profile_basic.png";
-import alarmBasic from "@/assets/image/home/home_alarm_basic.png";
-import myPageArrow from "@/assets/image/home/home_arr_head.png";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
+import AlarmIcon from "@/assets/image/home/alarm_basic.svg";
+import ChevronRight from "@/assets/image/adjustmenticon/arrow_right_Icon.svg";
+import GradientAvatar from "@/components/GradientAvatar";
 
-const screenWidth = Dimensions.get("window").width;
-const screenHeight = Dimensions.get("window").height;
+type Props = {
+  style?: ViewStyle;
+  profileImage?: string;
+  profileLabel?: string;
+  onPressProfile?: () => void;
+  unreadCount?: number;
+  onPressBell?: () => void;
+};
 
-type User = { name: string; profileImage: string | null };
+export default function HomeHeadercomponent({
+  style,
+  profileImage,
+  profileLabel = "내 계정",
+  onPressProfile,
+  unreadCount = 0,
+  onPressBell,
+}: Props) {
+  const hasUnread = unreadCount > 0;
 
-export default function HomeHeadercomponent(){
+  return (
+    <View style={[s.container, style]}>
+      {/* 좌측 프로필 */}
+      <TouchableOpacity
+        activeOpacity={0.85}
+        style={s.profileBtn}
+        onPress={onPressProfile}
+      >
+        <GradientAvatar uri={profileImage} size={40} />
+        <Text style={s.profileText}>{profileLabel}</Text>
+        <ChevronRight width={14} height={14} />
+      </TouchableOpacity>
 
-    const [userProfile, setUserProfile] = useState<User | null>(null);;
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // 실제 API 호출을 시뮬레이션
-    // 백엔드에서 사용자 정보를 가져오는 API를 호출하는 로직
-    setTimeout(() => {
-      // API 응답 데이터 (프로필 이미지가 있는 경우)
-      const fetchedProfileWithImage = {
-        name: "효진",
-        profileImage: "https://placehold.co/40x40/A0C4FF/ffffff?text=User"
-      };
-
-      // API 응답 데이터 (프로필 이미지가 없는 경우)
-      const fetchedProfileWithoutImage = {
-        name: "효진",
-        profileImage: null
-      };
-      
-      // 프로필 이미지가 없는 경우를 가정하여 설정
-      setUserProfile(fetchedProfileWithoutImage);
-      // setUserProfile(fetchedProfileWithImage); // 프로필 이미지가 있는 경우 사용
-      
-      setIsLoading(false);
-    }, 500); // 1.5초 로딩 지연
-  }, []);
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFDB58" />
-        <Text style={styles.loadingText}>프로필 정보를 불러오는 중...</Text>
-      </View>
-    );
-  }
-
-  // 프로필 이미지가 있을 경우 해당 URL을, 없을 경우 기본 이미지를 사용
-  const profileImageSource = userProfile?.profileImage ? { uri: userProfile.profileImage } : profileBasic;
-
-    return<View style={styles.topSection}>
-          <TouchableOpacity
-            style={styles.profileContainer}
-            onPress={() => router.push("../mypage")}
-          >
-            <Image source={profileImageSource} style={styles.profileImage} />
-            <Text style={styles.profileText}>내 계정</Text>
-            <Image source={myPageArrow} style={styles.myPageArrow} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.alarmContainer}
-            onPress={() => router.push("../alarm")}
-          >
-            <Image source={alarmBasic} style={styles.alarmImage} />
-          </TouchableOpacity>
+      {/* 우측 알림 */}
+      <TouchableOpacity
+        activeOpacity={0.85}
+        style={s.bellWrap}
+        onPress={onPressBell}
+      >
+        <View style={s.bellCircle}>
+          <AlarmIcon width={24} height={24} />
+          {hasUnread && <View style={s.badgeDot} />}
         </View>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white'
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#888',
-  },
-  // 화면 전체 높이의 약 10%
-  topSection: {
-    height: screenHeight * 0.1,
-    backgroundColor: "#E5E5E5", // 구역 시각화를 위한 임시 색상
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-  },
-  // 화면 전체 높이의 약 40%
-  puzzleSection: {
-    height: screenHeight * 0.4,
-    backgroundColor: "#fbd0d0ff", // 구역 시각화를 위한 임시 색상
-  },
-  profileContainer: {
+    height: 56,
+    //backgroundColor: "pink",
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 7,
+    //paddingHorizontal: 16,
   },
-  profileImage: {
+  profileBtn: { flexDirection: "row", alignItems: "center", gap: 10 },
+  profileText: { fontSize: 14, fontWeight: "600", color: "#222", marginRight: 2 },
+
+  bellWrap: {},
+  bellCircle: {
     width: 40,
     height: 40,
-    borderRadius: 20, // 동그란 프로필 사진을 위해 추가
+    borderRadius: 20,
+    backgroundColor: "#F0F0F0",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
   },
-  profileText: {
-    fontSize: 16,
-    top:10,
-    left:8
-  },
-  myPageArrow: {
-    width: 20,
-    height: 20,
-    top:10.5,
-    left:7
-  },
-  alarmContainer: {
-    flexDirection: "row",
-    alignItems: 'center',
-  },
-  alarmImage: {
-    width: 40,
-    height: 40,
-    right:5
-  },
-  puzzleImage: {
-    width: 188,
-    height: 188,
-    top:30,
-    left:15
-  },
-  textContainer: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    flex: 1, // 남는 공간을 모두 차지
-    marginLeft: 220, // 퍼즐 이미지와의 간격
-    bottom: 120,
-  },
-  helloText: {
-    fontSize: 28,
-    fontWeight: "bold",
-  },
-  myMateText: {
-    fontSize: 12,
-    fontWeight: "bold",
-    marginTop: 20,
-  },
-  myMateArrowContainer: {
+  badgeDot: {
     position: "absolute",
-    right: 20,
-    bottom: 50,
-  },
-  myMateArrow: {
-    width: 35,
-    height: 35,
+    top: 8,
+    right: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#FF3B30",
   },
 });

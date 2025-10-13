@@ -1,44 +1,55 @@
 import React from "react";
-import { View, Image, ColorValue } from "react-native";
+import { View, Image, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import BasicProfile from "@/assets/image/home/basic_profile.svg";
 
 type Props = {
-  uri: string;
-  size?: number; // 내부 원 크기
-  ringWidth?: number; // 링 두께
-  colors?: readonly [ColorValue, ColorValue, ...ColorValue[]]; // 최소 2개 이상 필수
+  uri?: string;
+  size?: number;
 };
 
-export default function GradientAvatar({
-  uri,
-  size = 40,
-  ringWidth = 2,
-  colors = ["#FFE81C", "#EBD29C", "#DDC2FA"] as const, // ✅ as const 필수!
-}: Props) {
-  const outer = size + ringWidth;
+export default function GradientAvatar({ uri, size = 40 }: Props) {
+  const ringSize = size + 2; // 외곽선용
 
   return (
     <LinearGradient
-      colors={colors}
+      colors={["#FFE81C", "#EBD29C", "#DDC2FA"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={{
-        width: outer,
-        height: outer,
-        borderRadius: outer / 2,
-        padding: ringWidth / 2,
-      }}
+      style={[
+        s.ring,
+        { width: ringSize, height: ringSize, borderRadius: ringSize / 2 },
+      ]}
     >
       <View
-        style={{
-          flex: 1,
-          borderRadius: size / 2,
-          backgroundColor: "#fff",
-          overflow: "hidden",
-        }}
+        style={[
+          s.hole,
+          { width: size, height: size, borderRadius: size / 2 },
+        ]}
       >
-        <Image source={{ uri }} style={{ width: "100%", height: "100%" }} />
+        {uri ? (
+          <Image
+            source={{ uri }}
+            style={{ width: "100%", height: "100%", borderRadius: size / 2 }}
+            resizeMode="cover"
+          />
+        ) : (
+          // ✅ 기본 프로필 SVG 표시
+          <View style={s.svgWrap}>
+            <BasicProfile/>
+          </View>
+        )}
       </View>
     </LinearGradient>
   );
 }
+
+const s = StyleSheet.create({
+  ring: { padding: 1 },
+  hole: { backgroundColor: "#fff", overflow: "hidden" },
+  svgWrap: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
