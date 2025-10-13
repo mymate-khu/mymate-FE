@@ -3,10 +3,8 @@ import { PaidItem } from "@/app/adjustment/PaidCarousel";
 import { UnpaidItem } from "@/app/adjustment/UnpaidCarousel";
 import type { AdjustmentCardItem, SettlementStatus } from "@/app/adjustment/AdjustmentListCard";
 
-/** 서버 응답 → PaidCarousel용 변환 */
 export const transformToPaidItems = (accounts: any[], myId: number | string): PaidItem[] => {
   return (accounts ?? []).map((a): PaidItem => {
-    // ✅ 숫자/문자 섞임 방지를 위해 문자열로 비교
     const isMine = String(a?.createdBy) === String(myId);
     const color: PaidItem["color"] = isMine ? "yellow" : "purple";
     const image: PaidItem["image"] = a?.imageUrl ? { uri: a.imageUrl } : undefined;
@@ -21,7 +19,6 @@ export const transformToPaidItems = (accounts: any[], myId: number | string): Pa
   });
 };
 
-/** 서버 응답 → UnpaidCarousel용 변환 */
 export const transformToUnpaidItems = (accounts: any[]): UnpaidItem[] => {
   const unpaid = accounts.filter((a) => a.status !== "COMPLETED");
   return unpaid.map((a): UnpaidItem => ({
@@ -31,13 +28,12 @@ export const transformToUnpaidItems = (accounts: any[]): UnpaidItem[] => {
   }));
 };
 
-/** "2024-01-15" → "24.01.15" */
 const toDateLabel = (yyyyMmDd: string) => {
   const [y, m, d] = (yyyyMmDd || "").split("-");
   return `${String(y).slice(2)}.${m}.${d}`;
 };
 
-/** /api/accounts → AdjustmentList용 변환 */
+// ✅ category 포함해서 카드로 넘김
 export const transformToListItems = (accounts: any[], myId: number) => {
   return (accounts ?? []).map((a): AdjustmentCardItem & { status: SettlementStatus } => ({
     id: String(a.id),
@@ -59,5 +55,6 @@ export const transformToListItems = (accounts: any[], myId: number) => {
       `https://api.dicebear.com/9.x/identicon/svg?seed=${encodeURIComponent(p.memberName ?? p.memberId)}`
     ),
     status: a.status === "COMPLETED" ? "done" : "todo",
+    category: a.category ?? "", // ← 추가
   }));
 };
