@@ -1,20 +1,19 @@
-import React, { useMemo, useState } from "react";
+// app/adjustment/adjustment_edit.tsx
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, SafeAreaView, StyleSheet,
-  StatusBar, Image, Modal, Platform,
+  StatusBar, Image, Modal, Platform, Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { router } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 
-// ✅ 훅으로 교체
-import { useCreateAccount } from "@/hooks/useAccounts";
-
+import { useAccountDetail, useUpdateAccount } from "@/hooks/useAccounts";
 import CalendarCard from "@/components/CalendarCard";
+import BackHeader from "@/components/BackHeader";
+
 import CalendarIcon from "@/assets/image/adjustmenticon/calendar_Icon.svg";
 import CameraIcon from "@/assets/image/adjustmenticon/camera_Icon.svg";
 import DropDownIcon from "@/assets/image/adjustmenticon/arrow_drop_down.svg";
-import CheckIcon from "@/assets/image/adjustmenticon/check_Icon.svg";
-import BackHeader from "@/components/BackHeader";
 import TagIcon from "@/assets/image/adjustmenticon/tag_Icon.svg";
 import TicketIcon from "@/assets/image/adjustmenticon/ticket_Icon.svg";
 import CutleryIcon from "@/assets/image/adjustmenticon/cutlery_Icon.svg";
@@ -25,20 +24,17 @@ import ShopbagIcon from "@/assets/image/adjustmenticon/shopbag_Icon.svg";
 /* ---------- helpers ---------- */
 function todayStrSlash() {
   const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y} / ${m} / ${day}`;
+  return `${d.getFullYear()} / ${String(d.getMonth() + 1).padStart(2, "0")} / ${String(d.getDate()).padStart(2, "0")}`;
 }
 const slashToDash = (s: string) => s.replace(/\s*\/\s*/g, "-");
+const dashToSlash = (s: string) => {
+  const [y, m, d] = (s || "").split("-");
+  return y && m && d ? `${y} / ${m} / ${d}` : todayStrSlash();
+};
 function formatCurrency(value: string) {
   const num = Number(value.replace(/[^0-9]/g, ""));
   if (isNaN(num)) return "";
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-    maximumFractionDigits: 0,
-  }).format(num);
+  return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(num);
 }
 const parseCurrencyToNumber = (v: string) => Number(v.replace(/[^0-9]/g, "")) || 0;
 
@@ -53,24 +49,59 @@ const CATEGORIES = [
 ] as const;
 
 /* ---------- component ---------- */
-export default function ExpenseCreate() {
+export default function AdjustmentEdit() {
+  const { accountId } = useLocalSearchParams<{ accountId: string }>();
+  const id = Number(accountId);
+
+  // 상세/수정 훅
+  const { data: detail, isLoading } = useAccountDetail(id);
+  const { mutateAsync: updateMutate, isPending } = useUpdateAccount(id);
+
+  // 폼 상태
   const [date, setDate] = useState<string>(todayStrSlash());
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [category, setCategory] = useState<string>("카테고리");
-
   const [item, setItem] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
   const [receiveAmount, setReceiveAmount] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
 
-  // ✅ 등록 훅
-  const { mutateAsync: createMutate, isPending } = useCreateAccount();
+  // (데모) 인원 선택 UI 유지용
+  const people = useMemo(
+    () => [
+      { id: "u1", name: "A", uri: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240" },
+      { id: "u2", name: "B", uri: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240" },
+      { id: "u3", name: "C", uri: "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=240" },
+    ],
+    []
+  );
+  const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
+  const togglePerson = (pid: string) =>
+    setSelectedPeople((prev) => (prev.includes(pid) ? prev.filter((x) => x !== pid) : [...prev, pid]));
 
+  // 상세 도착 시 폼 채우기
+  useEffect(() => {
+    if (!detail) return;
+    setItem(detail.title ?? "");
+    setCategory(detail.category ?? "카테고리");
+    setDate(dashToSlash(detail.expenseDate ?? ""));
+    setTotalAmount(formatCurrency(String(detail.totalAmount ?? "0")));
+    setReceiveAmount(formatCurrency(String(detail.receiveAmount ?? "0")));
+    setImageUri(detail.imageUrl ?? null);
+  }, [detail]);
+
+  const isValid =
+    item.trim().length > 0 &&
+    category !== "카테고리" &&
+    parseCurrencyToNumber(totalAmount) > 0 &&
+    parseCurrencyToNumber(receiveAmount) >= 0;
+
+  /* ---------- 이미지 선택 ---------- */
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      alert("사진 접근 권한을 허용해주세요.");
+      Alert.alert("권한 필요", "사진 접근 권한을 허용해주세요.");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -84,58 +115,29 @@ export default function ExpenseCreate() {
     }
   };
 
-  // TODO: people은 실제 백엔드 멤버 리스트로 교체 예정
-  const people = useMemo(
-    () => [
-      { id: "u1", name: "A", uri: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240" },
-      { id: "u2", name: "B", uri: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240" },
-      { id: "u3", name: "C", uri: "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=240" },
-      { id: "u4", name: "D", uri: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240" },
-    ],
-    []
-  );
-
-  const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
-  const togglePerson = (id: string) =>
-    setSelectedPeople((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-
-  const isValid =
-    item.trim().length > 0 &&
-    category !== "카테고리" &&
-    parseCurrencyToNumber(totalAmount) > 0 &&
-    parseCurrencyToNumber(receiveAmount) >= 0 &&
-    selectedPeople.length > 0;
-
-  /* ---------- submit ---------- */
+  /* ---------- 제출 ---------- */
   const onSubmit = async () => {
-    if (!isValid) {
-      alert("모든 입력값을 확인해주세요.");
-      return;
-    }
+    if (!isValid || !id) return;
 
     try {
-      // ⚠️ 로컬 이미지 URI는 서버에서 읽을 수 없음 → 업로드 기능 붙일 때 교체
-      const imageUrlToSend: string | null = null; // imageUri ? await upload(imageUri) : null;
+      // 로컬 URI는 서버에서 못 읽음 → 이미지 업로드 API 붙일 때 교체
+      const imageUrlToSend: string | null = detail?.imageUrl ?? null;
 
-      // 임시 participantIds 매핑 (u1→1, u2→2 …). 실제론 백엔드 memberId 사용.
-      const participantIds = selectedPeople.map((_, idx) => idx + 1);
-
-      await createMutate({
+      await updateMutate({
         title: item.trim(),
         description: `${item.trim()} 정산`,
-        expenseDate: slashToDash(date),  // "YYYY-MM-DD"
-        category,                        // 예: "식비"
+        expenseDate: slashToDash(date),
+        category,
         imageUrl: imageUrlToSend,
         totalAmount: parseCurrencyToNumber(totalAmount),
         receiveAmount: parseCurrencyToNumber(receiveAmount),
-        participantIds,
+        // participantIds: 필요 시 추가 (현재 스웨거 수정 바디 예시에만 있으면 함께 전송)
       });
 
-      alert("정산이 성공적으로 등록되었습니다!");
       router.replace("/adjustment");
     } catch (err: any) {
-      console.error("[정산 등록 실패]", err);
-      alert(err?.message || "서버와의 통신 중 오류가 발생했습니다.");
+      // 예: ACCOUNT4002 "이미 완료된 정산입니다." → 백엔드 메시지 그대로 노출
+      Alert.alert("수정 실패", err?.message || "수정 중 오류가 발생했습니다.");
     }
   };
 
@@ -144,10 +146,9 @@ export default function ExpenseCreate() {
   return (
     <SafeAreaView style={s.container}>
       <StatusBar barStyle="dark-content" />
-      <BackHeader title="정산 등록하기" color="#111" onBack={() => router.replace("/adjustment")} />
+      <BackHeader title="정산 수정하기" color="#111" onBack={() => router.replace("/adjustment")} />
 
       <View style={s.card}>
-        {/* 사진 */}
         <TouchableOpacity style={s.photoBox} activeOpacity={0.8} onPress={pickImage}>
           {imageUri ? <Image source={{ uri: imageUri }} style={s.photoPreview} /> : <CameraIcon width={28} height={28} />}
         </TouchableOpacity>
@@ -166,7 +167,7 @@ export default function ExpenseCreate() {
           <DropDownIcon width={24} height={24} />
         </TouchableOpacity>
 
-        {/* 지출 항목 */}
+        {/* 항목 */}
         <TextInput
           style={s.inputSolo}
           {...commonInputProps}
@@ -175,7 +176,6 @@ export default function ExpenseCreate() {
           onChangeText={setItem}
         />
 
-        {/* 디바이더 */}
         <View style={s.formDivider} />
 
         {/* 총 금액 */}
@@ -184,7 +184,7 @@ export default function ExpenseCreate() {
           {...commonInputProps}
           placeholder="총 금액을 입력하세요"
           value={totalAmount}
-          onChangeText={(text) => setTotalAmount(formatCurrency(text))}
+          onChangeText={(t) => setTotalAmount(formatCurrency(t))}
           keyboardType="number-pad"
         />
 
@@ -194,50 +194,24 @@ export default function ExpenseCreate() {
           {...commonInputProps}
           placeholder="받을 금액을 입력하세요"
           value={receiveAmount}
-          onChangeText={(text) => setReceiveAmount(formatCurrency(text))}
+          onChangeText={(t) => setReceiveAmount(formatCurrency(t))}
           keyboardType="number-pad"
         />
 
-        {/* 사람 선택 */}
-        <View style={s.peopleBox}>
-          <Text style={s.peopleLabel}>정산 할 사람을 선택하세요</Text>
-          <View style={s.peopleRow}>
-            {people.map((p) => {
-              const on = selectedPeople.includes(p.id);
-              return (
-                <TouchableOpacity
-                  key={p.id}
-                  onPress={() => togglePerson(p.id)}
-                  activeOpacity={0.85}
-                  style={[s.avatarWrap, on && s.avatarWrapActive]}
-                >
-                  <Image source={{ uri: p.uri }} style={s.avatar} />
-                  {on && <View style={s.avatarDim} />}
-                  {on && (
-                    <View style={s.checkWrap}>
-                      <CheckIcon width={28} height={28} />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* 등록 버튼 */}
+        {/* 저장 버튼 */}
         <TouchableOpacity
           activeOpacity={isValid && !isPending ? 0.9 : 1}
           style={[s.submitBtn, (!isValid || isPending) && s.submitBtnDisabled]}
           onPress={onSubmit}
-          disabled={!isValid || isPending}
+          disabled={!isValid || isPending || isLoading}
         >
           <Text style={[s.submitText, (!isValid || isPending) && s.submitTextDisabled]}>
-            {isPending ? "등록 중..." : "등록하기"}
+            {isPending ? "수정 중..." : "수정하기"}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Calendar 모달 */}
+      {/* 달력 모달 */}
       <Modal visible={calendarOpen} transparent animationType="fade" onRequestClose={() => setCalendarOpen(false)}>
         <View style={s.modalRoot}>
           <TouchableOpacity style={s.backdrop} onPress={() => setCalendarOpen(false)} />
@@ -303,15 +277,6 @@ const s = StyleSheet.create({
   inputSolo: { height: 48, borderRadius: 12, backgroundColor: "#fff", paddingHorizontal: 14, marginBottom: 12, color: "#111", fontSize: 17 },
 
   formDivider: { height: 2, backgroundColor: "#FFD51C", marginBottom: 12, borderRadius: 1 },
-
-  peopleBox: { backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 12 },
-  peopleLabel: { fontSize: 16, color: "#666", marginBottom: 8 },
-  peopleRow: { flexDirection: "row", gap: 12 },
-  avatarWrap: { width: 72, height: 72, borderRadius: 36, padding: 2, borderWidth: 2, borderColor: "#E9E9E9", overflow: "hidden" },
-  avatarWrapActive: { borderColor: "#FFD51C" },
-  avatar: { width: "100%", height: "100%", borderRadius: 36 },
-  avatarDim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.45)" },
-  checkWrap: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
 
   submitBtn: { height: 48, borderRadius: 12, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", marginTop: 24 },
   submitBtnDisabled: { backgroundColor: "#fff" },

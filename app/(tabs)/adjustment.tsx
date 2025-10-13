@@ -1,4 +1,14 @@
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, StyleSheet, StatusBar } from "react-native";
+// app/adjustment/adjustment.tsx
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+} from "react-native";
 import { router } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 
@@ -7,16 +17,42 @@ import AdjustIllustration from "@/assets/image/adjustmenticon/adjustment_Illustr
 import UnpaidCarousel, { UnpaidItem } from "../adjustment/UnpaidCarousel";
 import PaidCarousel, { PaidItem } from "../adjustment/PaidCarousel";
 
+// ✅ API/유틸
+import { fetchAccounts } from "@/components/apis/account";
+import { storage } from "@/components/apis/storage";
+import { transformToPaidItems, transformToUnpaidItems } from "@/utils/transformer";
+
 export default function Adjustment() {
-  const UNPAID: UnpaidItem[] = [
-    { id: "u1", title: "휴지", amount: "-₩21,000" },
-    { id: "u2", title: "주방세제", amount: "-₩8,400" },
-  ];
-  const PAID: PaidItem[] = [
-    { id: "p1", title: "휴지", amount: "-₩21,000", color: "yellow" },
-    { id: "p2", title: "섬유유연제", amount: "-₩12,500", color: "purple" },
-    { id: "p3", title: "전기요금", amount: "-₩34,700", color: "purple" },
-  ];
+  const [paidData, setPaidData] = useState<PaidItem[]>([]);
+  const [unpaidData, setUnpaidData] = useState<UnpaidItem[]>([]);
+
+  useEffect(() => {
+    const loadAccounts = async () => {
+      try {
+        // storage에서 내 userId (문자열로 사용)
+        const userId = await storage.getItem("userId");
+        const myId = String(userId ?? "");
+
+        // API 호출
+        const res = await fetchAccounts();
+
+        // 응답 모양이 달라도 안전하게 accounts 추출
+        const accounts =
+          (res as any)?.accounts ??
+          (res as any)?.data?.accounts ??
+          (res as any)?.data?.data?.accounts ??
+          [];
+
+        // 캐러셀용 데이터로 변환
+        setPaidData(transformToPaidItems(accounts, myId));
+        setUnpaidData(transformToUnpaidItems(accounts));
+      } catch (err) {
+        console.error("[정산 목록 불러오기 실패]", err);
+      }
+    };
+
+    loadAccounts();
+  }, []);
 
   return (
     <SafeAreaView style={s.container}>
@@ -62,10 +98,10 @@ export default function Adjustment() {
       {/* 섹션: 미정산 */}
       <View style={s.sectionBox}>
         <View style={s.sectionHeader}>
-          <Text style={s.title}>아직 정산되지 않은 항목이 {UNPAID.length}건 있어요</Text>
+          <Text style={s.title}>아직 정산되지 않은 항목이 {unpaidData.length}건 있어요</Text>
         </View>
         <UnpaidCarousel
-          data={UNPAID}
+          data={unpaidData}
           onPressItem={(item) => console.log("unpaid press:", item)}
         />
       </View>
@@ -74,14 +110,16 @@ export default function Adjustment() {
       <View style={s.sectionBox}>
         <View style={s.sectionHeader}>
           <Text style={s.title}>정산내역</Text>
-          <TouchableOpacity onPress={() => router.push("/adjustment/adjustment_list")}
-            style={s.moreWrap}>
+          <TouchableOpacity
+            onPress={() => router.push("/adjustment/adjustment_list")}
+            style={s.moreWrap}
+          >
             <Text style={s.moreLink}>더보기</Text>
             <ChevronRight size={16} color="#707070" />
           </TouchableOpacity>
         </View>
         <PaidCarousel
-          data={PAID}
+          data={paidData}
           onPressItem={(item) => console.log("paid press:", item)}
           onPressMore={() => router.push("/adjustment/adjustment_list")}
         />
@@ -90,11 +128,9 @@ export default function Adjustment() {
   );
 }
 
+// 💅 스타일
 const s = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#FFFFFF" 
-  },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
 
   header: {
     flexDirection: "row",
@@ -112,32 +148,24 @@ const s = StyleSheet.create({
     height: 44,
     marginRight: 8,
   },
-  searchIcon: { 
-    width: 20, 
-    height: 20 
-  },
-  searchInput: { 
-    flex: 1, 
-    height: 48, 
-    borderRadius: 12, 
-    paddingHorizontal: 12, 
-    color: "#111" 
+  searchIcon: { width: 20, height: 20 },
+  searchInput: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    color: "#111",
   },
   addBtn: {
-    width: 40, 
-    height: 40, 
+    width: 40,
+    height: 40,
     borderRadius: 20,
     backgroundColor: "#FFE600",
-    alignItems: "center", 
+    alignItems: "center",
     justifyContent: "center",
   },
-  addBtnText: { 
-    fontSize: 26, 
-    lineHeight: 26, 
-    color: "#111" 
-  },
+  addBtnText: { fontSize: 26, lineHeight: 26, color: "#111" },
 
-  // 인포 박스
   infoBox: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -149,56 +177,25 @@ const s = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 20,
   },
-  infoTextBox: { 
-    flex: 1, 
-    marginHorizontal: 10 
-  },
-  infoTitle: { 
-    fontSize: 19, 
-    fontWeight: "600", 
-    color: "#000" 
-  },
-  infoSub: { 
-    fontSize: 13, 
-    color: "#797979", 
-    marginTop: 8 
-  },
-  infoImageBox: { 
-    width: 115, 
-    height: 113, 
-    justifyContent: "center", 
-    alignItems: "center", 
-    marginRight: 12 
+  infoTextBox: { flex: 1, marginHorizontal: 10 },
+  infoTitle: { fontSize: 19, fontWeight: "600", color: "#000" },
+  infoSub: { fontSize: 13, color: "#797979", marginTop: 8 },
+  infoImageBox: {
+    width: 115,
+    height: 113,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
   },
 
-  // 공통 섹션 카드
-  sectionBox: {
-    marginTop: 35,
-    marginHorizontal: 24,
-    //paddingVertical: 14,
-    //backgroundColor: "lightblue",
-  },
+  sectionBox: { marginTop: 35, marginHorizontal: 24 },
   sectionHeader: {
     marginBottom: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    //backgroundColor: "lightgreen",
   },
-  moreWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    //backgroundColor: "red",
-    //paddingHorizontal: 2,
-  },
-  title: { 
-    fontSize: 16, 
-    fontWeight: "700", 
-    color: "#111" 
-  },
-  moreLink: { 
-    fontSize: 14, 
-    color: "#707070" 
-  },
+  moreWrap: { flexDirection: "row", alignItems: "center", gap: 4 },
+  title: { fontSize: 16, fontWeight: "700", color: "#111" },
+  moreLink: { fontSize: 14, color: "#707070" },
 });
