@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
-import { router } from "expo-router"; // ✅ 추가
+import { router } from "expo-router";
 import AlarmIcon from "@/assets/image/home/alarm_basic.svg";
 import ChevronRight from "@/assets/image/adjustmenticon/arrow_right_Icon.svg";
 import GradientAvatar from "@/components/GradientAvatar";
@@ -9,7 +9,7 @@ type Props = {
   style?: ViewStyle;
   profileImage?: string;
   profileLabel?: string;
-  onPressProfile?: () => void;  // 외부로도 커스터마이즈 가능
+  onPressProfile?: () => void;
   unreadCount?: number;
   onPressBell?: () => void;
 };
@@ -26,29 +26,27 @@ export default function HomeHeadercomponent({
 
   // ✅ 내 계정 클릭 시 이동
   const handlePressProfile = () => {
-    if (onPressProfile) return onPressProfile(); // 커스텀 함수가 있다면 우선
-    router.push("/home/home_header/MyPage/MyPage"); // 기본 동작
+    if (onPressProfile) return onPressProfile();
+    router.push("/home/home_header/MyPage/MyPage");
+  };
+
+  // ✅ 알림 아이콘 클릭 시 이동
+  const handlePressBell = () => {
+    if (onPressBell) return onPressBell();
+    router.push("/home/home_header/Alarm/NotificationListScreen");
   };
 
   return (
     <View style={[s.container, style]}>
-      {/* 좌측 프로필 */}
-      <TouchableOpacity
-        activeOpacity={0.85}
-        style={s.profileBtn}
-        onPress={handlePressProfile}
-      >
+      {/* 좌측: 프로필 */}
+      <TouchableOpacity activeOpacity={0.85} style={s.profileBtn} onPress={handlePressProfile}>
         <GradientAvatar uri={profileImage} size={40} />
         <Text style={s.profileText}>{profileLabel}</Text>
         <ChevronRight width={14} height={14} />
       </TouchableOpacity>
 
-      {/* 우측 알림 */}
-      <TouchableOpacity
-        activeOpacity={0.85}
-        style={s.bellWrap}
-        onPress={onPressBell}
-      >
+      {/* 우측: 알림 */}
+      <TouchableOpacity activeOpacity={0.85} style={s.bellWrap} onPress={handlePressBell}>
         <View style={s.bellCircle}>
           <AlarmIcon width={24} height={24} />
           {hasUnread && <View style={s.badgeDot} />}

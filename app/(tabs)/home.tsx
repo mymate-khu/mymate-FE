@@ -34,8 +34,7 @@ export default function Home() {
       {/*메이트보드 : 승원*/}
       <MateboardComponent></MateboardComponent>
 
-      {/*투데이퍼즐  : 지민*/}
-      
+      {/*투데이퍼즐 : 지민*/}
       <TodayPuzzleComponent />
       
       <ChattingComponent/>
