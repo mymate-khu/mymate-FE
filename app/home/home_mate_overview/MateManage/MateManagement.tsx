@@ -1,6 +1,7 @@
 // app/home/home_mate_overview/MateManage/MateManagement.tsx
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { router } from "expo-router"; // ✅ 추가
 import BackHeader from "@/components/BackHeader";
 import SectionHeader from "./SectionHeader";
 import MateListItem from "./MateListItem";
@@ -68,7 +69,13 @@ export default function MateManagement() {
   };
 
   const handleAddMate = () => {
-    console.log("메이트 추가하기 클릭");
+    // ✅ 메이트 추가 화면으로 이동
+    // 내가 만든 경로에 맞춰서 push 경로를 써줘.
+    // 예) app/home/mate_add/MateAddScreen.tsx 를 만들었다면:
+    router.push("./MateAddScreen");
+
+    // 만약 다른 위치라면 그 경로로 바꿔줘:
+    // router.push("/home/home_mate_overview/MateManage/MateAddScreen");
   };
 
   return (
@@ -87,7 +94,6 @@ export default function MateManagement() {
               photo={m.photo}
               mode="pending"
               onPressAction={() => handleRejectPending(m)}
-              // style 필요하면 MateListItem에 style prop 추가해서 사용
             />
           ))}
           {pendingMates.length === 0 && (
@@ -125,8 +131,8 @@ export default function MateManagement() {
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#fff" },
-  container: { paddingBottom: 40, },
-  sectionBody: { paddingTop: 8, paddingBottom: 16,  },
+  container: { paddingBottom: 40 },
+  sectionBody: { paddingTop: 8, paddingBottom: 16 },
   emptyText: { color: "#9A9A9A", fontSize: 14, paddingHorizontal: 2, paddingVertical: 10 },
 
   addBtn: {

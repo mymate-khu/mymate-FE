@@ -61,7 +61,7 @@ const s = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 25,
   },
   left: {
     width: 44,
