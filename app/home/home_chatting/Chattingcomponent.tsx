@@ -255,7 +255,7 @@ export default function ChatScreen({ fixedHeight = 560, onScrollActive }: Props)
 const styles = StyleSheet.create({
   safe: { backgroundColor: "white", width: "100%" },
   flex: { flex: 1 },
-  container: { flex: 1 },
+  container: { flex: 1},
   header: {
     marginTop:20,
     height: 52,

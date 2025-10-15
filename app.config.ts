@@ -1,6 +1,6 @@
 // app.config.ts
 import 'dotenv/config';
-import type { ExpoConfig } from 'expo/config';
+import { ExpoConfig, ConfigContext } from 'expo/config';
 
 const config: ExpoConfig = {
   name: 'mymate',
@@ -23,6 +23,6 @@ const config: ExpoConfig = {
     SENTRY_DSN: process.env.SENTRY_DSN,     // 선택
     eas: { projectId: '412ab654-b934-4dd0-863b-21e7efb950b1' },
   },
-};
 
-export default config;
+};
+export default config

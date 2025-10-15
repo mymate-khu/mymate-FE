@@ -3,23 +3,23 @@ import { Text, TextInput, View, TouchableOpacity, StyleSheet, ScrollView, useWin
 import { router } from "expo-router"
 import { useState } from "react";
 import { Calendar, DateData, LocaleConfig } from 'react-native-calendars';
-import {TokenReq} from "@/components/apis/axiosInstance"
+import { TokenReq } from "@/components/apis/axiosInstance"
 
 import CalendarIcon from '@/assets/image/Calendar.png';
 import Profileimg from "@/assets/image/signupcheckimg/profileuploadimg.png"
 
 type User = {
-  userId: String,
-  passwordEncrypted: String,
-  email: String,
-  name: String,
-  phone: String,
-  agreeService: true,
-  agreePrivacy: true,
-  agreeAgeOver14: true,
-  agreeThirdParty: true,
-  agreeMarketing: true,
-  token: String
+    userId: String,
+    passwordEncrypted: String,
+    email: String,
+    name: String,
+    phone: String,
+    agreeService: true,
+    agreePrivacy: true,
+    agreeAgeOver14: true,
+    agreeThirdParty: true,
+    agreeMarketing: true,
+    token: String
 }
 
 
@@ -37,28 +37,87 @@ export default function Signup2() {
 
     const [curdate, setcurdate] = useState(todayISO)
 
-    const [authorization,setauthorization] = useState(false)
+    const [authorization, setauthorization] = useState(true)
 
-    const [passwordmsg,setpasswordmsg] = useState(false)
+    const [passwordmsg, setpasswordmsg] = useState(false)
 
-    const [formname , setformname] = useState("")
-    const [formgender , setformgender] = useState("")
-    const [formphonenumber , setformphonenumber] = useState("")
+    const [formname, setformname] = useState("")
+    const [formgender, setformgender] = useState("")
+    const [formphonenumber, setformphonenumber] = useState("")
+    const [formauthorizenumber, setformauthorizenumber] = useState("")
+    const [authorizecomplete, setauthorizecomplete] = useState(false);
+    const [formid, setformid] = useState("")
+    const [formpassword, setformpassword] = useState("")
 
 
-    const handlephonenumber = (e : any)=>{
+    const handlename = (e: any) => {
+        setformname(e.target.value)
+    }
+    const handleid = (e: any) => {
+        setformid(e.target.value)
+    }
+    const handlepassword = (e: any) => {
+        setformpassword(e.target.value)
+    }
+    const handlephonenumber = (e: any) => {
         setformphonenumber(e.target.value)
         console.log(formphonenumber)
     }
+    const handleauthorizenumber = (e: any) => {
+        setformauthorizenumber(e.target.value)
+    }
 
-    const sendphonenumber = async()=>{
-        try{
-            const res =  await TokenReq.post("/api/auth/phone/request-code",{
-            phone : formphonenumber
-        })
-        console.log(res.data)
+    const sendphonenumber = async () => {
+        try {
+            setauthorization(false)
+            const res = await TokenReq.post("/api/auth/phone/request-code", {
+                phone: formphonenumber
+            })
+            setformauthorizenumber(res.data.data)
         }
-        catch{
+        catch {
+            console.error("에러")
+        }
+    }
+
+    const sendauthorizenumber = async () => {
+        try {
+
+            const res = await TokenReq.post("/api/auth/phone/verify-code", {
+                phone: formphonenumber,
+                code: formauthorizenumber
+            })
+            console.log(res.data)
+            setauthorization(true)
+            setauthorizecomplete(true)
+        }
+        catch {
+            console.error("에러")
+        }
+    }
+
+    const signup = async () => {
+        try {
+
+            const res = await TokenReq.post("/api/auth/signup", {
+
+                userId: formid,
+                passwordEncrypted: formpassword,
+                email: "user123@naver.com",
+                name: formname,
+                phone: formphonenumber,
+                agreeService: true,
+                agreePrivacy: true,
+                agreeAgeOver14: true,
+                agreeThirdParty: false,
+                agreeMarketing: false,
+                token: null
+
+            })
+            console.log(res.data)
+            router.replace("/login/loginpage")
+        }
+        catch {
             console.error("에러")
         }
     }
@@ -91,8 +150,8 @@ export default function Signup2() {
                 <TouchableOpacity
                     onPress={() => { setselected(false) }}
                     style={[styles.btn1, { backgroundColor: !selected ? "rgba(255, 230, 0, 1)" : "rgba(153, 153, 153, 0.1)", marginLeft: "3%" }]}>
-                        <Text>남</Text>
-                    </TouchableOpacity>
+                    <Text>남</Text>
+                </TouchableOpacity>
             </View>
 
             <View style={[{ marginTop: 20 }, styles.bar1]}>
@@ -130,33 +189,59 @@ export default function Signup2() {
                 <Text style={{ fontFamily: "PretendardSemiBold", fontWeight: 600, left: 12 }}>전화번호</Text>
             </View>
             <View style={{ flexDirection: "row" }}>
-                <TextInput value={formphonenumber } onChange={handlephonenumber} style={styles.bar2_short} placeholder="전화번호" placeholderTextColor={"#797979"}></TextInput>
-                <TouchableOpacity onPress={() => {sendphonenumber()}} style={styles.bar2_short_btn}>발송</TouchableOpacity>
+                <TextInput value={formphonenumber} onChange={handlephonenumber} style={styles.bar2_short} placeholder="전화번호" placeholderTextColor={"#797979"}></TextInput>
+                <TouchableOpacity onPress={() => { sendphonenumber() }} style={styles.bar2_short_btn}>발송</TouchableOpacity>
             </View>
 
             <View style={{ flexDirection: "row" }}>
-                <TextInput style={styles.bar2_short} placeholder="인증번호" placeholderTextColor={"#797979"}></TextInput>
-                <TouchableOpacity onPress={() => { }} style={styles.bar2_short_btn}>확인</TouchableOpacity>
+                <TextInput
+                    style={styles.bar2_short}
+                    placeholder="인증번호"
+                    placeholderTextColor={"#797979"}
+                    value={formauthorizenumber}
+                    onChange={handleauthorizenumber}
+                >
+                </TextInput>
+                {authorization && authorizecomplete ?
+                    <TouchableOpacity disabled={true} style={styles.bar2_short_btn2} onPress={() => { sendauthorizenumber() }}>
+                        완료
+                    </TouchableOpacity> :
+                    (<TouchableOpacity onPress={() => { sendauthorizenumber() }} style={styles.bar2_short_btn}>
+                        확인
+                    </TouchableOpacity>)}
+
             </View>
             {/*인증 메세지*/}
-            {authorization && <View style={{height:20}}><Text style={{fontSize:12,color:"red"}}>남은 인증시간</Text></View>}
+            {!authorization && <View style={{ height: 20 }}><Text style={{ fontSize: 12, color: "red" }}>남은 인증시간</Text></View>}
 
             <View style={[styles.bar1, { marginTop: 20 }]}>
                 <Text style={{ fontFamily: "PretendardSemiBold", fontWeight: 600, left: 12 }}>아이디</Text>
             </View>
-            <TextInput placeholder="아이디" placeholderTextColor={"#797979"} style={styles.bar2}></TextInput>
+            <TextInput
+                placeholder="아이디"
+                placeholderTextColor={"#797979"}
+                style={styles.bar2}
+                value={formid}
+                onChange={handleid}
+            ></TextInput>
 
             <View style={[styles.bar1, { marginTop: 20 }]}>
                 <Text style={{ fontFamily: "PretendardSemiBold", fontWeight: 600, left: 12 }}>비밀번호</Text>
             </View>
-            <TextInput placeholder="비밀번호" placeholderTextColor={"#797979"} style={styles.bar2}></TextInput>
+            <TextInput
+                placeholder="비밀번호"
+                placeholderTextColor={"#797979"}
+                style={styles.bar2}
+                value={formpassword}
+                onChange={handlepassword}
+            ></TextInput>
             <TextInput placeholder="비밀번호 확인" placeholderTextColor={"#797979"} style={styles.bar2}></TextInput>
             {/*인증 메세지*/}
-            {passwordmsg && <View style={{height:20}}><Text style={{fontSize:12,color:"red"}}>비밀번호가 일치하지 않습니다</Text></View>}
+            {passwordmsg && <View style={{ height: 20 }}><Text style={{ fontSize: 12, color: "red" }}>비밀번호가 일치하지 않습니다</Text></View>}
 
-            <TouchableOpacity style={styles.btn2} onPress={()=>{router.push("/login/addmate")}}>회원가입</TouchableOpacity>
+            <TouchableOpacity style={styles.btn2} onPress={() => { signup() }}>회원가입</TouchableOpacity>
         </View>
-        <View style={{height:50}}></View>
+        <View style={{ height: 50 }}></View>
     </ScrollView>
 }
 
@@ -220,6 +305,17 @@ const styles = StyleSheet.create({
         alignItems: "center",
         width: "15%",
         fontWeight: 500
+    },
+    bar2_short_btn2: {
+        height: 50,
+        justifyContent: "center",
+        backgroundColor: "grey",
+        borderRadius: 10,
+        marginTop: 10,
+        marginLeft: "5%",
+        alignItems: "center",
+        width: "15%",
+        fontWeight: 500,
     },
     btn2: {
         height: 50,
