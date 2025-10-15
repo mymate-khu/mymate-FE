@@ -4,6 +4,7 @@ import {
   Dimensions,
   StyleSheet,
 } from "react-native";
+import { useCallback,useState } from "react";
 
 import ChattingComponent from "@/app/home/home_chatting/Chattingcomponent";
 import MateboardComponent from "@/app//home/home_mateboard/Mateboardcomponent";
@@ -15,6 +16,13 @@ import MateManagement from "../home/home_mate_manage/MateManagement";
 
 export default function Home() {
 
+  const [outerScrollEnabled, setOuterScrollEnabled] = useState(true);
+
+  const handleChatScrollActive = useCallback((active: boolean) => {
+    // active=true: 채팅이 스크롤 중 -> 부모 스크롤 잠금
+    setOuterScrollEnabled(!active);
+  }, []);
+
   
   return (
     <ScrollView
@@ -24,6 +32,9 @@ export default function Home() {
         flexDirection: "column",
         paddingHorizontal:"5%"
       }}
+      nestedScrollEnabled // 👈 추가
+      keyboardShouldPersistTaps="handled"
+      scrollEnabled={outerScrollEnabled}
     >
       {/*맨위 마이페이지, 알림 */}
       <HomeHeadercomponent></HomeHeadercomponent>
@@ -38,7 +49,13 @@ export default function Home() {
       
       <TodayPuzzleComponent />
       
-      <ChattingComponent/>
+       {/* 채팅 영역은 고정 높이 + 자식 스크롤만 동작 */}
+      <View style={{ height: 560, marginBottom: 12 }}>
+        <ChattingComponent
+          fixedHeight={560}
+          onScrollActive={handleChatScrollActive} // 👈 콜백 전달
+        />
+      </View>
 
 
     </ScrollView>

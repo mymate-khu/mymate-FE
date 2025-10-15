@@ -49,41 +49,46 @@ const initialMessages: ChatMessage[] = [
     avatarUrl: "https://i.pravatar.cc/100?img=1",
   },
   {
-    id: "m1",
+    id: "m4",
     text: "안녕! 오늘 시간 돼?",
     createdAt: Date.now() - 1000 * 60 * 6,
     sender: "other",
     avatarUrl: "https://i.pravatar.cc/100?img=5",
   },
   {
-    id: "m1",
+    id: "m5",
     text: "안녕! 오늘 시간 돼?",
     createdAt: Date.now() - 1000 * 60 * 6,
     sender: "other",
     avatarUrl: "https://i.pravatar.cc/100?img=5",
   },
   {
-    id: "m1",
+    id: "m6",
     text: "안녕! 오늘 시간 돼?",
     createdAt: Date.now() - 1000 * 60 * 6,
     sender: "other",
     avatarUrl: "https://i.pravatar.cc/100?img=5",
   },
   {
-    id: "m1",
+    id: "m7",
     text: "안녕! 오늘 시간 돼?",
     createdAt: Date.now() - 1000 * 60 * 6,
     sender: "other",
     avatarUrl: "https://i.pravatar.cc/100?img=5",
   },
   {
-    id: "m1",
+    id: "m8",
     text: "안녕! 오늘 시간 돼?",
     createdAt: Date.now() - 1000 * 60 * 6,
     sender: "other",
     avatarUrl: "https://i.pravatar.cc/100?img=5",
   },
 ];
+
+type Props = {
+  fixedHeight?: number;
+  onScrollActive?: (active: boolean) => void; // 👈 추가
+};
 
 const timeText = (ts: number) => {
   const d = new Date(ts);
@@ -150,7 +155,7 @@ const ChatInput = ({ onSend }: { onSend: (text: string) => void }) => {
  * fixedHeight: 전체 ChatScreen 높이 (기본 560)
  * 리스트는 남는 공간을 차지하고, 넘치면 스크롤됨.
  */
-export default function ChatScreen({ fixedHeight = 560 }: { fixedHeight?: number }) {
+export default function ChatScreen({ fixedHeight = 560, onScrollActive }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const listRef = useRef<FlatList<ChatMessage>>(null);
 
@@ -225,8 +230,18 @@ export default function ChatScreen({ fixedHeight = 560 }: { fixedHeight?: number
             contentContainerStyle={styles.listContent}
             onContentSizeChange={() => scrollToBottom(false)}
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={true}
-            ListFooterComponent={<View onLayout={() => scrollToBottom(false)} />} // 레이아웃 완료 후 보정
+            showsVerticalScrollIndicator
+            ListFooterComponent={<View onLayout={() => scrollToBottom(false)} />}
+            nestedScrollEnabled
+
+            // 👇 드래그 시작/끝에 부모 스크롤 잠금/해제
+            onScrollBeginDrag={() => onScrollActive?.(true)}
+            onMomentumScrollEnd={() => onScrollActive?.(false)}
+            onScrollEndDrag={() => onScrollActive?.(false)}
+
+            // 👇 가장자리에서 부모 스크롤로 넘어가는 걸 줄임
+            bounces={false}                 // iOS 탄성 제거
+            overScrollMode="never"          // Android 오버스크롤 제거
           />
 
           {/* Input */}
@@ -242,6 +257,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1 },
   header: {
+    marginTop:20,
     height: 52,
     justifyContent: "center",
     borderBottomWidth: StyleSheet.hairlineWidth,

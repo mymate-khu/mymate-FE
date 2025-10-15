@@ -39,7 +39,6 @@ yarn-error.*
 app-example
 app/
 .env
-eas.json
 google-services.json
 GoogleService-Info.plist
 .env
