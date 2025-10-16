@@ -2,11 +2,12 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import GradientAvatar from "@/components/GradientAvatar";
+import { X } from "lucide-react-native"; // ✅ 추가 (Lucide 아이콘)
 
 export type SelectedMateChipProps = {
   id: string;
   name: string;
-  code?: string; // ✅ 아이디 추가
+  code?: string;
   avatarUri?: string;
   onRemove?: (id: string) => void;
 };
@@ -20,14 +21,14 @@ export default function SelectedMateChip({
 }: SelectedMateChipProps) {
   return (
     <View style={s.wrap}>
-      <GradientAvatar uri={avatarUri} size={56} />
+      <GradientAvatar uri={avatarUri} size={40} />
 
       {/* 이름 */}
       <Text style={s.name} numberOfLines={1}>
         {name}
       </Text>
 
-      {/* ✅ 아이디 추가 */}
+      {/* 아이디 */}
       {!!code && (
         <Text style={s.code} numberOfLines={1}>
           {code}
@@ -40,7 +41,7 @@ export default function SelectedMateChip({
         onPress={() => onRemove?.(id)}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Text style={s.closeText}>×</Text>
+        <X size={12} color="#fff" strokeWidth={3} />
       </TouchableOpacity>
     </View>
   );
@@ -48,18 +49,19 @@ export default function SelectedMateChip({
 
 const s = StyleSheet.create({
   wrap: {
-    marginRight: 12,
+    marginRight: 15,
+    paddingRight: 4,
     alignItems: "center",
-    width: 86,
+    width: 48,
+    //backgroundColor: "yellow",
   },
   name: {
-    marginTop: 8,
+    marginTop: 5,
     fontSize: 13,
     color: "#111",
     textAlign: "center",
-    fontWeight: "600",
+    fontWeight: "500",
   },
-  // ✅ 아이디(코드) 스타일
   code: {
     marginTop: 2,
     fontSize: 11,
@@ -68,14 +70,13 @@ const s = StyleSheet.create({
   },
   close: {
     position: "absolute",
-    right: 2,
-    top: 2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    right: 0,
+    top: 0,
+    width: 15,
+    height: 15,
+    borderRadius: 9,
     backgroundColor: "#111",
     alignItems: "center",
     justifyContent: "center",
   },
-  closeText: { color: "#fff", fontSize: 12, lineHeight: 12, fontWeight: "700" },
 });

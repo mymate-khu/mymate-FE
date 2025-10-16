@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import BackHeader from "@/components/BackHeader";
-import SearchBar from "@/components/SearchBar";                 // ✅ 공용 서치바
+import SearchBar from "@/components/SearchBar";
 import SelectedMateStrip from "./SelectedMateStrip";
 import SearchResultItem, { SearchResultItemState } from "./SearchResultItem";
 
@@ -44,6 +44,13 @@ const ALL_USERS: User[] = [
     id: "u4",
     name: "정하진",
     code: "SZZYDE773",
+    avatarUri:
+      "https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=480&auto=format&fit=crop",
+  },
+    {
+    id: "u5",
+    name: "이하진",
+    code: "SZZYDE775",
     avatarUri:
       "https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=480&auto=format&fit=crop",
   },
@@ -109,7 +116,7 @@ export default function MateAddScreen() {
     >
       <BackHeader title="나의 메이트 추가하기" />
 
-      {/* ✅ 공용 SearchBar 적용 */}
+      {/* 공용 SearchBar 적용 */}
       <View style={s.searchBar}>
         <SearchBar
           value={q}
@@ -183,7 +190,7 @@ export default function MateAddScreen() {
 
 const s = StyleSheet.create({
   // 🔄 기존 searchWrap 제거 → 공용 SearchBar 마진만 관리
-  searchBar: { marginHorizontal: 16, marginTop: 6 },
+  searchBar: { marginHorizontal: 16, marginTop: 6, marginBottom: 20 },
 
   divider: { height: 1, backgroundColor: "#F1F1F1", marginLeft: 84 },
 
@@ -201,14 +208,14 @@ const s = StyleSheet.create({
     borderTopColor: "#EFEFEF",
   },
   ctaBtn: {
-    height: 52,
+    height: 48,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaBtnActive: { backgroundColor: "#FFD51C" },
-  ctaBtnGhost: { backgroundColor: "#F3F3F3" },
-  ctaText: { fontSize: 16, fontWeight: "700" },
+  ctaBtnActive: { backgroundColor: "#FFE600" },
+  ctaBtnGhost: { backgroundColor: "#FFE600" },
+  ctaText: { fontSize: 17, fontWeight: "500" },
   ctaTextActive: { color: "#111" },
-  ctaTextGhost: { color: "#888" },
+  ctaTextGhost: { color: "#111" },
 });

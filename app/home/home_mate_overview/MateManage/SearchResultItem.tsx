@@ -1,8 +1,11 @@
 // app/home/home_mate_overview/MateManage/SearchResultItem.tsx
-// 세로 결과 1행
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import GradientAvatar from "@/components/GradientAvatar";
+
+// ✅ SVG 아이콘 import (경로는 실제 아이콘 위치에 맞춰 조정)
+import CheckIcon from "@/assets/image/home/check.svg";
+import PlusIcon from "@/assets/image/home/plus.svg";
 
 export type SearchResultItemState = "default" | "selected" | "disabled";
 
@@ -33,17 +36,31 @@ export default function SearchResultItem({
       onPress={() => onToggle?.(id)}
       style={[s.row, disabled && { opacity: 0.5 }]}
     >
-      <GradientAvatar uri={avatarUri} size={56} />
+      {/* 아바타 */}
+      <GradientAvatar uri={avatarUri} size={40} />
 
+      {/* 이름 + 코드 */}
       <View style={s.center}>
-        <Text style={s.name} numberOfLines={1}>{name}</Text>
-        <Text style={s.code} numberOfLines={1}>{code}</Text>
+        <Text style={s.name} numberOfLines={1}>
+          {name}
+        </Text>
+        <Text style={s.code} numberOfLines={1}>
+          {code}
+        </Text>
       </View>
 
-      <View style={[s.circle, isSelected ? s.circleSelected : s.circleDefault]}>
-        <Text style={[s.circleText, isSelected && s.circleTextSelected]}>
-          {isSelected ? "✓" : "+"}
-        </Text>
+      {/* 우측 아이콘 영역 */}
+      <View
+        style={[
+          s.circle,
+          isSelected ? s.circleSelected : s.circleDefault,
+        ]}
+      >
+        {isSelected ? (
+          <CheckIcon width={24} height={24} />
+        ) : (
+          <PlusIcon width={24} height={24} />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -51,21 +68,23 @@ export default function SearchResultItem({
 
 const s = StyleSheet.create({
   row: {
-    paddingHorizontal: 16,
+    paddingHorizontal: "5%",
     paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
+    //backgroundColor: "lightblue",
   },
   center: { flex: 1, marginLeft: 12 },
-  name: { fontSize: 16, fontWeight: "700", color: "#111" },
-  code: { marginTop: 4, fontSize: 13, color: "#8E8E8E" },
+  name: { fontSize: 16, fontWeight: "500", color: "#111" },
+  code: { marginTop: 4, fontSize: 10, color: "#797979" },
 
   circle: {
-    width: 44, height: 44, borderRadius: 22,
-    alignItems: "center", justifyContent: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  circleDefault: { backgroundColor: "#F3F3F3" },
-  circleSelected: { backgroundColor: "#FFD51C" },
-  circleText: { fontSize: 20, color: "#111", fontWeight: "700" },
-  circleTextSelected: { color: "#111" },
+  circleDefault: { backgroundColor: "#F0F0F0" },
+  circleSelected: { backgroundColor: "#FFE600" },
 });
