@@ -1,10 +1,21 @@
+// app/home/home_header/MyPage/MyPage.tsx
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { router } from "expo-router";
+
 import BackHeader from "@/components/BackHeader";
 import GradientAvatar from "@/components/GradientAvatar";
 import SettingListItem from "./SettingListItem";
 
+// 아이콘
 import UserIcon from "@/assets/image/mypage/user.svg";
 import LockIcon from "@/assets/image/mypage/lock.svg";
 import BellIcon from "@/assets/image/mypage/bell.svg";
@@ -13,17 +24,52 @@ import ChatIcon from "@/assets/image/mypage/chat.svg";
 import LogoutIcon from "@/assets/image/mypage/logout.svg";
 import EditIcon from "@/assets/image/mypage/edit.svg";
 
+// ✅ 프로필 훅
+import { useMyProfile } from "@/hooks/useMyProfile";
+// ✅ 토큰/스토리지 (logout 시 사용)
+import { storage } from "@/components/apis/storage";
+
 export default function MyPage() {
-  const user = {
-    name: "심효진",
-    id: "SZZYDE770",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=480&auto=format&fit=crop",
+  // 프로필 불러오기
+  const { me, loading, error } = useMyProfile();
+
+  // 화면에 표기할 값들 (닉네임 > 실명 > email)
+  const displayName = loading
+    ? "..."
+    : (me?.nickname || me?.username || me?.email || "회원");
+
+  // ID 표기: 기획에 맞게 email 또는 memberId 등에서 선택
+  const idLabel = loading
+    ? ""
+    : (me?.email ? me.email : `ID : ${me?.memberId ?? ""}`);
+
+  const avatarUri = me?.profileImageUrl ?? undefined;
+
+  const handleLogout = async () => {
+    Alert.alert("로그아웃", "정말 로그아웃 하시겠어요?", [
+      { text: "취소", style: "cancel" },
+      {
+        text: "로그아웃",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await storage.removeItem("accessToken");
+            await storage.removeItem("refreshToken");
+            // 필요하다면 사용자 캐시/기타 키도 함께 정리
+            // await storage.removeItem("userId");
+
+            router.replace("/login"); // 로그인 화면 경로에 맞게 수정
+          } catch (e) {
+            console.warn(e);
+          }
+        },
+      },
+    ]);
   };
 
-  const handleLogout = () => {
-    console.log("로그아웃 실행");
-    // TODO: storage.clear(); router.replace("/login");
+  const goEditProfile = () => {
+    // 프로필 수정 화면 경로에 맞게 조정
+    router.push("/profile/edit");
   };
 
   return (
@@ -34,13 +80,25 @@ export default function MyPage() {
         {/* 프로필 영역 */}
         <View style={s.profileBox}>
           <View style={s.avatarWrap}>
-            <GradientAvatar uri={user.avatar} size={80} />
-            <TouchableOpacity style={s.editBtn} activeOpacity={0.8}>
+            <GradientAvatar uri={avatarUri} size={80} />
+            <TouchableOpacity style={s.editBtn} activeOpacity={0.8} onPress={goEditProfile}>
               <EditIcon width={24} height={24} />
             </TouchableOpacity>
           </View>
-          <Text style={s.name}>{user.name}</Text>
-          <Text style={s.idText}>ID : {user.id}</Text>
+
+          {/* 이름 & 아이디 */}
+          <Text style={s.name}>{displayName}</Text>
+
+          {loading ? (
+            <ActivityIndicator style={{ marginTop: 8 }} />
+          ) : (
+            !!idLabel && <Text style={s.idText}>{idLabel}</Text>
+          )}
+
+          {/* 에러가 있으면 살짝만 표시(원하면 삭제 가능) */}
+          {!!error && (
+            <Text style={{ color: "#f33", marginTop: 8 }}>프로필 불러오기 실패</Text>
+          )}
         </View>
 
         {/* 나의 계정 섹션 */}
@@ -93,23 +151,15 @@ export default function MyPage() {
 }
 
 const s = StyleSheet.create({
-  container: {
-    flex: 1,
-    //backgroundColor: "#FAFAFA",
-  },
-  scroll: {
-    paddingBottom: 40,
-  },
+  container: { flex: 1 },
+  scroll: { paddingBottom: 40 },
 
   /* 프로필 */
   profileBox: {
     alignItems: "center",
     paddingVertical: 32,
-    //backgroundColor: "pink",
   },
-  avatarWrap: {
-    position: "relative",
-  },
+  avatarWrap: { position: "relative" },
   editBtn: {
     position: "absolute",
     bottom: 0,
@@ -139,10 +189,7 @@ const s = StyleSheet.create({
   },
 
   /* 섹션 */
-  section: {
-    marginTop: 10,
-    //backgroundColor: "yellow",
-  },
+  section: { marginTop: 10 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
@@ -153,9 +200,7 @@ const s = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#797979",
   },
-  sectionBody: {
-    //backgroundColor: "red",
-  },
+  sectionBody: {},
 
   /* 로그아웃 버튼 */
   logoutBtn: {
@@ -165,7 +210,6 @@ const s = StyleSheet.create({
     marginTop: 24,
     marginHorizontal: "5%",
     borderRadius: 10,
-    //backgroundColor: "#FFF",
     height: 48,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "#E8E8E8",
