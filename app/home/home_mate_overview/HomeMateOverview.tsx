@@ -1,60 +1,51 @@
+// app/home/home_mate_overview/HomeMateOverview.tsx
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from "react-native";
-import { useRouter } from "expo-router"; // ✅ 추가!
+import { useRouter } from "expo-router";
 import PuzzleLogo from "@/assets/image/home/puzzle_logo.svg";
 import ArrowRight from "@/assets/image/home/arrow_right.svg";
 import AvatarStack from "@/components/AvatarStack";
+import { useMyProfile } from "@/hooks/useMyProfile"; // ← 경로 알맞게
 
 type Mate = { id: string; name?: string; photo?: string };
 
 type Props = {
   style?: ViewStyle;
-  userName?: string;
+  userName?: string;    // 폴백용 (API 실패/로딩일 때)
   mates?: Mate[];
 };
 
 const DEFAULT_MATES: Mate[] = [
-  {
-    id: "m1",
-    photo:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=480&auto=format&fit=crop",
-  },
-  {
-    id: "m2",
-    photo:
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=480&auto=format&fit=crop",
-  },
-  {
-    id: "m3",
-    photo:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=480&auto=format&fit=crop",
-  },
+  { id: "m1", photo: "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=480&auto=format&fit=crop" },
+  { id: "m2", photo: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=480&auto=format&fit=crop" },
+  { id: "m3", photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=480&auto=format&fit=crop" },
 ];
 
 export default function HomeMateOverview({
   style,
-  userName = "효진",
+  userName = "...", // API 로딩 전까지 표시할 이름
   mates = DEFAULT_MATES,
 }: Props) {
-  const router = useRouter(); // ✅ 라우터 객체 생성
+  const router = useRouter();
+  const { me, loading } = useMyProfile();
+
+  // ✅ 닉네임 없이 username만 사용
+  const displayName = loading ? "..." : (me?.username || userName);
 
   const handleNavigateToManage = () => {
-    // MateManagement 페이지 경로로 이동
     router.push("/home/home_mate_overview/MateManage/MateManagement");
   };
 
   return (
     <View style={[s.container, style]}>
-      {/* 좌측: 퍼즐 로고 */}
       <View style={s.logoWrap}>
         <PuzzleLogo width="100%" height="100%" />
       </View>
 
-      {/* 우측: 텍스트 + 메이트 + 버튼 */}
       <View style={s.rightCol}>
         <View>
           <Text style={s.hello1}>안녕하세요!</Text>
-          <Text style={s.hello2}>{userName} 님!</Text>
+          <Text style={s.hello2}>{displayName} 님!</Text>
         </View>
 
         <Text style={s.sectionTitle}>MyMate</Text>
@@ -68,12 +59,7 @@ export default function HomeMateOverview({
         </View>
       </View>
 
-      {/* 👉 MateManagement로 이동 */}
-      <TouchableOpacity
-        activeOpacity={0.85}
-        style={s.nextBtn}
-        onPress={handleNavigateToManage}
-      >
+      <TouchableOpacity activeOpacity={0.85} style={s.nextBtn} onPress={handleNavigateToManage}>
         <ArrowRight width={24} height={24} />
       </TouchableOpacity>
     </View>
