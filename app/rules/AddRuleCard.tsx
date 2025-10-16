@@ -15,7 +15,7 @@ export default function AddRuleCard({ onPress }: Props) {
 
       {/* 중앙 + 아이콘 + 텍스트 */}
       <View style={s.centerContent}>
-        <Plus size={28} color="#888" />
+        <Plus size={24} color="#999999" />
         <Text style={s.label}>규칙 추가하기</Text>
       </View>
     </TouchableOpacity>
@@ -35,7 +35,7 @@ const s = StyleSheet.create({
   },
   centerContent: {
     position: "absolute",
-    top: "45%",            // SVG 노치 피해서 약간 위로
+    top: "35%",            // SVG 노치 피해서 약간 위로
     left: 0,
     right: 0,
     alignItems: "center",
@@ -43,8 +43,8 @@ const s = StyleSheet.create({
   },
   label: {
     marginTop: 8,
-    fontSize: 16,
-    color: "#888",
+    fontSize: 14,
+    color: "#999999",
     fontWeight: "500",
   },
 });

@@ -16,6 +16,12 @@ import { useRulebooks } from "../../hooks/useRulebooks";
 
 type EditTarget = { id: number; title: string; body: string } | null;
 
+// 퍼즐 겹침/간격 설정
+const COLS = 2;
+const NOTCH = 26;     // 카드 SVG의 하단 반달 높이(필요하면 24~28 사이로 미세조정)
+const ROW_GAP = 4;   // 행 간 기본 여백
+const OVERLAP = NOTCH - ROW_GAP; // 2행부터 위로 당겨 겹칠 값
+
 export default function RulesScreen() {
   const { list: rules, create, update, remove } = useRulebooks();
 
@@ -99,14 +105,24 @@ export default function RulesScreen() {
       <FlatList
         data={dataWithAdd}
         keyExtractor={(it: any) => String(it.id)}
-        numColumns={2}
+        numColumns={COLS}
         contentContainerStyle={s.listContent}
-        columnWrapperStyle={{ gap: 4 }}
-        renderItem={({ item, index }) =>
-          item.id === "add" ? (
-            <AddRuleCard onPress={openCreate} />
-          ) : (
-            <View style={deletingId === item.id ? { opacity: 0.5 } : undefined}>
+        columnWrapperStyle={{ gap: 4,  }} 
+        ItemSeparatorComponent={() => <View style={{ height: ROW_GAP }} />}   // ✅ 행 간 기본 여백
+        renderItem={({ item, index }) => {
+          const row = Math.floor(index / COLS);
+          const overlapStyle = row > 0 ? { marginTop: -OVERLAP } : null;      // ✅ 2행부터 겹치기
+
+          if (item.id === "add") {
+            return (
+              <View style={overlapStyle}>
+                <AddRuleCard onPress={openCreate} />
+              </View>
+            );
+          }
+
+          return (
+            <View style={[overlapStyle, deletingId === item.id ? { opacity: 0.5 } : undefined]}>
               <RuleCard
                 {...item}
                 order={index + 1}
@@ -114,8 +130,8 @@ export default function RulesScreen() {
                 onDelete={() => handleDelete(item.id)}
               />
             </View>
-          )
-        }
+          );
+        }}
       />
 
       <RuleAddModal
@@ -134,11 +150,15 @@ const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#fff" },
   hero: {
     paddingTop: 24,
-    paddingHorizontal: "5%",
+    paddingHorizontal: "8%",
     paddingBottom: 20,
-    //backgroundColor: "yellow",
   },
-  heroLine: { fontSize: 24, lineHeight: 40, fontWeight: "700", color: "#111" },
+  heroLine: { 
+    fontSize: 24, 
+    lineHeight: 35, 
+    fontWeight: "700", 
+    color: "#111" 
+},
   listContent: {
     paddingHorizontal: "5%",
     paddingTop: 10,

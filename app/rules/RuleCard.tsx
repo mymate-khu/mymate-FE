@@ -128,11 +128,11 @@ const s = StyleSheet.create({
   },
 
   topRow: { flexDirection: "row", alignItems: "center", },
-  orderText: { fontSize: 18, fontWeight: "700", color: "#111" },
+  orderText: { fontSize: 14, fontWeight: "700", color: "#111" },
   moreBtn: { marginLeft: "auto" },
 
   body: { marginTop: 12,  flex: 1, },
-  title: { fontSize: 18, fontWeight: "700", color: "#111",   },
+  title: { fontSize: 14, fontWeight: "700", color: "#111",   },
   desc: { marginTop: 8, fontSize: 14, lineHeight: 20, color: "#3E3E3E" },
 
   // 메뉴
@@ -154,17 +154,17 @@ const s = StyleSheet.create({
   },
   menu: {
     position: "absolute",
-    top: 56,
+    top: 45,
     right: 10,
-    width: 132,
+    width: 142,
     borderRadius: 14,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOpacity: 0.15,
     shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 0 },
   },
-  menuItem: { height: 44, paddingHorizontal: 18, justifyContent: "center" },
+  menuItem: { height: 40, paddingHorizontal: 18, justifyContent: "center" },
   menuText: { fontSize: 16, color: "#111", textAlign: "right" },
   menuDivider: { height: StyleSheet.hairlineWidth, backgroundColor: "#A8A8A8" },
 });
