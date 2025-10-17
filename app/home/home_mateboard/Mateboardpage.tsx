@@ -1,23 +1,94 @@
-import { View, ScrollView, StyleSheet, Text, Image } from "react-native";
+import React, { useCallback, useMemo, useState } from "react";
+import { View, ScrollView, StyleSheet, Text, Image, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import Union from "@/assets/image/homepage_puzzleimg/Union.svg";
+import { TokenReq } from "@/components/apis/axiosInstance";
 
-type Data = {
-  imgurl: string;
-  name: string;
-  content: string;
+// 📌 실제 로그인 유저의 memberId로 교체하세요 (ex. 전역 auth store, /me 응답 등)
+const MY_MEMBER_ID = 123; // TODO: replace
+
+// 서버 응답 타입 (질문에 준 스키마 기준)
+type PuzzleDto = {
+  id: number;
+  title: string;
+  description: string;
+  scheduledDate: string;
+  completedAt: string | null;
+  status: "PENDING" | "DONE" | string;
+  memberId: number;
+  recurrenceType: string | null;
+  recurrenceEndDate: string | null;
+  parentPuzzleId: number | null;
+  priority: string | null;
+  category: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
-const datas: Data[] = [
-  { imgurl: "", name: "홍길동", content: "화장실 청소" },
-  { imgurl: "", name: "홍길동", content: "화장실 청소" },
-  { imgurl: "", name: "홍길동", content: "화장실 청소" },
-  { imgurl: "", name: "홍길동", content: "화장실 청소" },
-  { imgurl: "", name: "홍길동", content: "화장실 청소" },
-  { imgurl: "", name: "홍길동", content: "화장실 청소" },
-];
+type ApiResponse = {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  data: PuzzleDto[];
+  success: boolean;
+};
+
+// 화면 렌더용 타입
+type CardData = {
+  id: number;
+  imgurl: string;
+  name: string;     // 멤버 이름 (서버에 없으면 memberId로 대체)
+  content: string;  // 퍼즐 내용(제목/설명)
+  memberId: number;
+};
 
 export default function MyPuzzleScreen() {
+  const [items, setItems] = useState<CardData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const today = new Date();
+  const todayISO = today.toISOString().split('T')[0];
+
+  // ✅ 화면 포커스 시 1회(또는 재진입 시마다) 퍼즐 목록 불러오기
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        try {
+          setLoading(true);
+          setErr(null);
+          // ⬇️ 실제 엔드포인트로 교체하세요 (ex. GET /api/puzzles)
+          const res = await TokenReq.get<ApiResponse>(`api/puzzles/date/${todayISO}`);
+          if (cancelled) return;
+          const all = res.data?.data ?? [];
+
+          // 1) 내 memberId와 다른 것만 필터
+          const filtered = all.filter((p) => p.memberId !== MY_MEMBER_ID);
+
+          // 2) UI 데이터로 매핑
+          const mapped: CardData[] = filtered.map((p) => ({
+            id: p.id,
+            imgurl: "", // 서버에서 아바타가 오지 않으므로 비워둠 (필요 시 멤버 프로필 조회 추가)
+            name: `멤버 ${p.memberId}`, // 서버가 username을 안 주므로 일단 memberId로 표시 (프로필 API 연동 시 교체)
+            content: p.title || p.description || "",
+            memberId: p.memberId,
+          }));
+
+          setItems(mapped);
+        } catch (e: any) {
+          if (!cancelled) setErr(e?.message ?? "목록을 불러오지 못했어요.");
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
+
   return (
     <View style={s.container}>
       <View style={s.header}>
@@ -27,16 +98,29 @@ export default function MyPuzzleScreen() {
         <Text style={s.arrow} onPress={() => router.replace("/home")}>{"<"}</Text>
       </View>
 
-      <ScrollView style={s.puzzlecontainer} contentContainerStyle={{ paddingBottom: 32 }}>
-        {datas.map((item, idx) => (
-          <PuzzleItem key={idx} data={item} style={{ marginBottom: -30 }} />
-        ))}
-      </ScrollView>
+      {loading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator />
+          <Text style={{ marginTop: 8, color: "#8E8E8E" }}>불러오는 중…</Text>
+        </View>
+      ) : err ? (
+        <Text style={s.error}>목록이 없습니다.</Text>
+      ) : (
+        <ScrollView style={s.puzzlecontainer} contentContainerStyle={{ paddingBottom: 32 }}>
+          {items.length === 0 ? (
+            <Text style={s.empty}>표시할 퍼즐이 없어요.</Text>
+          ) : (
+            items.map((item) => (
+              <PuzzleItem key={item.id} data={item} style={{ marginBottom: -30 }} />
+            ))
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
 
-function PuzzleItem({ data, style }: { data: Data; style?: any }) {
+function PuzzleItem({ data, style }: { data: CardData; style?: any }) {
   return (
     <View style={[s.item, style]}>
       {/* SVG 배경 (터치 통과) */}
@@ -92,8 +176,8 @@ const s = StyleSheet.create({
   // 각 퍼즐 카드 컨테이너
   item: {
     position: "relative",
-    minWidth:300   // viewBox 높이에 맞춤
-    // 또는 비율 고정 원하면: aspectRatio: 370 / 170, height 제거
+    minWidth: 300, // ← 쉼표 누락되어 있던 부분 수정!
+    // 필요 시: aspectRatio: 370 / 170,
   },
 
   // SVG 위 오버레이
@@ -130,5 +214,16 @@ const s = StyleSheet.create({
   content: {
     fontSize: 14,
     color: "#4A4A4A",
+  },
+
+  empty: {
+    padding: 24,
+    textAlign: "center",
+    color: "#8E8E8E",
+  },
+  error: {
+    padding: 24,
+    textAlign: "center",
+    color: "#D00",
   },
 });
