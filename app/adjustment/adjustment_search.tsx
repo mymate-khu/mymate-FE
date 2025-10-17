@@ -5,6 +5,12 @@ import { router } from "expo-router";
 import ArrowLeftIcon from "@/assets/image/adjustmenticon/arrow_left_Icon.svg";
 import SearchIcon from "@/assets/image/adjustmenticon/search_Icon.svg";
 import FilterIcon from "@/assets/image/adjustmenticon/filter_Icon.svg";
+import TagIcon from "@/assets/image/adjustmenticon/tag_Icon.svg";
+import TicketIcon from "@/assets/image/adjustmenticon/ticket_Icon.svg";
+import CutleryIcon from "@/assets/image/adjustmenticon/cutlery_Icon.svg";
+import CarIcon from "@/assets/image/adjustmenticon/car_Icon.svg";
+import HouseIcon from "@/assets/image/adjustmenticon/house_Icon.svg";
+import ShopbagIcon from "@/assets/image/adjustmenticon/shopbag_Icon.svg";
 
 export default function AdjustmentSearch() {
   const [q, setQ] = useState("");
@@ -25,7 +31,7 @@ export default function AdjustmentSearch() {
       {/* 상단 검색어 창 */}
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.replace("/adjustment")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>   
-          <ArrowLeftIcon width={20} height={20} />
+          <ArrowLeftIcon width={13} height={13} />
         </TouchableOpacity>
 
 
@@ -34,7 +40,7 @@ export default function AdjustmentSearch() {
             value={q}
             onChangeText={setQ}
             placeholder="검색어를 입력하세요."
-            placeholderTextColor="#9E9E9E"
+            placeholderTextColor="#767676"
             style={s.searchInput}
             returnKeyType="search"
             onSubmitEditing={() => console.log("search:", q)}
@@ -86,6 +92,20 @@ export default function AdjustmentSearch() {
           <View style={s.grid}>
             {OPTIONS.map(opt => {
               const on = selectedKey === opt.key;
+
+              // 각 key에 맞는 아이콘을 선택
+              const renderIcon = () => {
+                switch (opt.key) {
+                  case "food":    return <CutleryIcon width={48} height={48} />;
+                  case "life":    return <ShopbagIcon width={48} height={48} />;
+                  case "shop":    return <TagIcon width={48} height={48} />;
+                  case "car":     return <CarIcon width={48} height={48} />;
+                  case "house":   return <HouseIcon width={48} height={48} />;
+                  case "culture": return <TicketIcon width={48} height={48} />;
+                  default:        return null;
+                }
+              };
+
               return (
                 <TouchableOpacity
                   key={opt.key}
@@ -94,7 +114,8 @@ export default function AdjustmentSearch() {
                   onPress={() => setSelectedKey(opt.key)}
                 >
                   <View style={s.gridIcon}>
-                    {/*  여기에 SVG 아이콘 넣기 */}
+                    {renderIcon()}
+                
                   </View>
                   <Text style={[s.gridLabel, on && s.gridLabelActive]}>
                     {opt.label}
@@ -123,7 +144,10 @@ export default function AdjustmentSearch() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F7F7F7" },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#F7F7F7" 
+  },
 
   header: {
     flexDirection: "row",
@@ -134,23 +158,31 @@ const s = StyleSheet.create({
   },
   searchBox: {
     flex: 1,
-    height: 44,
-    borderRadius: 22,
+    height: 48,
+    borderRadius: 14,
     backgroundColor: "#ECECEC",
     paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  searchInput: { flex: 1, color: "#111", fontSize: 15 },
+  searchInput: { 
+    flex: 1, 
+    color: "#111", 
+    fontSize: 14 
+  },
 
   bottomArea: {
+    //height: 48,
     paddingHorizontal: 24,
-    paddingBottom: Platform.select({ ios: 20, android: 16 }),
+    paddingBottom: 80,
     paddingTop: 8,
+    alignItems: "center",
+    //backgroundColor: "red",
   },
   filterBtn: {
-    height: 56,
+    height: 48,
+    width: 156,
     borderRadius: 28,
     backgroundColor: "#FFFFFF",
     flexDirection: "row",
@@ -158,12 +190,16 @@ const s = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
     shadowColor: "#000",
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.05,
     shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
+    //shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
-  filterText: { fontSize: 16, fontWeight: "700", color: "#111" },
+  filterText: { 
+    fontSize: 14, 
+    fontWeight: "700", 
+    color: "#111" 
+  },
 
   /* 모달 */
   backdrop: {
@@ -182,15 +218,15 @@ const s = StyleSheet.create({
   },
   handle: {
     alignSelf: "center",
-    width: 56,
+    width: 36,
     height: 6,
     borderRadius: 3,
     backgroundColor: "#D5D5D5",
-    marginBottom: 12,
+    marginBottom: 24,
   },
   sheetTitle: {
-    fontSize: 20,
-    fontWeight: "800",
+    fontSize: 16,
+    fontWeight: "700",
     color: "#111",
     marginBottom: 16,
   },
@@ -203,23 +239,32 @@ const s = StyleSheet.create({
     gap: 12,
   },
   gridItem: {
-    width: "31.5%",            // 3열
+    width: "31%",            // 3열
     aspectRatio: 1,            // 정사각형
     borderRadius: 16,
-    backgroundColor: "#F3F3F3",
+    backgroundColor: "#EEEEEE",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
   },
   gridItemActive: {
-    backgroundColor: "#FFE600",  // 노랑
+    backgroundColor: "#FFE81C",
   },
   gridIcon: {
-    width: 40, height: 40, marginBottom: 6,
-    alignItems: "center", justifyContent: "center",
+    width: 48, 
+    height: 48, 
+    marginBottom: 6,
+    alignItems: "center", 
+    justifyContent: "center",
   },
-  gridLabel: { fontSize: 16, color: "#111", fontWeight: "700" },
-  gridLabelActive: { color: "#111" },
+  gridLabel: { 
+    fontSize: 14, 
+    color: "#111", 
+    fontWeight: "600" 
+  },
+  gridLabelActive: { 
+    color: "#111" 
+  },
 
   confirmBtn: {
     height: 56,
@@ -230,5 +275,9 @@ const s = StyleSheet.create({
     marginTop: 24,
     marginBottom: 8,
   },
-  confirmText: { fontSize: 18, fontWeight: "800", color: "#111" },
+  confirmText: { 
+    fontSize: 18, 
+    fontWeight: "800", 
+    color: "#111" 
+  },
 });

@@ -12,7 +12,7 @@ import TodayPuzzleComponent from "../home/home_puzzle/TodayPuzzleComponent";
 
 // 로컬 이미지 리소스
 import HomeHeadercomponent from "@/app/home/home_header/HomeHeadercomponent";
-import MateManagement from "../home/home_mate_manage/MateManagement";
+import HomeMateOverview from "../home/home_mate_overview/HomeMateOverview";
 
 export default function Home() {
 
@@ -40,13 +40,12 @@ export default function Home() {
       <HomeHeadercomponent></HomeHeadercomponent>
 
       {/*로고 & 메이트관리 */}
-      <MateManagement></MateManagement>
+      <HomeMateOverview></HomeMateOverview>
 
       {/*메이트보드 : 승원*/}
       <MateboardComponent></MateboardComponent>
 
-      {/*투데이퍼즐  : 지민*/}
-      
+      {/*투데이퍼즐 : 지민*/}
       <TodayPuzzleComponent />
       
        {/* 채팅 영역은 고정 높이 + 자식 스크롤만 동작 */}
