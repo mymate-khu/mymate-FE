@@ -11,6 +11,6 @@
     "strict": true,
     "lib": ["ESNext", "DOM"]
   },
-  "extends": "expo/tsconfig.base",
+  "extends": "expo/tsconfig.base.json",
   "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"]
 }

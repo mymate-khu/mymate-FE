@@ -34,6 +34,7 @@ export default function Layout() {
         shouldShowList: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
+        shouldShowAlert: true, // 포그라운드에서도 배너보이게
       }),
     });
 

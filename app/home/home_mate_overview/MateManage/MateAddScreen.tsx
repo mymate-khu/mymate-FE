@@ -9,7 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from "react-native";
+import {router}from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import BackHeader from "@/components/BackHeader";
 import SearchBar from "@/components/SearchBar";
@@ -43,6 +45,7 @@ export default function MateAddScreen() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // 이미 메이트/요청중인 아이디들 (API 연동 시 교체)
   const alreadyMateIds = useMemo(() => new Set<string>([]), []);
@@ -115,16 +118,46 @@ export default function MateAddScreen() {
     setSelected((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
-  const onSubmit = useCallback(() => {
-    if (!selected.length) {
-      // 건너뛰기
-      console.log("skip");
+  const onSubmit = useCallback(async () => {
+  // 선택 없음 ⇒ 건너뛰기
+  if (!selected.length) {
+    router.replace("/(tabs)/home");
+    return;
+  }
+
+  try {
+    setSubmitting(true);
+
+    // 선택된 유저의 code(또는 이메일/아이디)를 identifier로 사용
+    const inviteeIdentifiers = selected.map((s) => s.code).filter(Boolean);
+
+    if (!inviteeIdentifiers.length) {
+      Alert.alert("추가 실패", "초대할 사용자의 식별자(code)가 없습니다.");
       return;
     }
-    // 추가하기
-    console.log("add mates:", selected.map((s) => s.id));
-    // TODO: POST /api/groups/{groupId}/members or 초대 API 호출
-  }, [selected]);
+
+    // ✅ 실제 API 엔드포인트로 교체
+    // 1) 그룹별 초대 API가 있는 경우
+    // const url = `/api/groups/${groupId}/invites`;
+
+    // 2) 전역 초대 API만 있는 경우
+    const url = `/api/invitations/invitations`;
+
+    const res = await TokenReq.post(url, { inviteeIdentifiers });
+    console.log("그룹초대발송 성공",res.data)
+
+    // 성공 시 홈으로
+    router.replace("/(tabs)/home");
+  } catch (e: any) {
+    console.log("[invite error]", e?.response?.data ?? e?.message);
+    Alert.alert(
+      "추가 실패",
+      String(e?.response?.data?.message ?? e?.message ?? "요청 실패")
+    );
+  } finally {
+    setSubmitting(false);
+  }
+}, [selected]);
 
   const ctaLabel = selected.length ? `추가하기(${selected.length})` : "건너뛰기";
 

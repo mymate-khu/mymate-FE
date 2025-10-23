@@ -102,11 +102,6 @@ export default function Signup2() {
       return;
     }
 
-    router.replace({
-      pathname: "/home/home_mate_overview/MateManage/MateAddScreen",
-      params: { token:"wdwdwddw" },
-    });
-
     const payload: User = {
       userId: formid,
       passwordEncrypted: formpassword,
@@ -123,12 +118,12 @@ export default function Signup2() {
 
     const res = await TokenReq.post("/api/auth/signup", payload)
       
-
+    console.log(res.data.data)
     // 서버가 아래처럼 준다고 가정
     // { accessToken: "eyJhbGciOi...", refreshToken: "...", ... }
-    const accessToken = res.data?.accessToken;
-    const refreshToken = res.data?.refreshToken;
-    console.log(accessToken)
+    const accessToken = res.data?.data.accessToken;
+    const refreshToken = res.data?.data.refreshToken;
+  
     if (!accessToken) {
       console.warn("회원가입 성공 응답에 accessToken이 없습니다.");
       return;
@@ -140,7 +135,7 @@ export default function Signup2() {
     // ✅ 페이지 이동 시 파라미터로도 넘길 수 있음
     router.replace({
       pathname: "/home/home_mate_overview/MateManage/MateAddScreen",
-      params: { token:"wdwdwddw" },
+      params: { token:accessToken },
     });
 
   } catch (e: any) {

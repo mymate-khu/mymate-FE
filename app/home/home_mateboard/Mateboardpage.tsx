@@ -61,6 +61,7 @@ export default function MyPuzzleScreen() {
           setErr(null);
           // ⬇️ 실제 엔드포인트로 교체하세요 (ex. GET /api/puzzles)
           const res = await TokenReq.get<ApiResponse>(`api/puzzles/date/${todayISO}`);
+          console.log(res)
           if (cancelled) return;
           const all = res.data?.data ?? [];
 

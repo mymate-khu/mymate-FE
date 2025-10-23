@@ -1,13 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, useWindowDimensions, TouchableOpacity, StyleSheet, SectionList } from 'react-native';
 import { Calendar, DateData, LocaleConfig } from 'react-native-calendars';
+import CalendarCard from '@/components/CalendarCard_modified';
 import { router } from 'expo-router';
 import { TokenReq } from '@/components/apis/axiosInstance';
 import { buildCalendarDots, type PuzzleItem, type CalendarDots } from "../../components/utils/buildCalendarDots";
 
 
-const initialEvents = {
 
+const initialEvents = {
+  "2025-10-05":{
+    dots:[{key:"m1",color:"rgba(255, 230, 0, 1)",selectedDotColor:"black"},
+      {key:"m2",color:"rgba(255, 230, 0, 1)",selectedDotColor:"black"},
+      {key:"m3",color:"rgba(255, 230, 0, 1)",selectedDotColor:"black"}
+    ]
+  }
 };
 
 const sampleCards = [
@@ -128,59 +135,35 @@ export default function MyCalendar() {
     };
   }, [events, selected]);
 
-  const listHeader = useMemo(
-    () => (
-      <View style={{ backgroundColor: 'white' }}>
-        <View style={{ height: height * 0.05, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: width * 0.04, fontFamily: "PretendardSemiBold", fontWeight: 500 }}>캘린더</Text>
-        </View>
-        <View style={{ height: height * 0.03, alignItems: 'center', justifyContent: 'flex-end', flex: 1 }}>
-          <Text style={{ fontSize: width * 0.04 }}>{curyear}</Text>
-        </View>
-        <Calendar
-          current={current}
-          markingType="multi-dot"
-          renderHeader={Header}
-          onMonthChange={(m: DateData) => {
-            setCurYear(m.year);
-            setCurMonth(m.month);
-            setcurrent(`${m.year}-${String(m.month).padStart(2, '0')}-01`);
-          }}
-          markedDates={markedDates}
-          onDayPress={(day) => setSelected(day.dateString)}
-          monthFormat={'MM월'}
-          theme={{
-            // 기본 폰트/색 설정 유지
-            textMonthFontFamily: 'PretendardSemiBold',
-            textDayHeaderFontFamily: 'PretendardSemiBold',
-            textDayFontFamily: 'PretendardSemiBold',
-            textDayFontWeight: '500',
-            todayTextColor: 'blue',
-            arrowColor: 'black',
 
-            'stylesheet.calendar.main': {
-              week: {
-                // 기존에 추가하려던 것
-                marginVertical: width * 0.03,
 
-                // 기본 레이아웃을 유지하려면 아래를 꼭 포함
-                flexDirection: 'row',
-                justifyContent: 'space-between', // 또는 'space-around'
-                alignItems: 'center',
-                flexWrap: 'nowrap',
-              },
-            },
-
-            // ⬇︎ 핵심: 날짜 셀/주/헤더 높이 커스텀
-          } as any}
-          onPressArrowLeft={(subtractMonth) => subtractMonth()}
-          onPressArrowRight={(addMonth) => addMonth()}
-          style={{ backgroundColor: 'white' }}
-        />
+const listHeader = useMemo(
+  () => (
+    <View style={{ backgroundColor: 'white' }}>
+      <View style={{ height: height * 0.05, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ fontSize: width * 0.04, fontFamily: "PretendardSemiBold", fontWeight: 500 }}>캘린더</Text>
       </View>
-    ),
-    [height, curyear, curmonth, todayISO, selected, events]
-  );
+
+      <CalendarCard
+        value={selected}                 // 현재 선택된 날짜
+        markedDates={markedDates}        // 기존 multi-dot 결과 그대로
+        onChange={(dateString) => {      // 날짜 탭
+          setSelected(dateString);
+          setcurrent(dateString);        // '+' 눌러 calendar_add로 보낼 때 쓰던 current 유지
+        }}
+        onMonthChange={(yy, mm, cursorISO) => {  // 월 바뀔 때 기존 로직 유지
+          setCurYear(yy);
+          setCurMonth(mm);
+          setcurrent(cursorISO);         // 'YYYY-MM-01'
+          // getcurmonthdata는 이미 useEffect([curyear, curmonth, myId])에서 호출됨
+        }}
+        style={{ backgroundColor: 'white' }}
+      />
+    </View>
+  ),
+  [height, curyear, curmonth, selected, markedDates]
+);
+
 
   // SectionList: 하나의 스크롤만 사용
   const sections = useMemo(

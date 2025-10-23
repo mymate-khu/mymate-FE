@@ -3,8 +3,9 @@ import {
   ScrollView,
   Dimensions,
   StyleSheet,
+  BackHandler
 } from "react-native";
-import { useCallback,useState } from "react";
+import { useCallback,useState,useEffect } from "react";
 
 import ChattingComponent from "@/app/home/home_chatting/Chattingcomponent";
 import MateboardComponent from "@/app//home/home_mateboard/Mateboardcomponent";
@@ -15,6 +16,12 @@ import HomeHeadercomponent from "@/app/home/home_header/HomeHeadercomponent";
 import HomeMateOverview from "../home/home_mate_overview/HomeMateOverview";
 
 export default function Home() {
+
+  useEffect(() => {
+    // 안드로이드에서 뒤로가기 막기
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => true);
+    return () => backHandler.remove();
+  }, []);
 
   const [outerScrollEnabled, setOuterScrollEnabled] = useState(true);
 
