@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   Alert,
 } from "react-native";
 import { router } from "expo-router";
@@ -24,20 +23,16 @@ import ChatIcon from "@/assets/image/mypage/chat.svg";
 import LogoutIcon from "@/assets/image/mypage/logout.svg";
 import EditIcon from "@/assets/image/mypage/edit.svg";
 
-// ✅ 프로필 훅
+// 프로필 훅 / 스토리지
 import { useMyProfile } from "@/hooks/useMyProfile";
-// ✅ 토큰/스토리지 (logout 시 사용)
 import { storage } from "@/components/apis/storage";
 
 export default function MyPage() {
   const { me, loading, error } = useMyProfile();
 
   // 이름: 닉네임 > 실명 > 기본값
-  const displayName = loading
-    ? "..."
-    : (me?.nickname || me?.username || "회원");
-
-  // ✅ 로그인 아이디만 노출
+  const displayName = loading ? "..." : (me?.nickname || me?.username || "회원");
+  // 로그인 아이디만 노출
   const idLabel = loading ? "" : (me?.memberLoginId ?? "");
 
   const avatarUri = me?.profileImageUrl ?? undefined;
@@ -68,7 +63,6 @@ export default function MyPage() {
   return (
     <View style={s.container}>
       <BackHeader title="마이페이지" />
-
       <ScrollView contentContainerStyle={s.scroll}>
         {/* 프로필 영역 */}
         <View style={s.profileBox}>
@@ -81,12 +75,7 @@ export default function MyPage() {
 
           {/* 이름 & 로그인아이디 */}
           <Text style={s.name}>{displayName}</Text>
-
-          {loading ? (
-            <ActivityIndicator style={{ marginTop: 8 }} />
-          ) : (
-            !!idLabel && <Text style={s.idText}>{idLabel}</Text>
-          )}
+          {!!idLabel && <Text style={s.idText}>{idLabel}</Text>}
 
           {!!error && (
             <Text style={{ color: "#f33", marginTop: 8 }}>프로필 불러오기 실패</Text>

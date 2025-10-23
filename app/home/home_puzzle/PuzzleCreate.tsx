@@ -39,6 +39,10 @@ export default function PuzzleCreate() {
 
   const isValid = title.trim().length > 0;
 
+  // ⛳️ 웹 전용: TextInput 포커스 아웃라인 제거
+  const webNoOutline =
+    Platform.OS === "web" ? ({ outlineStyle: "none", outlineWidth: 0 } as any) : null;
+
   const onSubmit = async () => {
     if (!isValid) {
       Alert.alert("입력 확인", "퍼즐 제목을 입력해주세요.");
@@ -49,9 +53,6 @@ export default function PuzzleCreate() {
         title: title.trim(),
         description: desc.trim(),
         scheduledDate: slashToDash(date), // "YYYY-MM-DD"
-        // 필요하면 여기에 priority, category 등 추가로 전달
-        // priority: "HIGH",
-        // category: "건강",
       });
       Alert.alert("완료", "퍼즐이 등록되었습니다.");
       router.back();
@@ -69,7 +70,7 @@ export default function PuzzleCreate() {
         {/* 날짜 */}
         <View style={s.inputRow}>
           <TextInput
-            style={s.input}
+            style={[s.input, webNoOutline]}
             placeholder="YYYY / MM / DD"
             placeholderTextColor="#999"
             value={date}
@@ -82,7 +83,7 @@ export default function PuzzleCreate() {
 
         {/* 퍼즐 제목 */}
         <TextInput
-          style={s.inputSolo}
+          style={[s.inputSolo, webNoOutline]}
           placeholder="퍼즐 제목 입력"
           placeholderTextColor="#999999"
           value={title}
@@ -92,7 +93,7 @@ export default function PuzzleCreate() {
         {/* 세부 설명 */}
         <View style={s.textareaBox}>
           <TextInput
-            style={s.textarea}
+            style={[s.textarea, webNoOutline]}
             placeholder="세부 설명 입력"
             placeholderTextColor="#999999"
             value={desc}
@@ -101,7 +102,7 @@ export default function PuzzleCreate() {
           />
         </View>
 
-        {/* 완료 버튼 (비활성화일 때 회색/커서 기본) */}
+        {/* 완료 버튼 */}
         <TouchableOpacity
           activeOpacity={isValid ? 0.9 : 1}
           style={[s.submitBtn, !isValid && s.submitBtnDisabled]}
@@ -146,22 +147,25 @@ const s = StyleSheet.create({
     padding: 16,
     marginTop: 8,
   },
-  card: { borderRadius: 24, padding: 16, marginTop: 8 },
+  card: {
+    borderRadius: 24,
+    padding: 16,
+  },
 
   inputRow: {
-    height: 52,
+    height: 48,
     borderRadius: 12,
     backgroundColor: "#fff",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 14,
-    marginBottom: 12,
+    marginBottom: 24,
   },
   trailingIcon: { marginLeft: "auto" },
   input: { flex: 1, color: "#111", fontSize: 17 },
 
   inputSolo: {
-    height: 52,
+    height: 48,
     borderRadius: 12,
     backgroundColor: "#fff",
     paddingHorizontal: 14,
@@ -176,13 +180,15 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: Platform.select({ ios: 12, android: 8 }),
     height: 180,
-    marginBottom: 16,
+    marginBottom: 48,
   },
   textarea: {
     flex: 1,
     color: "#111",
-    fontSize: 16,
+    fontSize: 17,
     textAlignVertical: "top",
+    paddingTop: 12,      // 위/아래 패딩으로 입력 느낌 개선
+    paddingBottom: 12,
   },
 
   submitBtn: {
@@ -195,10 +201,13 @@ const s = StyleSheet.create({
   },
   submitBtnDisabled: {
     backgroundColor: "#fff",
-    opacity: 0.5,                // ← 비활성화 시 흐리게
+    //opacity: 0.5,
   },
-  submitText: { color: "#111", fontWeight: "700", fontSize: 16 },
-  submitTextDisabled: { color: "#999" },
+  submitText: { color: "#111", fontWeight: "600", fontSize: 17 },
+  submitTextDisabled: { 
+    color: "#999",
+
+  },
 
   modalRoot: { flex: 1, alignItems: "center" },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.2)" },

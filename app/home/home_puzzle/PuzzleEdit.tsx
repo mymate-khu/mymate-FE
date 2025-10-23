@@ -27,6 +27,10 @@ export default function PuzzleEdit() {
 
   const isValid = title.trim().length > 0;
 
+  // ✅ 웹 아웃라인 제거 (Create와 동일)
+  const webNoOutline =
+    Platform.OS === "web" ? ({ outlineStyle: "none", outlineWidth: 0 } as any) : null;
+
   useEffect(() => {
     (async () => {
       try {
@@ -34,7 +38,7 @@ export default function PuzzleEdit() {
         const p = await getPuzzle(puzzleId);
         setTitle(p.title || "");
         setDesc(p.description || "");
-        setDate(dashToSlash(p.scheduledDate)); // "YYYY / MM / DD"
+        setDate(dashToSlash(p.scheduledDate));
       } catch (e: any) {
         Alert.alert("불러오기 실패", e?.message || "퍼즐 정보를 불러오지 못했습니다.");
         router.back();
@@ -69,7 +73,7 @@ export default function PuzzleEdit() {
         {/* 날짜 */}
         <View style={s.inputRow}>
           <TextInput
-            style={s.input}
+            style={[s.input, webNoOutline]}
             placeholder="YYYY / MM / DD"
             placeholderTextColor="#999"
             value={date}
@@ -82,7 +86,7 @@ export default function PuzzleEdit() {
 
         {/* 제목 */}
         <TextInput
-          style={s.inputSolo}
+          style={[s.inputSolo, webNoOutline]}
           placeholder="퍼즐 제목 입력"
           placeholderTextColor="#999999"
           value={title}
@@ -92,7 +96,7 @@ export default function PuzzleEdit() {
         {/* 설명 */}
         <View style={s.textareaBox}>
           <TextInput
-            style={s.textarea}
+            style={[s.textarea, webNoOutline]}
             placeholder="세부 설명 입력"
             placeholderTextColor="#999999"
             value={desc}
@@ -132,38 +136,89 @@ export default function PuzzleEdit() {
   );
 }
 
+/* ✅ 수정된 스타일 (Create와 통일) */
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFE300", borderRadius: 24, padding: 16, marginTop: 8 },
-  card: { borderRadius: 24, padding: 16, marginTop: 8 },
+  container: {
+    flex: 1,
+    backgroundColor: "#FFE300",
+    borderRadius: 24,
+    padding: 16,
+    marginTop: 8,
+  },
+  card: { borderRadius: 24, padding: 16 },
+
   inputRow: {
-    height: 52, borderRadius: 12, backgroundColor: "#fff",
-    flexDirection: "row", alignItems: "center", paddingHorizontal: 14, marginBottom: 12,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    marginBottom: 24,
   },
   trailingIcon: { marginLeft: "auto" },
   input: { flex: 1, color: "#111", fontSize: 17 },
+
   inputSolo: {
-    height: 52, borderRadius: 12, backgroundColor: "#fff",
-    paddingHorizontal: 14, marginBottom: 12, color: "#111", fontSize: 17,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    color: "#111",
+    fontSize: 17,
   },
+
   textareaBox: {
-    borderRadius: 12, backgroundColor: "#fff",
-    paddingHorizontal: 14, paddingVertical: Platform.select({ ios: 12, android: 8 }),
-    height: 180, marginBottom: 16,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    paddingHorizontal: 14,
+    paddingVertical: Platform.select({ ios: 12, android: 8 }),
+    height: 180,
+    marginBottom: 48,
   },
-  textarea: { flex: 1, color: "#111", fontSize: 16, textAlignVertical: "top" },
+  textarea: {
+    flex: 1,
+    color: "#111",
+    fontSize: 17,
+    textAlignVertical: "top",
+    paddingTop: 12,
+    paddingBottom: 12,
+  },
+
   submitBtn: {
-    height: 52, borderRadius: 12, backgroundColor: "#fff",
-    alignItems: "center", justifyContent: "center", marginTop: 8,
+    height: 52,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
   },
-  submitBtnDisabled: { backgroundColor: "#fff", opacity: 0.5 },
-  submitText: { color: "#111", fontWeight: "700", fontSize: 16 },
-  submitTextDisabled: { color: "#999" },
+  submitBtnDisabled: {
+    backgroundColor: "#fff", // ✅ 비활성화 시 흰색 고정
+  },
+  submitText: {
+    color: "#111",
+    fontWeight: "600",
+    fontSize: 17,
+  },
+  submitTextDisabled: {
+    color: "#999",
+  },
+
   modalRoot: { flex: 1, alignItems: "center" },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.2)" },
   modalPanel: {
-    width: "97%", borderRadius: 20, backgroundColor: "#fff", paddingVertical: 15,
-    shadowColor: "#000", shadowOpacity: 0.08, shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 14, elevation: 3, paddingBottom: Platform.select({ ios: 8, android: 8 }),
+    width: "97%",
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    paddingVertical: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 14,
+    elevation: 3,
+    paddingBottom: Platform.select({ ios: 8, android: 8 }),
     marginTop: 275,
   },
 });
