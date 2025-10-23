@@ -1,4 +1,4 @@
-// app/home_puzzle/TodayPuzzleComponent.tsx
+// app/home_puzzle/TodayPuzzleScreen.tsx
 import React from "react";
 import { View, Text, StyleSheet, Alert, Platform } from "react-native";
 import { router, useFocusEffect } from "expo-router";
