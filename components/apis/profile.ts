@@ -1,4 +1,3 @@
-// src/apis/profile.ts
 import { TokenReq } from "@/components/apis/axiosInstance";
 
 export type Me = {
@@ -6,6 +5,7 @@ export type Me = {
   username: string;       // 실명
   nickname: string;       // 앱에서 표기할 닉네임
   email: string;
+  memberLoginId?: string; // ✅ 추가: 로그인 아이디 (ex. sw1111)
   profileImageUrl?: string | null;
   bio?: string | null;
   signUpCompleted?: boolean;
