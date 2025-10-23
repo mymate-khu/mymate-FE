@@ -9,7 +9,7 @@ import TodayPuzzleStack from "./TodayPuzzleStack";
 import StatusBadge from "./StatusBadge";
 import { usePuzzles } from "@/hooks/usePuzzles";
 
-export default function TodayPuzzleComponent() {
+export default function TodayPuzzleScreen() {
   const { loading, mode, setMode, day, setDay, items, mateStatuses, refetch, remove } = usePuzzles();
 
   useFocusEffect(React.useCallback(() => { refetch(); }, [refetch]));

@@ -7,11 +7,12 @@ import {
 
 import ChattingComponent from "@/app/home/home_chatting/Chattingcomponent";
 import MateboardComponent from "@/app//home/home_mateboard/Mateboardcomponent";
-import TodayPuzzleComponent from "../home/home_puzzle/TodayPuzzleComponent";
+import TodayPuzzleComponent from "../home/home_puzzle/TodayPuzzleScreen";
 
 // 로컬 이미지 리소스
 import HomeHeadercomponent from "@/app/home/home_header/HomeHeadercomponent";
 import HomeMateOverview from "../home/home_mate_overview/HomeMateOverview";
+import TodayPuzzleScreen from "../home/home_puzzle/TodayPuzzleScreen";
 
 export default function Home() {
 
@@ -35,7 +36,7 @@ export default function Home() {
       <MateboardComponent></MateboardComponent>
 
       {/*투데이퍼즐 : 지민*/}
-      <TodayPuzzleComponent />
+      <TodayPuzzleScreen/>
       
       <ChattingComponent/>
 
