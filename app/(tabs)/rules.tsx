@@ -1,13 +1,6 @@
 // app/rules/RulesScreen.tsx
 import React, { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Alert,
-  Platform,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, Alert, Platform } from "react-native";
 
 import RuleCard from "../rules/RuleCard";
 import AddRuleCard from "../rules/AddRuleCard";
@@ -18,9 +11,9 @@ type EditTarget = { id: number; title: string; body: string } | null;
 
 // 퍼즐 겹침/간격 설정
 const COLS = 2;
-const NOTCH = 26;     // 카드 SVG의 하단 반달 높이(필요하면 24~28 사이로 미세조정)
-const ROW_GAP = 4;   // 행 간 기본 여백
-const OVERLAP = NOTCH - ROW_GAP; // 2행부터 위로 당겨 겹칠 값
+const NOTCH = 26;      // 카드 SVG 하단 반달 높이
+const ROW_GAP = 4;     // 행 간 기본 여백
+const OVERLAP = NOTCH - ROW_GAP; // 2행부터 위로 당길 값(겹침)
 
 export default function RulesScreen() {
   const { list: rules, create, update, remove } = useRulebooks();
@@ -49,10 +42,7 @@ export default function RulesScreen() {
   const handleSubmit = async (payload: { title: string; body: string }) => {
     try {
       if (editTarget) {
-        await update(editTarget.id, {
-          title: payload.title,
-          content: payload.body,
-        });
+        await update(editTarget.id, { title: payload.title, content: payload.body });
       } else {
         await create({ title: payload.title, content: payload.body || "" });
       }
@@ -107,11 +97,18 @@ export default function RulesScreen() {
         keyExtractor={(it: any) => String(it.id)}
         numColumns={COLS}
         contentContainerStyle={s.listContent}
-        columnWrapperStyle={{ gap: 4,  }} 
-        ItemSeparatorComponent={() => <View style={{ height: ROW_GAP }} />}   // ✅ 행 간 기본 여백
+        columnWrapperStyle={{ gap: 4 }}
+        ItemSeparatorComponent={() => <View style={{ height: ROW_GAP }} />}
         renderItem={({ item, index }) => {
+          // 행/열 계산
           const row = Math.floor(index / COLS);
-          const overlapStyle = row > 0 ? { marginTop: -OVERLAP } : null;      // ✅ 2행부터 겹치기
+          const col = index % COLS;
+
+          // 2행부터 위로 겹치기
+          const overlapStyle = row > 0 ? { marginTop: -(NOTCH - ROW_GAP) } : null;
+
+          // 🔸 색상(배경 SVG) 지그재그: (row + col) 짝수면 노랑(me), 홀수면 보라(mate)
+          const author = (row + col) % 2 === 0 ? "me" : "mate";
 
           if (item.id === "add") {
             return (
@@ -126,6 +123,7 @@ export default function RulesScreen() {
               <RuleCard
                 {...item}
                 order={index + 1}
+                author={author}                 // ✅ 여기서 강제 지그재그 컬러
                 onEdit={() => openEdit(item.id)}
                 onDelete={() => handleDelete(item.id)}
               />
@@ -153,12 +151,12 @@ const s = StyleSheet.create({
     paddingHorizontal: "8%",
     paddingBottom: 20,
   },
-  heroLine: { 
-    fontSize: 24, 
-    lineHeight: 35, 
-    fontWeight: "700", 
-    color: "#111" 
-},
+  heroLine: {
+    fontSize: 24,
+    lineHeight: 35,
+    fontWeight: "700",
+    color: "#111",
+  },
   listContent: {
     paddingHorizontal: "5%",
     paddingTop: 10,
