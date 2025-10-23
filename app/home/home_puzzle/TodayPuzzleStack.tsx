@@ -6,15 +6,21 @@ import PlusIcon from "@/assets/image/homepage_puzzleimg/PlusYellow.svg";
 
 const CARD_HEIGHT = 120;
 const OVERLAP_OFFSET = 100;
-const EXPAND_DELTA = 200;      // 펼쳤을 때 카드 높이 증가분
-const MAX_CARDS = 3;
 
-// 펼칠 때 컨테이너는 그대로 두고, 카드만 위로 당겨서 겹치게 보정
-const PULL_UP = EXPAND_DELTA;  // 위로 끌어올릴 픽셀
-const EXTRA_PAD = 40;          // 스택 하단 여유(플로팅 버튼/그림자 여백)
+// 사이즈별 확장량(작게/중간/크게로 펼쳤을 때 추가되는 높이)
+// medium = +100, large = +200 은 예시값이며 PuzzleBox의 높이와 맞춰 사용하세요.
+const DELTA = {
+  small: 0,
+  medium: 100,
+  large: 200,
+} as const;
+
+const MAX_CARDS = 3;
+const EXTRA_PAD = 40; // 하단 여유 (플로팅 버튼 그림자 등)
 
 export type StackItem = { id: number; title: string; desc?: string };
 type Palette = "yellow" | "purple";
+type Size = "small" | "medium" | "large";
 
 export default function TodayPuzzleStack({
   items,
@@ -45,20 +51,24 @@ export default function TodayPuzzleStack({
 
   const tones: Array<"light" | "medium" | "dark"> = ["light", "medium", "dark"];
 
-  // ✅ 컨테이너 높이는 '고정' (펼쳐도 전체 레이아웃이 늘어나지 않게)
+  // 퍼즐 개수에 따라 "열렸을 때" 사이즈 결정
+  const openSize: Size =
+    puzzles.length >= 3 ? "large" : puzzles.length === 2 ? "medium" : "small";
+  const pullUp = DELTA[openSize]; // 펼칠 때 위로 당기는 양
+
+  // 컨테이너는 고정 높이 (펼쳐도 레이아웃 안 흔들리게)
   const containerHeight =
     CARD_HEIGHT + Math.max(0, puzzles.length - 1) * OVERLAP_OFFSET + EXTRA_PAD;
 
-  // 플로팅 버튼 위치 계산(앵커 카드 기준)
+  // FAB 위치 계산 (열린 카드 기준)
   const anchorIndex = openIndex ?? puzzles.length - 1;
   const anchorBaseTop = Math.max(0, anchorIndex * OVERLAP_OFFSET);
-  const anchorTop =
-    openIndex === null ? anchorBaseTop : Math.max(0, anchorBaseTop - PULL_UP);
-  const anchorHeight = openIndex === null ? CARD_HEIGHT : CARD_HEIGHT + EXPAND_DELTA;
+  const anchorTop = openIndex === null ? anchorBaseTop : Math.max(0, anchorBaseTop - pullUp);
+  const anchorHeight =
+    openIndex === null ? CARD_HEIGHT : CARD_HEIGHT + DELTA[openSize];
 
   const FAB_SIZE = 52;
   const fabTop = anchorTop + anchorHeight - FAB_SIZE / 2;
-
   const fabZIndex = 2000;
   const fabElevation = 24;
 
@@ -69,8 +79,10 @@ export default function TodayPuzzleStack({
       {puzzles.map((p, i) => {
         const isOpen = openIndex === i;
         const baseTop = i * OVERLAP_OFFSET;
-        // ✅ 펼치면 해당 카드만 위로 당겨서(겹치게) 키워 보이도록
-        const top = isOpen ? Math.max(0, baseTop - PULL_UP) : baseTop;
+        const top = isOpen ? Math.max(0, baseTop - pullUp) : baseTop;
+
+        // 닫힌 카드는 small, 열린 카드는 openSize 로 렌더
+        const sizeForCard: Size = isOpen ? openSize : "small";
 
         return (
           <View
@@ -85,7 +97,7 @@ export default function TodayPuzzleStack({
               description={p.desc}
               palette={palette}
               tone={tones[i]}
-              size={isOpen ? "large" : "small"}
+              size={sizeForCard}
               chevron={isOpen ? "down" : "up"}
               showActions={isOpen && !isMateMode}
               onEdit={isOpen && !isMateMode ? () => onEdit?.(p.id) : undefined}
@@ -144,12 +156,14 @@ const styles = StyleSheet.create({
   container: {
     position: "relative",
     width: "100%",
-    alignItems: "center",
     paddingTop: 20,
     overflow: "visible",
     marginTop: 16,
   },
-  cardWrap: { position: "absolute", width: "100%", alignItems: "center" },
+  cardWrap: {
+    position: "absolute",
+    width: "100%",
+  },
   fab: {
     position: "absolute",
     left: "50%",

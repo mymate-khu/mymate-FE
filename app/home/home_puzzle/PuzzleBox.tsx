@@ -57,7 +57,7 @@ export default function PuzzleBox({
   const actionsVisible = showActions && (!!onEdit || !!onDelete);
 
   const Card = (
-    <View style={[styles.card, { backgroundColor: bg, width: BOX_WIDTH, height, borderRadius: RADIUS }, style]}>
+    <View style={[styles.card, { backgroundColor: bg, width: "100%", height, borderRadius: RADIUS, maxWidth: 480, }, style]}>
       {/* 위쪽 돌기 + 아이콘 */}
       <View style={[styles.nubWrap, { top: -NUB_OFFSET }]}>
         <View style={[styles.nub, { width: NUB_SIZE, height: NUB_SIZE, borderRadius: NUB_SIZE / 2, backgroundColor: bg }]}>
