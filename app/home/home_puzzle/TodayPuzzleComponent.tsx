@@ -1,6 +1,6 @@
 // app/home_puzzle/TodayPuzzleComponent.tsx
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Alert, Platform } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 
 import DayTab from "./DayTab";
@@ -10,12 +10,33 @@ import StatusBadge from "./StatusBadge";
 import { usePuzzles } from "@/hooks/usePuzzles";
 
 export default function TodayPuzzleComponent() {
-  const { loading, mode, setMode, day, setDay, items, mateStatuses, refetch } = usePuzzles();
+  const { loading, mode, setMode, day, setDay, items, mateStatuses, refetch, remove } = usePuzzles();
 
   useFocusEffect(React.useCallback(() => { refetch(); }, [refetch]));
 
+  // MATE 모드일 때만 우상단 상태 배지 (index 그대로 사용)
   const rightSlot = (index: number) =>
     mode === "mate" ? <StatusBadge status={mateStatuses[index] ?? "inprogress"} /> : null;
+
+  // ✅ 이제 id를 직접 받음
+  const handleEdit = (id: number) => {
+    router.push(`/home/home_puzzle/PuzzleEdit?id=${id}`);
+  };
+
+  const handleDelete = (id: number) => {
+    if (Platform.OS === "web") {
+      // eslint-disable-next-line no-restricted-globals
+      const ok = confirm("정말 삭제하시겠습니까?");
+      if (!ok) return;
+      remove(id).catch((e: any) => alert(e?.message || "삭제에 실패했어요."));
+      return;
+    }
+    Alert.alert("삭제", "정말 삭제할까요?", [
+      { text: "취소", style: "cancel" },
+      { text: "삭제", style: "destructive", onPress: () =>
+          remove(id).catch((e:any)=>Alert.alert("삭제 실패", e?.message || "삭제에 실패했어요.")) },
+    ]);
+  };
 
   return (
     <View style={{ flex: 1, marginTop: 20 }}>
@@ -27,15 +48,13 @@ export default function TodayPuzzleComponent() {
       <DayTab value={day} onChange={setDay} style={{ marginTop: 8, marginBottom: 8 }} />
 
       <TodayPuzzleStack
-        items={items /* ✅ 이제 각 item에 id가 있어야 함 */}
+        items={items}                                // items의 각 원소에 id 있어야 함
         palette={mode === "me" ? "yellow" : "purple"}
-        rightSlot={rightSlot}
+        rightSlot={rightSlot}                        // 배지는 index로 계속 OK
         showPlus={mode === "me"}
         onAdd={() => router.push("/home/home_puzzle/PuzzleCreate")}
-        // ✅ 수정 화면으로 이동 (id 쿼리로 전달)
-        onEdit={(id) => router.push(`/home/home_puzzle/PuzzleEdit?id=${id}`)}
-        // 삭제는 이후 API 붙일 때 처리
-        onDelete={(id) => console.log("delete id:", id)}
+        onEdit={handleEdit}                          // ← id 직접 전달
+        onDelete={handleDelete}                      // ← id 직접 전달
       />
 
       {loading ? null : null}

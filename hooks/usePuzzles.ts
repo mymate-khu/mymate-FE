@@ -1,31 +1,30 @@
 // hooks/usePuzzles.ts
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchPuzzles, type Puzzle } from "@/components/apis/puzzles";
+import { fetchPuzzles, deletePuzzle, type Puzzle } from "@/components/apis/puzzles";
 import { fetchMyProfile } from "@/components/apis/profile";
 import { storage } from "@/components/apis/storage";
 
-/* UI에서 쓰는 카드 타입 */
-// ✅ id 추가!
+/* UI 카드 타입: id 포함 */
 export type StackItem = { id: number; title: string; desc?: string };
 export type Mode = "me" | "mate";
 export type DayIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-/** 요일 인덱스 계산 */
+/** "YYYY-MM-DD" 또는 ISO 날짜 → 요일 인덱스 */
 function dayOf(dateISO: string): DayIndex {
   const d = new Date(dateISO.length > 10 ? dateISO : `${dateISO}T00:00:00`);
   return d.getDay() as DayIndex;
 }
 
-/** 로그인 아이디 가져오기 (스토리지 -> API 순) */
+/** 로그인 ID 얻기 (storage → API) */
 async function getMyLoginId(): Promise<string | null> {
   try {
-    const fromStorage = await storage.getItem("memberLoginId");
-    if (fromStorage) return fromStorage;
+    const cached = await storage.getItem("memberLoginId");
+    if (cached) return cached;
 
     const me = await fetchMyProfile();
     console.log("✅ 내 프로필 데이터:", me);
 
-    const loginId = (me as any).memberLoginId || null; // 백엔드 필드명에 맞춰 사용
+    const loginId = (me as any).memberLoginId || null;
     if (loginId) {
       await storage.setItem("memberLoginId", loginId);
       return loginId;
@@ -45,17 +44,14 @@ export function usePuzzles() {
   const [rows, setRows] = useState<Puzzle[]>([]);
   const [myLoginId, setMyLoginId] = useState<string | null>(null);
 
-  /** 최초 내 로그인 아이디 로드 */
+  /** 최초 1회 내 로그인 아이디 로드 */
   useEffect(() => {
     (async () => setMyLoginId(await getMyLoginId()))();
   }, []);
 
   /** 목록 조회 */
   const refetch = useCallback(async () => {
-    if (!myLoginId) {
-      // 아직 로그인 아이디 모르면 대기
-      return;
-    }
+    if (!myLoginId) return;
     setLoading(true);
     try {
       const page = await fetchPuzzles({ page: 0, size: 10 });
@@ -73,27 +69,45 @@ export function usePuzzles() {
     refetch();
   }, [refetch]);
 
-  /** 모드/요일에 맞게 필터 & 매핑 */
+  /** 삭제 (낙관적 갱신 + 실패시 롤백) */
+  const remove = useCallback(
+    async (id: number) => {
+      console.log("[usePuzzles.remove] try delete id:", id);
+      const prev = rows;
+      // 낙관적 업데이트
+      setRows(prev.filter(p => p.id !== id));
+
+      try {
+        const res = await deletePuzzle(id);
+        console.log("[usePuzzles.remove] success:", id, res?.message);
+        // 필요하면 서버 상태 재동기화
+        // await refetch();
+      } catch (e) {
+        console.error("[usePuzzles.remove] failed:", e);
+        // 롤백
+        setRows(prev);
+        throw e;
+      }
+    },
+    [rows]
+  );
+
+  /** 모드/요일 필터 + 카드 매핑 */
   const { items, mateStatuses } = useMemo(() => {
-    const filtered = rows.filter((p) =>
+    const filtered = rows.filter(p =>
       mode === "me" ? p.memberLoginId === myLoginId : p.memberLoginId !== myLoginId
     );
+    const byDay = filtered.filter(p => dayOf(p.scheduledDate) === day);
 
-    const byDay = filtered.filter((p) => dayOf(p.scheduledDate) === day);
-
-    // ✅ 카드 변환: id 포함
-    const items: StackItem[] = byDay.map((p) => ({
-      id: p.id,                     // ← 여기!
+    const items: StackItem[] = byDay.map(p => ({
+      id: p.id,
       title: p.title,
       desc: p.description ?? undefined,
     }));
 
-    const mateStatuses = byDay.map((p) => (p.status === "DONE" ? "done" : "inprogress"));
+    const mateStatuses = byDay.map(p => (p.status === "DONE" ? "done" : "inprogress"));
 
-    console.log(
-      `🟢[usePuzzles] mode=${mode} day=${day} myLoginId=${myLoginId} → show=${items.length}`
-    );
-
+    console.log(`🟢[usePuzzles] mode=${mode} day=${day} myLoginId=${myLoginId} → show=${items.length}`);
     return { items, mateStatuses };
   }, [rows, mode, day, myLoginId]);
 
@@ -103,8 +117,9 @@ export function usePuzzles() {
     setMode,
     day,
     setDay,
-    items,          // ← 이제 각 item에 id가 들어있음
-    mateStatuses,   // mate 모드에서 상태 뱃지
+    items,
+    mateStatuses,
     refetch,
+    remove,          // ← 컴포넌트에서 onDelete에 연결
   };
 }
