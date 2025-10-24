@@ -2,6 +2,7 @@
 import { PaidItem } from "@/app/adjustment/PaidCarousel";
 import { UnpaidItem } from "@/app/adjustment/UnpaidCarousel";
 import type { AdjustmentCardItem, SettlementStatus } from "@/app/adjustment/AdjustmentListCard";
+import { getRandomAvatarUrl } from "./avatar";
 
 /* --------------------------------
  * 공통 유틸: author/owner 판정 & 색상
@@ -74,11 +75,12 @@ export const transformToPaidItems = (
       title: a.title,
       createdByMemberId: a.createdByMemberId,
       author: a.author,
+      category: a.category,
       myId: myId
     });
     
     const color = colorByAuthor(a, myId);
-    console.log("결정된 색상:", color);
+    console.log("결정된 색상:", color, "카테고리:", a.category);
     
     const image: PaidItem["image"] = a?.imageUrl ? { uri: a.imageUrl } : undefined;
 
@@ -88,6 +90,7 @@ export const transformToPaidItems = (
       amount: `-${fmtKRW(Number(a.totalAmount) || 0)}`,
       color,
       image,
+      category: a.category ?? "",
     };
   });
 };
@@ -102,6 +105,7 @@ export const transformToUnpaidItems = (accounts: any[]): UnpaidItem[] => {
     id: String(a.id),
     title: a.title,
     amount: `-${fmtKRW(Number(a.totalAmount) || 0)}`,
+    category: a.category ?? "",
   }));
 };
 
@@ -127,8 +131,7 @@ export const transformToListItems = (
     finalAmount: fmtKRW(Number(a.receiveAmount) || 0),
     imageUri: a.imageUrl ?? undefined,
     avatars: (a.participants ?? []).slice(0, 4).map((p: any) =>
-      p?.avatarUrl ??
-      `https://api.dicebear.com/9.x/identicon/svg?seed=${encodeURIComponent(p?.memberName ?? p?.memberId)}`
+      p?.avatarUrl ?? getRandomAvatarUrl(p?.memberName ?? p?.memberId)
     ),
     status: String(a.status).toUpperCase() === "COMPLETED" ? "settled" : "unsettled", // 올바른 상태 매핑
     category: a.category ?? "",

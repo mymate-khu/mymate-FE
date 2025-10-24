@@ -26,7 +26,16 @@ export default function BackHeader({
   centerSlot,
   rightSlot,
 }: Props) {
-  const onPressBack = () => (onBack ? onBack() : router.back());
+  const onPressBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      // 뒤로 갈 화면이 없으면 홈으로 이동
+      router.replace("/(tabs)/home");
+    }
+  };
 
   return (
     <SafeAreaView style={{ backgroundColor }}>
