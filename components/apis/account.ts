@@ -1,8 +1,6 @@
 // components/apis/account.ts
 import { TokenReq } from "@/components/apis/axiosInstance";
 
-
-
 /* ========= 공통 타입 ========= */
 
 export type AccountStatus = "PENDING" | "COMPLETED";
@@ -19,14 +17,15 @@ export type AccountEntity = {
   id: number;
   title: string;
   description: string;
-  expenseDate: string;       // "YYYY-MM-DD"
+  expenseDate: string;
   category: string;
   imageUrl: string | null;
   totalAmount: number;
   receiveAmount: number;
   status: AccountStatus | string;
   groupId: number;
-  createdBy: number;
+  createdByMemberId: string;  // API 응답의 createdByMemberId 필드
+  createdBy: number;          // 백엔드 응답 키가 다르면 필요에 맞게 바꿔줘도 됨
   participants: Participant[];
   createdAt: string;
   updatedAt: string;
@@ -34,7 +33,7 @@ export type AccountEntity = {
 
 export type ApiEnvelope<T> = {
   isSuccess: boolean;
-  code?: string;      // 예: ACCOUNT4001, ACCOUNT4002...
+  code?: string;
   message?: string;
   data: T;
 };
@@ -44,7 +43,7 @@ export type ApiEnvelope<T> = {
 export type UpsertAccountReq = {
   title: string;
   description: string;
-  expenseDate: string;       // "YYYY-MM-DD"
+  expenseDate: string;
   category: string;
   imageUrl: string | null;
   totalAmount: number;
@@ -65,10 +64,10 @@ export type AccountsPage = {
 };
 
 export type ListParams = {
-  page?: number;               // default 0
-  size?: number;               // default 10
-  sort?: string;               // default createdAt
-  direction?: "asc" | "desc";  // default desc
+  page?: number;
+  size?: number;
+  sort?: string;
+  direction?: "asc" | "desc";
 };
 
 /* ========= 내부 유틸 ========= */
@@ -76,7 +75,6 @@ export type ListParams = {
 function normErr(err: any, fallback = "요청 처리 중 오류가 발생했어요.") {
   const serverMsg = err?.response?.data?.message;
   if (serverMsg) return new Error(serverMsg);
-
   if (typeof err?.message === "string" && err.message.includes("Network")) {
     return new Error("서버에 연결할 수 없어요.");
   }
@@ -91,7 +89,6 @@ function stripUndefined<T extends object>(obj: T): T {
 
 /* ========= API ========= */
 
-/** 생성: POST /api/accounts */
 export async function createAccount(payload: UpsertAccountReq): Promise<AccountEntity> {
   try {
     const { data } = await TokenReq.post<ApiEnvelope<AccountEntity>>("/api/accounts", payload);
@@ -102,7 +99,6 @@ export async function createAccount(payload: UpsertAccountReq): Promise<AccountE
   }
 }
 
-/** 목록: GET /api/accounts?page&size&sort&direction */
 export async function fetchAccounts(params?: ListParams): Promise<AccountsPage> {
   try {
     const { data } = await TokenReq.get<ApiEnvelope<AccountsPage>>("/api/accounts", { params });
@@ -113,7 +109,6 @@ export async function fetchAccounts(params?: ListParams): Promise<AccountsPage> 
   }
 }
 
-/** 상세: GET /api/accounts/{accountId} */
 export async function getAccountDetail(accountId: number): Promise<AccountEntity> {
   try {
     const { data } = await TokenReq.get<ApiEnvelope<AccountEntity>>(`/api/accounts/${accountId}`);
@@ -124,7 +119,6 @@ export async function getAccountDetail(accountId: number): Promise<AccountEntity
   }
 }
 
-/** 수정: PUT /api/accounts/{accountId}  (PENDING 상태에서만 가능) */
 export async function updateAccount(
   accountId: number,
   payload: Partial<UpsertAccountReq>
@@ -136,7 +130,6 @@ export async function updateAccount(
       body
     );
     if (!data?.isSuccess) {
-      // 예) ACCOUNT4002 "이미 완료된 정산입니다."
       throw new Error(data?.message || "정산 수정 실패");
     }
     return data.data;
@@ -145,10 +138,6 @@ export async function updateAccount(
   }
 }
 
-/** 삭제: DELETE /api/accounts/{accountId}
- *  - 생성자만 가능
- *  - COMPLETED 상태면 불가
- */
 export async function deleteAccount(accountId: number): Promise<{ message?: string }> {
   try {
     const { data } = await TokenReq.delete<ApiEnvelope<null>>(`/api/accounts/${accountId}`);
@@ -156,5 +145,22 @@ export async function deleteAccount(accountId: number): Promise<{ message?: stri
     return { message: data?.message };
   } catch (e) {
     throw normErr(e, "정산 삭제 실패");
+  }
+}
+
+/** ✅ 상태 변경: PATCH /api/accounts/{accountId}/status  { status } */
+export async function setAccountStatus(
+  accountId: number,
+  status: AccountStatus
+): Promise<AccountEntity> {
+  try {
+    const { data } = await TokenReq.patch<ApiEnvelope<AccountEntity>>(
+      `/api/accounts/${accountId}/status`,
+      { status } // PENDING | COMPLETED
+    );
+    if (!data?.isSuccess) throw new Error(data?.message || "정산 상태 변경 실패");
+    return data.data; // 최신 엔티티 반환
+  } catch (e) {
+    throw normErr(e, "정산 상태 변경 실패");
   }
 }

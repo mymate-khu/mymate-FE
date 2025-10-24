@@ -17,8 +17,8 @@ import SettingListItem from "./SettingListItem";
 // 아이콘
 import UserIcon from "@/assets/image/mypage/user.svg";
 import LockIcon from "@/assets/image/mypage/lock.svg";
-import BellIcon from "@/assets/image/mypage/Bell.svg";
-import FlagIcon from "@/assets/image/mypage/Flag.svg";
+import BellIcon from "@/assets/image/mypage/bell.svg";
+import FlagIcon from "@/assets/image/mypage/flag.svg";
 import ChatIcon from "@/assets/image/mypage/chat.svg";
 import LogoutIcon from "@/assets/image/mypage/logout.svg";
 import EditIcon from "@/assets/image/mypage/edit.svg";
