@@ -9,7 +9,7 @@ export interface ApiResponse<T> {
   success: boolean;
 }
 
-// 채팅 메시지 데이터 타입
+// 채팅 메시지 데이터 타입 (API 응답 구조에 맞게 수정)
 export interface ChatMessageData {
   id: number;
   chatRoomId: number;
@@ -19,6 +19,7 @@ export interface ChatMessageData {
   content: string;
   createdAt: string;
   isDeleted: boolean;
+  senderProfileImageUrl?: string; // 발신자 프로필 이미지 URL 추가
 }
 
 // 채팅 메시지 타입 (UI에서 사용)
@@ -58,8 +59,14 @@ export interface ChatRoom {
   createdAt: string;
 }
 
-// 채팅방 목록 조회 응답
-export type GetChatRoomsResponse = ApiResponse<ChatRoom[]>;
+// 채팅방 목록 조회 응답 (실제 API 응답에 맞게 수정)
+export interface GetChatRoomsResponse {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  data: ChatRoom[];
+  success: boolean;
+}
 
 // 채팅방 상세 조회 응답
 export type GetChatRoomDetailResponse = ApiResponse<ChatRoom>;
@@ -85,15 +92,13 @@ export interface PageInfo {
 
 // 채팅방 메시지 조회 응답 (실제 API 응답에 맞게 수정)
 export interface GetMessagesResponse {
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  content: ChatMessageData[];
-  number: number;
-  numberOfElements: number;
-  first: boolean;
-  last: boolean;
-  empty: boolean;
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  data: {
+    content: ChatMessageData[];
+  };
+  success: boolean;
 }
 
 // 메시지 삭제 응답
@@ -115,6 +120,7 @@ export function transformToChatMessage(
     senderId: data.senderId,
     senderName: data.senderName,
     chatRoomId: data.chatRoomId,
+    avatarUrl: data.senderProfileImageUrl, // 프로필 이미지 URL 설정
   };
 }
 

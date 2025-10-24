@@ -20,6 +20,7 @@ import {API_URL} from "@env"
 import Vector from "@/assets/image/home_chattingimg/Vector.svg"
 import { sendMessage, getMessages, transformToChatMessage, deleteMessage, getChatRooms, type ChatMessage, type SendMessageRequest } from "@/components/apis/chat";
 import { useMyProfile } from "@/hooks/useMyProfile";
+import GradientAvatar from "@/components/GradientAvatar";
 
 /**
  * Chat UI (Expo friendly)
@@ -41,16 +42,15 @@ const timeText = (ts: number) => {
   return `${hh}:${mm}`;
 };
 
-const MessageRow = ({ msg, onLongPress }: { msg: ChatMessage; onLongPress: (m: ChatMessage) => void }) => {
-  const isMe = msg.sender === "me";
+const MessageRow = ({ msg, onLongPress, myUsername }: { msg: ChatMessage; onLongPress: (m: ChatMessage) => void; myUsername?: string }) => {
+  // senderName이 내 username과 같은지 확인
+  const isMe = msg.senderName === myUsername;
   return (
-    <View style={[styles.row, isMe ? styles.rowMe : styles.rowOther]}>
+    <View style={[styles.row, styles.rowOther]}>
       {/* Avatar */}
-      {msg.avatarUrl ? (
-        <Image source={{ uri: msg.avatarUrl }} style={[styles.avatar, isMe ? { marginLeft: 8 } : { marginRight: 8 }]} />
-      ) : (
-        <View style={[styles.avatar, styles.avatarFallback]} />)
-      }
+      <View style={[styles.avatar, { marginRight: 8 }]}>
+        <GradientAvatar uri={msg.avatarUrl} size={40} />
+      </View>
 
       {/* Bubble */}
       <TouchableOpacity
@@ -60,7 +60,6 @@ const MessageRow = ({ msg, onLongPress }: { msg: ChatMessage; onLongPress: (m: C
         style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther]}
       >
         <Text style={[styles.msgText, isMe ? styles.msgTextMe : styles.msgTextOther]}>{msg.content}</Text>
-        <Text style={[styles.time, isMe ? styles.timeMe : styles.timeOther]}>{timeText(msg.createdAt)}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -176,12 +175,12 @@ export default function ChatScreen({ fixedHeight = 560, onScrollActive, chatRoom
     
     try {
       setLoading(true);
-      const response = await getMessages({ chatRoomId: actualChatRoomId, page: 0, size: 50 });
+      const response = await getMessages({ chatRoomId: actualChatRoomId, page: 0, size: 100 });
       console.log('📨 메시지 조회 응답:', response);
       
-      if (response.content) {
-        console.log('📋 받은 메시지 개수:', response.content.length);
-        const transformedMessages = response.content.map(msg => 
+      if (response.data && response.data.content) {
+        console.log('📋 받은 메시지 개수:', response.data.content.length);
+        const transformedMessages = response.data.content.map(msg => 
           transformToChatMessage(msg, me.memberId)
         );
         console.log('🔄 변환된 메시지들:', transformedMessages);
@@ -198,12 +197,31 @@ export default function ChatScreen({ fixedHeight = 560, onScrollActive, chatRoom
     }
   }, [actualChatRoomId, me]);
 
-  // 초기 메시지 로드
+  // 초기 메시지 로드 및 컴포넌트 마운트 시 메시지 로드
   useEffect(() => {
     if (actualChatRoomId && me) {
+      console.log('🔄 컴포넌트 마운트/업데이트 시 메시지 로드');
       loadMessages();
     }
   }, [loadMessages]);
+
+  // 컴포넌트가 포커스를 받을 때마다 메시지 새로고침
+  useEffect(() => {
+    const handleFocus = () => {
+      if (actualChatRoomId && me) {
+        console.log('🔄 화면 포커스 시 메시지 새로고침');
+        loadMessages();
+      }
+    };
+
+    // 컴포넌트가 마운트될 때와 포커스를 받을 때 메시지 로드
+    handleFocus();
+    
+    // 포커스 이벤트 리스너 (React Navigation 사용 시)
+    const unsubscribe = () => {}; // 필요시 포커스 이벤트 리스너 추가
+    
+    return unsubscribe;
+  }, [actualChatRoomId, me]);
 
   const onSend = async (text: string) => {
     console.log('🚀 메시지 전송 시작:', { text, chatRoomId: actualChatRoomId, memberId: me?.memberId });
@@ -355,7 +373,7 @@ export default function ChatScreen({ fixedHeight = 560, onScrollActive, chatRoom
               ref={listRef}
               data={data}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => <MessageRow msg={item} onLongPress={onLongPress} />}
+              renderItem={({ item }) => <MessageRow msg={item} onLongPress={onLongPress} myUsername={me?.username} />}
               contentContainerStyle={styles.listContent}
               onContentSizeChange={() => scrollToBottom(false)}
               keyboardShouldPersistTaps="handled"
@@ -398,25 +416,25 @@ const styles = StyleSheet.create({
   listContent: { paddingVertical: 12, paddingHorizontal: 12 },
 
   // message row
-  row: { marginVertical: 6, flexDirection: "row", alignItems: "flex-start" },
+  row: { marginVertical: 6, flexDirection: "row", alignItems: "flex-start", marginLeft: -10 },
   rowOther: { justifyContent: "flex-start" },
   rowMe: { justifyContent: "flex-start", flexDirection: "row-reverse" },
 
   // avatar
-  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#E5E7EB" },
-  avatarFallback: { justifyContent: "center", alignItems: "center" },
+  avatar: { width: 40, height: 40, borderRadius: 20 },
 
   // bubble
   bubble: {
-    maxWidth: "74%",
+    width: 270,
+    height: 40,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    justifyContent: 'center',
   },
-  bubbleMe: { backgroundColor: "rgba(255, 252, 194, 1)", borderTopRightRadius: 4, marginHorizontal: 8 },
+  bubbleMe: { backgroundColor: "rgba(255, 252, 194, 1)", marginHorizontal: 8 },
   bubbleOther: {
     backgroundColor: "rgba(235, 217, 255, 1)",
-    borderTopLeftRadius: 4,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "#E3E8EF",
     marginHorizontal: 8,
