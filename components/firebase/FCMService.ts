@@ -2,6 +2,9 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import FirebaseConfig from './FirebaseConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '@env';
+import { TokenReq } from '../apis/axiosInstance';
 
 const ANDROID_CHANNEL_ID = 'default';
 
@@ -10,7 +13,7 @@ class FCMService {
   private fcmToken: string | null = null;
   private listenersRegistered: boolean = false;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): FCMService {
     if (!FCMService.instance) {
@@ -26,12 +29,12 @@ class FCMService {
     try {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-      
+
       if (existingStatus !== 'granted') {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-      
+
       if (finalStatus === 'granted') {
         console.log('✅ 알림 권한이 허용되었습니다');
         return true;
@@ -65,7 +68,7 @@ class FCMService {
       const token = projectId
         ? await Notifications.getExpoPushTokenAsync({ projectId })
         : await Notifications.getExpoPushTokenAsync();
-      
+
       if (token && token.data) {
         this.fcmToken = token.data;
         console.log('✅ Expo Push 토큰 발급 성공');
@@ -102,7 +105,7 @@ class FCMService {
       }
 
       const messaging = firebaseConfig.getMessaging();
-      
+
       messaging.onTokenRefresh((token: string) => {
         console.log('🔄 FCM 토큰이 새로고침되었습니다:', token);
         this.fcmToken = token;
@@ -118,32 +121,37 @@ class FCMService {
    * 서버에 FCM 토큰을 전송합니다
    */
   async sendTokenToServer(token: string): Promise<boolean> {
-    try {
-      // TODO: 실제 서버 API 엔드포인트로 변경하세요
-      const response = await fetch('http://localhost:8080/api/notifications/fcm/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fcmToken: token,
-          platform: Platform.OS,
-
-        }),
-      });
-
-      if (response.ok) {
-        console.log('✅ FCM 토큰이 서버에 성공적으로 전송되었습니다');
-        return true;
-      } else {
-        console.log('❌ FCM 토큰 서버 전송 실패');
-        return false;
+  try {
+    const res = await TokenReq.post(
+      "/api/notifications/push/token",
+      {
+        token: token,          // 서버가 기대하는 필드명 확인!
+        deviceType: Platform.OS,    // 'ios' | 'android'
+      },
+      {
+        // 필요 시 커스텀 헤더 추가 (보통 Axios 인스턴스가 자동으로 JSON 헤더 셋업함)
+        // headers: { "Content-Type": "application/json" },
+        timeout: 10000,
       }
-    } catch (error) {
-      console.error('FCM 토큰 서버 전송 중 오류 발생:', error);
-      return false;
+    );
+
+    // 디버깅에 도움 되는 로그
+    console.log("✅ 토큰 전송 성공:", res.status, res.data);
+    return true;
+  } catch (err: any) {
+    if (err.response) {
+      // 서버가 4xx/5xx 응답을 보낸 경우
+      console.error("❌ 서버 에러:", err.response.status, err.response.data);
+    } else if (err.request) {
+      // 요청은 갔지만 응답을 못 받은 경우 (네트워크)
+      console.error("🌐 네트워크 에러 또는 무응답:", err.message);
+    } else {
+      // 요청 구성 중 에러
+      console.error("⚙️ 요청 구성 에러:", err.message);
     }
+    return false;
   }
+}
 
   /**
    * FCM 서비스를 초기화합니다
@@ -151,7 +159,7 @@ class FCMService {
   async initialize(): Promise<void> {
     try {
       console.log('🚀 FCM 서비스 초기화 시작...');
-      
+
       // Firebase 먼저 초기화 (토큰 새로고침/메시징 사용을 위해 필수)
       try {
         const firebaseOk = await FirebaseConfig.getInstance().initialize();
@@ -165,28 +173,31 @@ class FCMService {
       // 프로젝트 ID 로그 출력
       const projectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
       console.log('📋 프로젝트 ID:', projectId);
-      
+
       // Expo Notifications 설정
       await this.setupExpoNotifications();
 
       // Android 알림 채널 생성 (필수)
       await this.createNotificationChannel();
-      
+
       // 토큰 새로고침 리스너 설정
       await this.setupTokenRefreshListener();
-      
+
       // 메시지 수신 리스너 설정
       await this.setupMessageListeners();
-      
+
       // 초기 토큰 가져오기
       const token = await this.getFCMToken();
-      
       if (token) {
-        console.log('🪪 서버 전송 예정 토큰(Expo/FCM):', token);
-        // 서버에 토큰 전송
-        await this.sendTokenToServer(token);
+        await AsyncStorage.setItem("FCMtoken", token);
       }
-      
+
+      // if (token) {
+      //   console.log('🪪 서버 전송 예정 토큰(Expo/FCM):', token);
+      //   // 서버에 토큰 전송
+      //   await this.sendTokenToServer(token);
+      // }
+
       console.log('✅ FCM 서비스 초기화 완료');
       console.log('📋 사용된 프로젝트 ID:', projectId);
     } catch (error) {
@@ -239,7 +250,7 @@ class FCMService {
 
       console.log('✅ Expo Notifications 리스너 설정 완료');
       this.listenersRegistered = true;
-      
+
       // 컴포넌트 언마운트 시 리스너 정리 (선택사항)
       return () => {
         Notifications.removeNotificationSubscription(notificationListener);
@@ -290,7 +301,7 @@ class FCMService {
         },
         trigger,
       });
-      
+
       console.log('✅ 로컬 알림 표시 완료');
     } catch (error) {
       console.error('로컬 알림 표시 중 오류 발생:', error);
