@@ -70,7 +70,7 @@ export default function RuleAddModal({
           </View>
 
           <Text style={[s.label, { marginTop: 16 }]}>내용</Text>
-          <View style={[s.inputBox, { height: 220 }]}>
+          <View style={[s.inputBox, { height: 180 }]}>
             <TextInput
               value={body}
               onChangeText={setBody}
@@ -98,27 +98,26 @@ const s = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   dim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.35)" },
   sheet: {
-    width: "90%",
+    width: 370,
+    height: 520,
     borderRadius: 24,
-    backgroundColor: "#fff",
+    //backgroundColor: "pink",
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 22,
   },
   close: { position: "absolute", right: 16, top: 16 },
-  title: { fontSize: 20, fontWeight: "800", color: "#111", alignSelf: "center", marginTop: 12, marginBottom: 16 },
-  label: { fontSize: 14, color: "#666", marginLeft: 6, marginBottom: 8 },
-  inputBox: { height: 56, borderRadius: 16, backgroundColor: "#F4F4F4", paddingHorizontal: 14, justifyContent: "center" },
+  title: { fontSize: 20, fontWeight: "500", color: "#111", alignSelf: "center", marginTop: 60, marginBottom: 16 },
+  label: { fontSize: 16 , color: "#797979", marginLeft: 6, marginBottom: 8 },
+  inputBox: { height: 48, borderRadius: 16, backgroundColor: "#F0F0F0", borderWidth: 0, borderColor: "#999999", paddingHorizontal: 14, justifyContent: "center" },
   input: { fontSize: 15, color: "#111" },
   cta: {
     marginTop: 18,
     alignSelf: "flex-end",
-    height: 44,
+    height: 40,
     paddingHorizontal: 18,
-    backgroundColor: "#FFD51C",
-    borderRadius: 14,
+    backgroundColor: "#FFE600",
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaText: { fontSize: 16, fontWeight: "700", color: "#111" },
+  ctaText: { fontSize: 14, fontWeight: "500", color: "#111" },
 });
