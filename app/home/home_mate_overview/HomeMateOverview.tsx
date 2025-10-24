@@ -69,13 +69,17 @@ export default function HomeMateOverview({
         </View>
 
         <Text style={s.sectionTitle}>MyMate</Text>
-
+        
         <View style={s.matesRow}>
-          <AvatarStack
-            uris={mateAvatars.length ? mateAvatars.map((m) => m.photo) : mates.map(m => m.photo)}
-            size={40}
-            overlap={10}
-          />
+          {mateAvatars.length > 0 ? (
+            <AvatarStack
+              uris={mateAvatars.map((m) => m.photo)}
+              size={40}
+              overlap={10}
+            />
+          ) : (
+            <View style={s.emptySpace} />
+          )}
         </View>
       </View>
 
@@ -124,6 +128,10 @@ const s = StyleSheet.create({
   matesRow: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  emptySpace: {
+    height: 40, // AvatarStack과 동일한 높이
+    width: 1, // 최소 너비
   },
   nextBtn: {
     position: "absolute",
