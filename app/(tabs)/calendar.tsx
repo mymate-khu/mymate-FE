@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { TokenReq } from '@/components/apis/axiosInstance';
 import { buildCalendarDots, type PuzzleItem, type CalendarDots } from '../../components/utils/buildCalendarDots';
 import { LocaleConfig } from 'react-native-calendars';
+import RefreshableSectionList from '@/components/refresh/RefreshableSectionList';
 
 LocaleConfig.locales['ko'] = {
   monthNames: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
@@ -211,7 +212,7 @@ export default function MyCalendar() {
 
   // ---- render -------------------------------------------------------------
   return (
-    <SectionList
+    <RefreshableSectionList
       sections={sections}
       keyExtractor={(item) => item.id}
       ListHeaderComponent={

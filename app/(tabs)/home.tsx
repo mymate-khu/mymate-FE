@@ -6,6 +6,7 @@ import {
   BackHandler
 } from "react-native";
 import { useCallback,useState,useEffect } from "react";
+import RefreshableScrollView from "@/components/refresh/RefreshableScrollView";
 
 import ChattingComponent from "@/app/home/home_chatting/Chattingcomponent";
 import MateboardComponent from "@/app//home/home_mateboard/Mateboardcomponent";
@@ -33,7 +34,7 @@ export default function Home() {
 
   
   return (
-    <ScrollView
+    <RefreshableScrollView
       style={{
         flex: 1,
         backgroundColor: "white",
@@ -65,7 +66,7 @@ export default function Home() {
       </View>
 
 
-    </ScrollView>
+    </RefreshableScrollView>
   );
 }
 
