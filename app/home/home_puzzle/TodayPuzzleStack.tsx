@@ -38,6 +38,15 @@ export default function TodayPuzzleStack({
 }) {
   const puzzles = useMemo(() => (items ?? []).slice(0, MAX_CARDS), [items]);
 
+  // ✅ 모든 훅을 조건문 이전에 선언
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [checked, setChecked] = useState<boolean[]>(() => puzzles.map(() => false));
+
+  useEffect(() => {
+    setChecked((prev) => puzzles.map((_, i) => prev[i] ?? false));
+    setOpenIndex((idx) => (idx !== null && idx >= puzzles.length ? null : idx));
+  }, [puzzles.length]);
+
   // ✅ 퍼즐 0개인 경우: 빈 상태 뷰 반환
   if (puzzles.length === 0) {
     const FAB_SIZE = 52;
@@ -90,14 +99,6 @@ export default function TodayPuzzleStack({
   }
 
   // ===== 여기부터 기존(퍼즐 1~3개) 로직 =====
-
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [checked, setChecked] = useState<boolean[]>(() => puzzles.map(() => false));
-
-  useEffect(() => {
-    setChecked((prev) => puzzles.map((_, i) => prev[i] ?? false));
-    setOpenIndex((idx) => (idx !== null && idx >= puzzles.length ? null : idx));
-  }, [puzzles.length]);
 
   const tones: Array<"light" | "medium" | "dark"> = ["light", "medium", "dark"];
 
