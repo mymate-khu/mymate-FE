@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from "react-nativ
 import { useRouter } from "expo-router";
 import PuzzleLogo from "@/assets/image/home/puzzle_logo.svg";
 import ArrowRight from "@/assets/image/home/arrow_right.svg";
-import { useMyProfile } from "@/hooks/useMyProfile"; // ← 경로 알맞게
+import { useMyProfile } from "@/hooks/useMyProfile";
 import { useGroups } from "@/hooks/useGroups";
 import AvatarStack from "@/components/AvatarStack";
 
@@ -14,6 +14,8 @@ type Props = {
   style?: ViewStyle;
   userName?: string;    // 폴백용 (API 실패/로딩일 때)
   mates?: Mate[];
+  /** ✅ 부모가 주는 새로고침 트리거 */
+  refreshSignal?: number;
 };
 
 const DEFAULT_MATES: Mate[] = [
@@ -24,20 +26,30 @@ const DEFAULT_MATES: Mate[] = [
 
 export default function HomeMateOverview({
   style,
-  userName = "...", // API 로딩 전까지 표시할 이름
+  userName = "...",
   mates = DEFAULT_MATES,
+  refreshSignal,
 }: Props) {
   const router = useRouter();
-  const { me, loading } = useMyProfile();
-  const { otherMembers, loading: groupsLoading } = useGroups();
 
-  // ✅ 닉네임 없이 username만 사용
+  // ✅ refetch 꺼내쓰기 (React Query라면 기본 제공)
+  const { me, loading, refetch: refetchProfile } = useMyProfile();
+  const { otherMembers, loading: groupsLoading, refetch: refetchGroups } = useGroups();
+
+  // ✅ 부모 Pull-to-Refresh 시 다시 불러오기
+  React.useEffect(() => {
+    if (refreshSignal !== undefined) {
+      refetchProfile?.();
+      refetchGroups?.();
+    }
+  }, [refreshSignal, refetchProfile, refetchGroups]);
+
   const displayName = loading ? "..." : (me?.username || userName);
 
-  // 실제 그룹 멤버들로 아바타 생성 (기본 SVG 사용)
+  // 실제 그룹 멤버들로 아바타 생성 (사진 없으면 기본 SVG)
   const mateAvatars = (otherMembers || []).slice(0, 3).map(member => ({
     id: member.id,
-    photo: undefined, // undefined로 두면 GradientAvatar에서 BasicProfile SVG 사용
+    photo: undefined, // undefined면 AvatarStack/GradientAvatar에서 기본 이미지 사용
   }));
 
   const handleNavigateToManage = () => {
@@ -60,7 +72,7 @@ export default function HomeMateOverview({
 
         <View style={s.matesRow}>
           <AvatarStack
-            uris={mateAvatars.map((m) => m.photo)}
+            uris={mateAvatars.length ? mateAvatars.map((m) => m.photo) : mates.map(m => m.photo)}
             size={40}
             overlap={10}
           />

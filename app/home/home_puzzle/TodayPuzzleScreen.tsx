@@ -9,10 +9,25 @@ import TodayPuzzleStack from "./TodayPuzzleStack";
 import StatusBadge from "./StatusBadge";
 import { usePuzzles } from "@/hooks/usePuzzles";
 
-export default function TodayPuzzleScreen() {
-  const { loading, mode, setMode, day, setDay, items, mateStatuses, puzzleStatuses, refetch, remove, toggleStatus } = usePuzzles();
+// ✅ 부모(Home)에서 넘겨주는 새로고침 시그널
+type Props = { refreshSignal?: number };
 
+export default function TodayPuzzleScreen({ refreshSignal }: Props) {
+  const {
+    loading, mode, setMode, day, setDay,
+    items, mateStatuses, puzzleStatuses,
+    refetch, remove, toggleStatus
+  } = usePuzzles();
+
+  // 화면 재진입 시 자동 refetch (기존 유지)
   useFocusEffect(React.useCallback(() => { refetch(); }, [refetch]));
+
+  // ✅ Pull-to-Refresh 등 부모 시그널 변화 시 강제 refetch
+  React.useEffect(() => {
+    if (refreshSignal !== undefined) {
+      refetch();
+    }
+  }, [refreshSignal, refetch]);
 
   const rightSlot = (index: number) =>
     mode === "mate" ? <StatusBadge status={mateStatuses[index] ?? "inprogress"} /> : null;
@@ -74,6 +89,7 @@ export default function TodayPuzzleScreen() {
         puzzleStatuses={puzzleStatuses}
       />
 
+      {/* 필요하면 로딩 인디케이터 표시 영역 */}
       {loading ? null : null}
     </View>
   );
