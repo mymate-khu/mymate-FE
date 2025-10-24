@@ -1,5 +1,5 @@
 // app/adjustment/adjustment.tsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -14,45 +14,16 @@ import { ChevronRight } from "lucide-react-native";
 
 import SearchIcon from "@/assets/image/adjustmenticon/search_Icon.svg";
 import AdjustIllustration from "@/assets/image/adjustmenticon/adjustment_Illustration.svg";
-import UnpaidCarousel, { UnpaidItem } from "../adjustment/UnpaidCarousel";
-import PaidCarousel, { PaidItem } from "../adjustment/PaidCarousel";
+import UnpaidCarousel from "../adjustment/UnpaidCarousel";
+import PaidCarousel from "../adjustment/PaidCarousel";
 
-// ✅ API/유틸
-import { fetchAccounts } from "@/components/apis/account";
-import { storage } from "@/components/apis/storage";
-import { transformToPaidItems, transformToUnpaidItems } from "@/utils/transformer";
+// ✅ 공용 훅 사용
+import { useAccounts } from "@/hooks/useAccounts";
 
 export default function Adjustment() {
-  const [paidData, setPaidData] = useState<PaidItem[]>([]);
-  const [unpaidData, setUnpaidData] = useState<UnpaidItem[]>([]);
-
-  useEffect(() => {
-    const loadAccounts = async () => {
-      try {
-        // storage에서 내 userId (문자열로 사용)
-        const userId = await storage.getItem("userId");
-        const myId = String(userId ?? "");
-
-        // API 호출
-        const res = await fetchAccounts();
-
-        // 응답 모양이 달라도 안전하게 accounts 추출
-        const accounts =
-          (res as any)?.accounts ??
-          (res as any)?.data?.accounts ??
-          (res as any)?.data?.data?.accounts ??
-          [];
-
-        // 캐러셀용 데이터로 변환
-        setPaidData(transformToPaidItems(accounts, myId));
-        setUnpaidData(transformToUnpaidItems(accounts));
-      } catch (err) {
-        console.error("[정산 목록 불러오기 실패]", err);
-      }
-    };
-
-    loadAccounts();
-  }, []);
+  const { data } = useAccounts();
+  const paidData = data?.paid ?? [];
+  const unpaidData = data?.unpaid ?? [];
 
   return (
     <SafeAreaView style={s.container}>
@@ -128,7 +99,6 @@ export default function Adjustment() {
   );
 }
 
-// 💅 스타일
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFFFFF" },
 
