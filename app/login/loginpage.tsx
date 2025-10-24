@@ -62,6 +62,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Image source={MainIcon} style={{ marginTop: 76 }} />
+      
 
       <Text style={styles.title}>마이메이트에 오신걸 환영해요!</Text>
 

@@ -1,6 +1,6 @@
-// app/notification/NotificationListScreen.tsx
-import React, { useMemo, useState, useCallback } from "react";
-import { View, StyleSheet, SectionList, ListRenderItem } from "react-native";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { View, StyleSheet, SectionList, ListRenderItem, Alert, ActivityIndicator } from "react-native";
+import { router } from "expo-router";
 
 import BackHeader from "@/components/BackHeader";
 import SectionHeader from "@/app/home/home_mate_overview/MateManage/SectionHeader";
@@ -8,130 +8,237 @@ import NotificationRow, {
   NotificationType,
   NotificationRowProps,
 } from "./NotificationRow";
+import { TokenReq } from "@/components/apis/axiosInstance";
 
-/* ===== 타입 ===== */
+/* ===== 서버 응답 타입 ===== */
+type ApiAction = {
+  type: string;
+  label: string;
+  style: string;
+  apiUrl: string;
+  method: string; // "GET" | "POST" | "PATCH" ...
+};
+
+type ApiNotification = {
+  id: number;
+  title: string;
+  content: string;
+  type: string; // e.g. "PUZZLE_CREATED", "MATE_INVITE", ...
+  status: "UNREAD" | "READ";
+  priority: "LOW" | "MEDIUM" | "HIGH";
+  senderId: number;
+  senderName: string;
+  relatedEntityType?: string;
+  relatedEntityId?: number;
+  actions?: ApiAction[];
+  navigationUrl?: string;
+  readAt?: string;
+  navigatedAt?: string;
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+type ApiResponse = {
+  isSuccess: boolean;
+  code: string;
+  message: string;
+  data: {
+    content: ApiNotification[];
+  };
+  success: boolean;
+};
+
+/* ===== UI 타입 ===== */
 type NotificationItem = {
   id: string;
   type: NotificationType;
   title: string;
   message: string;
-  createdAt: string;      // ISO
-  // mate_invite 전용 액션 (선택)
-  onAccept?: () => void;
-  onDecline?: () => void;
+  createdAt: string;
+  unread?: boolean;
 };
 
-/* ===== 더미 데이터 ===== */
-const NOW = Date.now();
-const D = (min: number) => new Date(NOW - min * 60 * 1000).toISOString();
+/* ===== 서버 타입 → UI 타입 매핑 ===== */
+const mapApiTypeToUIType = (t: string): NotificationType => {
+  switch (t) {
+    case "MATE_INVITE":
+    case "INVITE_RECEIVED":
+      return "mate_invite";
+    case "SETTLEMENT_CREATED":
+    case "SETTLEMENT_REQUEST":
+      return "settlement";
+    case "COMMENT_CREATED":
+    case "REPLY_CREATED":
+      return "comment";
+    case "PUZZLE_CREATED":
+    case "SCHEDULE_CREATED":
+    case "EVENT_CREATED":
+    default:
+      return "schedule";
+  }
+};
 
-const DUMMY: NotificationItem[] = [
-  {
-    id: "n1",
-    type: "schedule",
-    title: "일정 추가",
-    message: "손민수님이 캘린더에 일정을 추가하셨습니다.",
-    createdAt: D(4),
-  },
-  {
-    id: "n2",
-    type: "mate_invite",
-    title: "메이트 요청",
-    message: "박민지님이 메이트 요청을 보냈습니다.",
-    createdAt: D(9),
-  },
-  {
-    id: "n3",
-    type: "settlement",
-    title: "정산 요청",
-    message: "김희영님이 새로운 정산을 등록하셨습니다.",
-    createdAt: D(120), // 2시간 전
-  },
-  {
-    id: "n4",
-    type: "comment",
-    title: "새 댓글",
-    message: "손민수님이 댓글을 남기셨습니다.",
-    createdAt: D(60 * 24), // 1일 전
-  },
-  {
-    id: "n5",
-    type: "comment",
-    title: "새 댓글",
-    message: "손민수님이 댓글을 남기셨습니다.",
-    createdAt: D(60 * 36), // 1.5일 전
-  },
-];
+const toUIItem = (n: ApiNotification): NotificationItem => ({
+  id: String(n.id),
+  type: mapApiTypeToUIType(n.type),
+  title: n.title ?? "",
+  message: n.content ?? "",
+  createdAt: n.createdAt ?? new Date().toISOString(),
+  unread: n.status === "UNREAD",
+});
 
-/* ===== 분류 기준: 시간만 사용 ===== */
+/* ===== 분류/정렬 ===== */
 const NEW_THRESHOLD_HOURS = 24;
-
 const isWithinHours = (d: string | number | Date, hours = NEW_THRESHOLD_HOURS) =>
   (Date.now() - new Date(d).getTime()) / 36e5 <= hours;
 
-// 최신순 정렬
 const byCreatedDesc = (a: NotificationItem, b: NotificationItem) =>
   new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 
+/* ===== 읽음 처리 API ===== */
+const READ_ENDPOINT = (id: string) => `/api/notifications/${id}/read`;
+const markAsRead = async (id: string) => {
+  try {
+    await TokenReq.post(READ_ENDPOINT(id));
+  } catch (e) {
+    console.error("[read API] failed:", e);
+  }
+};
+
 export default function NotificationListScreen() {
-  const [items] = useState<NotificationItem[]>(DUMMY);
+  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 액션 예시(필요 시 API 연동)
-  const handleAccept = useCallback((id: string) => {
-    console.log("[invite ACCEPT]", id);
+  /* ---- 서버에서 목록 조회 ---- */
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        // 실제 목록 엔드포인트로 변경 필요 시 여기 수정
+        const res = await TokenReq.get("/api/notifications");
+        console.log(res)
+        const list = res.data?.data?.content ?? [];
+        const mapped = list.map(toUIItem).sort(byCreatedDesc);
+        if (mounted) setItems(mapped);
+      } catch (e: any) {
+        console.error("[notifications] fetch error:", e?.response?.data ?? e);
+        Alert.alert("알림", "알림을 불러오는 중 문제가 발생했습니다.");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const handleDecline = useCallback((id: string) => {
-    console.log("[invite DECLINE]", id);
+  /* ---- 공통: 낙관적 읽음 반영 ---- */
+  const optimisticRead = useCallback((id: string) => {
+    setItems(prev => prev.map(n => (n.id === id ? { ...n, unread: false } : n)));
   }, []);
 
-  const handleOpen = useCallback((id: string) => {
-    console.log("[row PRESS] open:", id);
-  }, []);
+  /* ---- 탭: 읽음 처리 → 라우팅 ----
+     규칙: mate_invite 제외 전부 "/(tabs)/home"
+           settlement만 "(tabs)/adjustment"로 별도 처리(네가 이미 넣은 규칙 유지) */
+  const handleOpen = useCallback(async (id: string) => {
+    const target = items.find(n => n.id === id);
+    if (!target) return;
 
-  // 섹션 데이터 (시간 기준만)
+    optimisticRead(id);
+    await markAsRead(id);
+
+    if (target.type === "mate_invite") {
+      // 그룹 초대는 CTA(수락/거절)로 처리. 탭 시 이동 없음.
+      return;
+    }
+    if (target.type === "settlement") {
+      router.replace("(tabs)/adjustment");
+      return;
+    }
+    router.push("/(tabs)/home" as any);
+  }, [items, optimisticRead]);
+
+  /* ---- 그룹 초대: 수락 → 읽음 처리 → 로그인 이동 ---- */
+  const handleAccept = useCallback(async (id: string) => {
+    try {
+      optimisticRead(id);
+      await markAsRead(id);
+
+      // TODO: 실제 초대 수락 API가 있다면 여기에 호출 추가
+      // await TokenReq.post(`/api/group-invites/${inviteId}/accept`);
+
+      router.replace("/login/loginpage" as any); // 뒤로가기 방지
+    } catch (e) {
+      Alert.alert("오류", "수락 처리 중 문제가 발생했습니다.");
+    }
+  }, [optimisticRead]);
+
+  /* ---- 그룹 초대: 거절 ---- */
+  const handleDecline = useCallback(async (id: string) => {
+    try {
+      optimisticRead(id);
+      await markAsRead(id);
+
+      // TODO: 실제 초대 거절 API가 있다면 호출 추가
+      // await TokenReq.post(`/api/group-invites/${inviteId}/decline`);
+
+      Alert.alert("알림", "초대가 거절되었습니다.");
+    } catch (e) {
+      Alert.alert("오류", "거절 처리 중 문제가 발생했습니다.");
+    }
+  }, [optimisticRead]);
+
+  /* ---- 섹션 구성 ---- */
   const sections = useMemo(() => {
-    const newList = items.filter(n => isWithinHours(n.createdAt)).sort(byCreatedDesc);
-    const oldList = items.filter(n => !isWithinHours(n.createdAt)).sort(byCreatedDesc);
-
+    const newList = items.filter(n => isWithinHours(n.createdAt));
+    const oldList = items.filter(n => !isWithinHours(n.createdAt));
     return [
       ...(newList.length ? [{ key: "new", title: "새 알림", data: newList }] : []),
       ...(oldList.length ? [{ key: "old", title: "이전 알림", data: oldList }] : []),
     ];
   }, [items]);
 
+  /* ---- 렌더러 ---- */
   const renderItem: ListRenderItem<NotificationItem> = ({ item }) => {
-    const rowProps: NotificationRowProps = {
+    const props: NotificationRowProps = {
       id: item.id,
       type: item.type,
       title: item.title,
       message: item.message,
       createdAt: item.createdAt,
-      onPress: () => handleOpen(item.id),
+      unread: item.unread,
+      onPress: handleOpen,
     };
 
     if (item.type === "mate_invite") {
-      rowProps.onAccept = () => handleAccept(item.id);
-      rowProps.onDecline = () => handleDecline(item.id);
+      props.onAccept = handleAccept;
+      props.onDecline = handleDecline;
     }
 
-    return <NotificationRow {...rowProps} />;
+    return <NotificationRow {...props} />;
   };
 
   return (
     <View style={s.container}>
       <BackHeader title="알림" />
-      <SectionList
-        sections={sections}
-        keyExtractor={(it) => it.id}
-        renderItem={renderItem}
-        renderSectionHeader={({ section }) => (
-          <SectionHeader title={section.title} style={{ backgroundColor: "#fff" }} />
-        )}
-        stickySectionHeadersEnabled={false}
-        contentContainerStyle={s.listContent}
-        ItemSeparatorComponent={() => <View style={s.separator} />}
-      />
+      {loading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator />
+        </View>
+      ) : (
+        <SectionList
+          sections={sections as any}
+          keyExtractor={(it) => it.id}
+          renderItem={renderItem}
+          renderSectionHeader={({ section }) => (
+            <SectionHeader title={section.title} style={{ backgroundColor: "#fff" }} />
+          )}
+          stickySectionHeadersEnabled={false}
+          contentContainerStyle={s.listContent}
+          ItemSeparatorComponent={() => <View style={s.separator} />}
+        />
+      )}
     </View>
   );
 }

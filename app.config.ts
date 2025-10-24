@@ -2,40 +2,36 @@
 import 'dotenv/config';
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
-export default ({ config }: ConfigContext): ExpoConfig => {
-  const profile = process.env.EAS_BUILD_PROFILE;
-  const isPreview = profile === 'preview';
+export default ({ config }: ConfigContext): ExpoConfig => ({
+  ...config,
+  name: 'mymate',
+  slug: 'mymate',
+  owner: 'yoonhojoon',
 
-  return {
-    ...config,
-    name: 'mymate',
-    slug: 'mymate',
-    extra: {
-      ...config.extra,
-      API_URL: process.env.API_URL,
-      STAGE: process.env.STAGE ?? 'dev',
-      SENTRY_DSN: process.env.SENTRY_DSN,
-      eas: {
-        ...(config.extra?.eas ?? {}),
-        projectId: 'ada93026-57fb-419f-a272-59fd9079c15b',
-      },
-    },
-    android: {
-      package: 'com.mymate.app',
-      versionCode: isPreview ? 1 : 1,
-      // ⛔ 여기엔 usesCleartextTraffic 직접 넣지 마세요(타입 에러 원인)
-    },
-    plugins: [
-      // 👇 여기서 네이티브 빌드 속성 주입
-      [
-        'expo-build-properties',
-        {
-          android: {
-            usesCleartextTraffic: process.env.API_URL?.startsWith('http://') ? true : false,
-          },
-        },
-      ],
-    ],
-  };
+  icon: './assets/image/onboarding/MymateMainlogo.png', // 기본 앱 아이콘
 
-};
+  android: {
+    package: 'com.mymate.app',
+    googleServicesFile: './google-services.json', // Firebase Android 설정
+    icon: './assets/image/onboarding/MymateMainlogo.png', // 안드로이드용 아이콘
+    adaptiveIcon: {
+      foregroundImage: './assets/image/onboarding/MymateMainlogo.png',
+      backgroundColor: '#ffffff',
+    },
+  },
+
+  ios: {
+    googleServicesFile: './GoogleService-Info.plist', // Firebase iOS 설정
+  },
+
+  plugins: ['expo-notifications'],
+
+  extra: {
+    API_URL: process.env.API_URL,
+    STAGE: process.env.STAGE ?? 'dev',
+    SENTRY_DSN: process.env.SENTRY_DSN,
+    eas: {
+      projectId: '412ab654-b934-4dd0-863b-21e7efb950b1',
+    },
+  },
+});

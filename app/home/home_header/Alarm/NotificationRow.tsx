@@ -57,6 +57,7 @@ export default function NotificationRow({
 }: NotificationRowProps) {
   const Icon = TypeIcon[type];
   const showCTA = type === "mate_invite";
+  const safeMessage = message ?? "";
 
   return (
     <TouchableOpacity
@@ -66,10 +67,9 @@ export default function NotificationRow({
       style={[
         s.wrap,
         unread && s.unread,
-        type === "mate_invite" && s.mateInviteBg, // ✅ 조건 추가
+        type === "mate_invite" && s.mateInviteBg,
       ]}
     >
-      {/* 상단: 아이콘 + 본문 + 시간 */}
       <View style={s.topRow}>
         <View style={s.iconCircle}>
           <Icon size={24} />
@@ -79,15 +79,16 @@ export default function NotificationRow({
           <Text style={s.title} numberOfLines={1}>
             {title}
           </Text>
-          <Text style={s.message} numberOfLines={2}>
-            {message}
-          </Text>
+          {!!safeMessage && (
+            <Text style={s.message} numberOfLines={2}>
+              {safeMessage}
+            </Text>
+          )}
         </View>
 
         <Text style={s.time}>{timeAgo(createdAt)}</Text>
       </View>
 
-      {/* 메이트 초대 전용 CTA */}
       {showCTA && (
         <View style={s.ctaRow}>
           <TouchableOpacity

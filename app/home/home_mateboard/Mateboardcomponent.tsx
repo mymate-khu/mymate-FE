@@ -7,7 +7,7 @@ import ChevronRight from "@/assets/image/homepage_puzzleimg/chevron-right.svg";
 export default function MateboardComponent() {
   return (
     <View>
-      <View style={{ marginBottom: 10 }}>
+      <View style={{ marginBottom: 10,marginTop:10 }}>
         <Text style={s.title}>MATE BOARD</Text>
       </View>
 

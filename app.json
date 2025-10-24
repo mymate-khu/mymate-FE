@@ -4,7 +4,7 @@
     "slug": "my-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/image/onboarding/MyMate.png",
+    "icon": "./assets/image/onboarding/mymatemainlogo.png",
     "userInterfaceStyle": "light",
     "scheme": "my-app",
     "splash": {
@@ -13,19 +13,20 @@
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
-      "**/*"
+      "assets/**"
     ],
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "icon": "./assets/image/onboarding/mymatemainlogo.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/image/onboarding/MyMate.png",
+        "foregroundImage": "./assets/image/onboarding/mymatemainlogo.png",
         "backgroundColor": "#ffffff"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/image/onboarding/mymatemainlogo.png"
     },
     "plugins": [
       "expo-font",
