@@ -2,27 +2,36 @@
 import 'dotenv/config';
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
-const config: ExpoConfig = {
+export default ({ config }: ConfigContext): ExpoConfig => ({
+  ...config,
   name: 'mymate',
   slug: 'mymate',
   owner: 'yoonhojoon',
-  // 필요한 설정들 ...
+
+  icon: './assets/image/onboarding/MymateMainlogo.png', // 기본 앱 아이콘
+
   android: {
     package: 'com.mymate.app',
-    googleServicesFile: './google-services.json', // Firebase Android 설정 파일
-  },
-  ios: {
-    googleServicesFile: './GoogleService-Info.plist', // Firebase iOS 설정 파일
-  },
-  plugins: [
-    'expo-notifications',
-  ],
-  extra: {
-    API_URL: process.env.API_URL,           // 필수
-    STAGE: process.env.STAGE ?? 'dev',      // 'dev' | 'staging' | 'prod'
-    SENTRY_DSN: process.env.SENTRY_DSN,     // 선택
-    eas: { projectId: '412ab654-b934-4dd0-863b-21e7efb950b1' },
+    googleServicesFile: './google-services.json', // Firebase Android 설정
+    icon: './assets/image/onboarding/MymateMainlogo.png', // 안드로이드용 아이콘
+    adaptiveIcon: {
+      foregroundImage: './assets/image/onboarding/MymateMainlogo.png',
+      backgroundColor: '#ffffff',
+    },
   },
 
-};
-export default config
+  ios: {
+    googleServicesFile: './GoogleService-Info.plist', // Firebase iOS 설정
+  },
+
+  plugins: ['expo-notifications'],
+
+  extra: {
+    API_URL: process.env.API_URL,
+    STAGE: process.env.STAGE ?? 'dev',
+    SENTRY_DSN: process.env.SENTRY_DSN,
+    eas: {
+      projectId: '412ab654-b934-4dd0-863b-21e7efb950b1',
+    },
+  },
+});
