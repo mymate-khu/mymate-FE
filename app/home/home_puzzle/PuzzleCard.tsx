@@ -6,7 +6,7 @@ import CheckOnIcon from "@/assets/image/homepage_puzzleimg/PuzzleCheckOn.svg";
 import CheckOffIcon from "@/assets/image/homepage_puzzleimg/PuzzleCheckOff.svg";
 
 type Tone = "light" | "medium" | "dark";
-type Palette = "yellow" | "purple" | "neutral"; // ✅ 회색 팔레트 추가( PuzzleBox도 추가 필요 )
+type Palette = "yellow" | "purple" | "gray"; // ✅ 회색 팔레트 추가
 type Size = "small" | "medium" | "large";
 type Chevron = "up" | "down";
 
@@ -56,12 +56,14 @@ export default function PuzzleCard({
   emptySubtitle,
 }: PuzzleCardProps) {
   const isEmpty = variant === "empty";
+  const finalPalette = isEmpty ? "gray" : palette;
+  const finalSize = isEmpty ? "small" : size;
 
   return (
     <PuzzleBox
-      palette={"yellow"}
+      palette={finalPalette}
       tone={tone}
-      size={size}
+      size={finalSize}
       chevron={chevron}
       style={style}
       onPress={onPress}

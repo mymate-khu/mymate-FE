@@ -17,14 +17,27 @@ export default function AdjustmentSearch() {
 
   const [filterOpen, setFilterOpen] = useState(false);
   const OPTIONS = [
-    { key: "food",    label: "식비" },
-    { key: "life",    label: "생활" },
-    { key: "shop",    label: "쇼핑" },
-    { key: "car",     label: "교통/차량" },
-    { key: "house",   label: "주거/관리비" },
-    { key: "culture", label: "문화/여가" },
+    { key: "식비",    label: "식비" },
+    { key: "생활",    label: "생활" },
+    { key: "쇼핑",    label: "쇼핑" },
+    { key: "교통/차량",     label: "교통/차량" },
+    { key: "주거/관리비",   label: "주거/관리비" },
+    { key: "문화/여가", label: "문화/여가" },
   ];
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
+  const handleSearch = () => {
+    if (q.trim()) {
+      router.push(`/adjustment/adjustment_list?search=${encodeURIComponent(q)}`);
+    }
+  };
+
+  const handleCategorySelect = () => {
+    if (selectedKey) {
+      router.push(`/adjustment/adjustment_list?category=${encodeURIComponent(selectedKey)}`);
+    }
+    setFilterOpen(false);
+  };
 
   return (
     <SafeAreaView style={s.container}>
@@ -43,7 +56,7 @@ export default function AdjustmentSearch() {
             placeholderTextColor="#767676"
             style={s.searchInput}
             returnKeyType="search"
-            onSubmitEditing={() => console.log("search:", q)}
+            onSubmitEditing={handleSearch}
             autoFocus={true} // 페이지 열리자마자 키보드 뜸
           />
           <SearchIcon width={20} height={20} />
@@ -96,12 +109,12 @@ export default function AdjustmentSearch() {
               // 각 key에 맞는 아이콘을 선택
               const renderIcon = () => {
                 switch (opt.key) {
-                  case "food":    return <CutleryIcon width={48} height={48} />;
-                  case "life":    return <ShopbagIcon width={48} height={48} />;
-                  case "shop":    return <TagIcon width={48} height={48} />;
-                  case "car":     return <CarIcon width={48} height={48} />;
-                  case "house":   return <HouseIcon width={48} height={48} />;
-                  case "culture": return <TicketIcon width={48} height={48} />;
+                  case "식비":    return <CutleryIcon width={48} height={48} />;
+                  case "생활":    return <ShopbagIcon width={48} height={48} />;
+                  case "쇼핑":    return <TagIcon width={48} height={48} />;
+                  case "교통/차량":     return <CarIcon width={48} height={48} />;
+                  case "주거/관리비":   return <HouseIcon width={48} height={48} />;
+                  case "문화/여가": return <TicketIcon width={48} height={48} />;
                   default:        return null;
                 }
               };
@@ -129,11 +142,7 @@ export default function AdjustmentSearch() {
           <TouchableOpacity
             style={s.confirmBtn}
             activeOpacity={0.9}
-            onPress={() => {
-              console.log("selected:", selectedKey);
-              setFilterOpen(false);
-              // TODO: 선택값을 검색 쿼리/상태로 반영
-            }}
+            onPress={handleCategorySelect}
           >
             <Text style={s.confirmText}>확인</Text>
           </TouchableOpacity>

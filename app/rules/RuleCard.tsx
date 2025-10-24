@@ -1,10 +1,10 @@
 // app/rules/components/RuleCard.tsx
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, Image, ImageBackground } from "react-native";
 import { BlurView } from "expo-blur";
 
-import RuleCardMe from "@/assets/image/rules/RuleCardMe.svg";
-import RuleCardMate from "@/assets/image/rules/RuleCardMate.svg";
+import RuleCardMe from "@/assets/image/rules/RuleCardMe.png";
+import RuleCardMate from "@/assets/image/rules/RuleCardMate.png";
 import DetailIcon from "@/assets/image/adjustmenticon/detail_Icon.svg";
 
 type AuthorType = "me" | "mate";
@@ -38,18 +38,16 @@ export default function RuleCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
 
-  const Bg = author === "me" ? RuleCardMe : RuleCardMate;
+  const bgImage = author === "me" ? RuleCardMe : RuleCardMate;
 
-  // 카드 안쪽 안전 여백 (SVG 파먹임/둥근 모서리 회피)
+  // 카드 안쪽 안전 여백 (둥근 모서리 회피)
   // 필요하면 수치만 살짝 조절하면 됩니다.
   const SAFE = { left: 16, right: 16, top: 20, bottom: 16 };
 
   return (
     <View style={[s.cardWrap, style,  { width: 183 }]}>
-      {/* 배경 SVG (터치 방해 X) */}
-      <View style={s.bgWrap} pointerEvents="none">
-        <Bg width="100%" height="100%" />
-      </View>
+      {/* 배경 이미지 (터치 방해 X) */}
+      <Image source={bgImage} style={s.bgImage} resizeMode="cover" />
 
       {/* 내용 오버레이: MateboardComponent처럼 absolute로 안전영역에 배치 */}
       <TouchableOpacity
@@ -59,7 +57,7 @@ export default function RuleCard({
       >
         {/* 상단: 번호 + 더보기 */}
         <View style={s.topRow}>
-          <Text style={s.orderText}>{`O${order}`}</Text>
+          <Text style={s.orderText}>{`O${String(order)}`}</Text>
 
           <TouchableOpacity
             style={s.moreBtn}
@@ -73,9 +71,9 @@ export default function RuleCard({
 
         {/* 본문 */}
         <View style={s.body}>
-          <Text style={s.title} numberOfLines={2}>{title}</Text>
+          <Text style={s.title} numberOfLines={2}>{String(title || '')}</Text>
           {!!description && (
-            <Text style={s.desc} numberOfLines={3}>{description}</Text>
+            <Text style={s.desc} numberOfLines={3}>{String(description)}</Text>
           )}
         </View>
       </TouchableOpacity>
@@ -113,11 +111,12 @@ const s = StyleSheet.create({
     aspectRatio: 0.78, 
     height: 158,    
     overflow: "hidden",     // 텍스트가 바깥으로 새지 않게
-    //backgroundColor: "pink",  
-  },
-  bgWrap: {
-    ...StyleSheet.absoluteFillObject,
     borderRadius: 24,
+  },
+  bgImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
   },
   // 🔥 MateboardComponent처럼 absolute overlay로 안전영역에 텍스트 배치
   content: {

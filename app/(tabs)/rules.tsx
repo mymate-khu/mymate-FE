@@ -130,8 +130,10 @@ export default function RulesScreen() {
           return (
             <View style={[overlapStyle, deletingId === item.id ? { opacity: 0.5 } : undefined]}>
               <RuleCard
-                {...item}
-                order={index + 1}
+                id={item.id}
+                order={item.order || index + 1}
+                title={item.title || ''}
+                description={item.description || ''}
                 author={author}
                 onEdit={() => openEdit(item.id)}
                 onDelete={() => handleDelete(item.id)}
