@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { View, StyleSheet, SectionList, ListRenderItem, Alert, ActivityIndicator } from "react-native";
+import { View, StyleSheet, SectionList, ListRenderItem, Alert } from "react-native";
 import { router } from "expo-router";
 
 import BackHeader from "@/components/BackHeader";
@@ -9,6 +9,7 @@ import NotificationRow, {
   NotificationRowProps,
 } from "./NotificationRow";
 import { TokenReq } from "@/components/apis/axiosInstance";
+import { acceptInvitation } from "@/components/apis/invitations";
 
 /* ===== 서버 응답 타입 ===== */
 type ApiAction = {
@@ -57,12 +58,13 @@ type NotificationItem = {
   message: string;
   createdAt: string;
   unread?: boolean;
+  relatedEntityId?: number; // 초대 ID를 저장
 };
 
 /* ===== 서버 타입 → UI 타입 매핑 ===== */
 const mapApiTypeToUIType = (t: string): NotificationType => {
   switch (t) {
-    case "MATE_INVITE":
+    case "GROUP_INVITATION_RECEIVED":
     case "INVITE_RECEIVED":
       return "mate_invite";
     case "SETTLEMENT_CREATED":
@@ -79,14 +81,20 @@ const mapApiTypeToUIType = (t: string): NotificationType => {
   }
 };
 
-const toUIItem = (n: ApiNotification): NotificationItem => ({
-  id: String(n.id),
-  type: mapApiTypeToUIType(n.type),
-  title: n.title ?? "",
-  message: n.content ?? "",
-  createdAt: n.createdAt ?? new Date().toISOString(),
-  unread: n.status === "UNREAD",
-});
+const toUIItem = (n: ApiNotification): NotificationItem => {
+  const uiType = mapApiTypeToUIType(n.type);
+  console.log(`🔍 알림 매핑: ${n.type} → ${uiType}, relatedEntityId: ${n.relatedEntityId}`);
+  
+  return {
+    id: String(n.id),
+    type: uiType,
+    title: n.title ?? "",
+    message: n.content ?? "",
+    createdAt: n.createdAt ?? new Date().toISOString(),
+    unread: n.status === "UNREAD",
+    relatedEntityId: n.relatedEntityId, // 초대 ID 저장
+  };
+};
 
 /* ===== 분류/정렬 ===== */
 const NEW_THRESHOLD_HOURS = 24;
@@ -108,7 +116,6 @@ const markAsRead = async (id: string) => {
 
 export default function NotificationListScreen() {
   const [items, setItems] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
   /* ---- 서버에서 목록 조회 ---- */
   useEffect(() => {
@@ -117,15 +124,17 @@ export default function NotificationListScreen() {
       try {
         // 실제 목록 엔드포인트로 변경 필요 시 여기 수정
         const res = await TokenReq.get("/api/notifications");
-        console.log(res)
+        console.log("🔍 알림 API 응답:", res.data);
         const list = res.data?.data?.content ?? [];
+        console.log("🔍 알림 목록:", list);
+        
         const mapped = list.map(toUIItem).sort(byCreatedDesc);
+        console.log("🔍 매핑된 알림 목록:", mapped);
+        
         if (mounted) setItems(mapped);
       } catch (e: any) {
         console.error("[notifications] fetch error:", e?.response?.data ?? e);
         Alert.alert("알림", "알림을 불러오는 중 문제가 발생했습니다.");
-      } finally {
-        if (mounted) setLoading(false);
       }
     })();
     return () => {
@@ -159,33 +168,69 @@ export default function NotificationListScreen() {
     router.push("/(tabs)/home" as any);
   }, [items, optimisticRead]);
 
-  /* ---- 그룹 초대: 수락 → 읽음 처리 → 로그인 이동 ---- */
+  /* ---- 그룹 초대: 수락 → 읽음 처리 → 메이트 추가 ---- */
   const handleAccept = useCallback(async (id: string) => {
     try {
+      // 알림 데이터에서 실제 초대 ID 찾기
+      const notification = items.find(n => n.id === id);
+      if (!notification) {
+        Alert.alert("오류", "알림을 찾을 수 없습니다.");
+        return;
+      }
+
+      if (!notification.relatedEntityId) {
+        Alert.alert("오류", "초대 정보를 찾을 수 없습니다.");
+        return;
+      }
+
+      // 알림을 읽음 처리
       optimisticRead(id);
       await markAsRead(id);
 
-      // TODO: 실제 초대 수락 API가 있다면 여기에 호출 추가
-      // await TokenReq.post(`/api/group-invites/${inviteId}/accept`);
+      // 초대 수락 API 호출 (relatedEntityId를 invitationId로 사용)
+      await acceptInvitation(notification.relatedEntityId);
 
-      router.replace("/login/loginpage" as any); // 뒤로가기 방지
+      // 성공 메시지 표시
+      Alert.alert("초대 수락", "초대를 수락했습니다! 메이트 목록에서 확인할 수 있습니다.", [
+        { text: "확인" }
+      ]);
+
+      // 알림 목록에서 해당 항목 제거 (수락된 초대는 더 이상 표시하지 않음)
+      setItems(prev => prev.filter(item => item.id !== id));
+
     } catch (e) {
-      Alert.alert("오류", "수락 처리 중 문제가 발생했습니다.");
+      console.error("초대 수락 실패:", e);
+      Alert.alert("오류", "초대 수락에 실패했습니다. 다시 시도해주세요.");
+      
+      // 실패 시 읽음 상태 롤백
+      setItems(prev => prev.map(n => n.id === id ? { ...n, unread: true } : n));
     }
-  }, [optimisticRead]);
+  }, [optimisticRead, items]);
 
   /* ---- 그룹 초대: 거절 ---- */
   const handleDecline = useCallback(async (id: string) => {
     try {
+      // 알림을 읽음 처리
       optimisticRead(id);
       await markAsRead(id);
 
       // TODO: 실제 초대 거절 API가 있다면 호출 추가
       // await TokenReq.post(`/api/group-invites/${inviteId}/decline`);
 
-      Alert.alert("알림", "초대가 거절되었습니다.");
+      // 성공 메시지 표시
+      Alert.alert("초대 거절", "초대를 거절했습니다.", [
+        { text: "확인" }
+      ]);
+
+      // 알림 목록에서 해당 항목 제거 (거절된 초대는 더 이상 표시하지 않음)
+      setItems(prev => prev.filter(item => item.id !== id));
+
     } catch (e) {
+      console.error("초대 거절 실패:", e);
       Alert.alert("오류", "거절 처리 중 문제가 발생했습니다.");
+      
+      // 실패 시 읽음 상태 롤백
+      setItems(prev => prev.map(n => n.id === id ? { ...n, unread: true } : n));
     }
   }, [optimisticRead]);
 
@@ -222,23 +267,17 @@ export default function NotificationListScreen() {
   return (
     <View style={s.container}>
       <BackHeader title="알림" />
-      {loading ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator />
-        </View>
-      ) : (
-        <SectionList
-          sections={sections as any}
-          keyExtractor={(it) => it.id}
-          renderItem={renderItem}
-          renderSectionHeader={({ section }) => (
-            <SectionHeader title={section.title} style={{ backgroundColor: "#fff" }} />
-          )}
-          stickySectionHeadersEnabled={false}
-          contentContainerStyle={s.listContent}
-          ItemSeparatorComponent={() => <View style={s.separator} />}
-        />
-      )}
+      <SectionList
+        sections={sections as any}
+        keyExtractor={(it) => it.id}
+        renderItem={renderItem}
+        renderSectionHeader={({ section }) => (
+          <SectionHeader title={section.title} style={{ backgroundColor: "#fff" }} />
+        )}
+        stickySectionHeadersEnabled={false}
+        contentContainerStyle={s.listContent}
+        ItemSeparatorComponent={() => <View style={s.separator} />}
+      />
     </View>
   );
 }
