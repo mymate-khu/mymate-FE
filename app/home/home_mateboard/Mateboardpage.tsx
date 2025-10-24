@@ -1,14 +1,12 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, ScrollView, StyleSheet, Text, Image, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
-import Union from "@/assets/image/homepage_puzzleimg/Union.svg";
+import Union from "@/assets/image/homepage_puzzleimg/Union.png";
 import { TokenReq } from "@/components/apis/axiosInstance";
 
-// 📌 실제 로그인 유저의 memberId로 교체하세요 (ex. 전역 auth store, /me 응답 등)
-const MY_MEMBER_ID = 123; // TODO: replace
+const MY_MEMBER_ID = 123;
 
-// 서버 응답 타입 (질문에 준 스키마 기준)
 type PuzzleDto = {
   id: number;
   title: string;
@@ -24,10 +22,7 @@ type PuzzleDto = {
   category: string | null;
   createdAt: string;
   updatedAt: string;
-
 };
-
-
 
 type ApiResponse = {
   isSuccess: boolean;
@@ -37,12 +32,11 @@ type ApiResponse = {
   success: boolean;
 };
 
-// 화면 렌더용 타입
 type CardData = {
   id: number;
   imgurl: string;
-  name: string;     // 멤버 이름 (서버에 없으면 memberId로 대체)
-  content: string;  // 퍼즐 내용(제목/설명)
+  name: string;
+  content: string;
   memberId: number;
 };
 
@@ -60,10 +54,8 @@ export default function MyPuzzleScreen() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const today = new Date();
-  const todayISO = today.toISOString().split('T')[0];
+  const todayISO = new Date().toISOString().split("T")[0];
 
-  // ✅ 화면 포커스 시 1회(또는 재진입 시마다) 퍼즐 목록 불러오기
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
@@ -71,66 +63,61 @@ export default function MyPuzzleScreen() {
         try {
           setLoading(true);
           setErr(null);
-          // ⬇️ 실제 엔드포인트로 교체하세요 (ex. GET /api/puzzles)
+
+          // 실제 엔드포인트로 교체
           const res = await TokenReq.get<ApiResponse>(`api/puzzles/date/${todayISO}`);
-          console.log(res)
           if (cancelled) return;
           const all = res.data?.data ?? [];
 
-          // 1) 내 memberId와 다른 것만 필터
           const filtered = all.filter((p) => p.memberId !== MY_MEMBER_ID);
-
-          // 2) UI 데이터로 매핑
           const mapped: CardData[] = filtered.map((p) => ({
             id: p.id,
-            imgurl: "", // 서버에서 아바타가 오지 않으므로 비워둠 (필요 시 멤버 프로필 조회 추가)
-            name: `멤버 ${p.memberId}`, // 서버가 username을 안 주므로 일단 memberId로 표시 (프로필 API 연동 시 교체)
+            imgurl: "",
+            name: `멤버 ${p.memberId}`,
             content: p.title || p.description || "",
             memberId: p.memberId,
           }));
 
           setItems(mapped.length ? mapped : DUMMY_CARDS);
-        } catch (e: any) {
-          if (!cancelled){
+        } catch (e) {
+          if (!cancelled) {
             setItems(DUMMY_CARDS);
             setErr("서버 연결이 불안정하여 임시 데이터를 표시합니다.");
-          } 
+          }
         } finally {
           if (!cancelled) setLoading(false);
         }
       })();
+
       return () => {
         cancelled = true;
       };
-    }, [])
+    }, [todayISO])
   );
 
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Text style={{ fontSize: 16, fontWeight: "500", fontFamily: "PretendardSemiBold" }}>
-          메이트 보드
+        <Text style={s.headerTitle}>메이트 보드</Text>
+        <Text style={s.arrow} onPress={() => router.replace("/home")}>
+          {"<"}
         </Text>
-        <Text style={s.arrow} onPress={() => router.replace("/home")}>{"<"}</Text>
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <View style={s.loadingWrap}>
           <ActivityIndicator />
-          <Text style={{ marginTop: 8, color: "#8E8E8E" }}>불러오는 중…</Text>
+          <Text style={s.loadingText}>불러오는 중…</Text>
         </View>
       ) : (
         <>
-          {/* 5) 에러는 안내 배너처럼만 표시하고, 리스트는 항상 렌더 */}
           {err && <Text style={s.info}>{err}</Text>}
 
-          <ScrollView style={s.puzzlecontainer} contentContainerStyle={{ paddingBottom: 32 }}>
+          <ScrollView style={{ marginTop: 16 }} contentContainerStyle={s.puzzleContent}>
             {items.length === 0 ? (
               <Text style={s.empty}>표시할 퍼즐이 없어요.</Text>
             ) : (
-              items.map((item) => (
-                <PuzzleItem key={item.id} data={item} style={{ marginBottom: -30 }} />
-              ))
+              items.map((item, idx) => <PuzzleItem key={item.id} data={item} idx={idx} />)
             )}
           </ScrollView>
         </>
@@ -139,28 +126,44 @@ export default function MyPuzzleScreen() {
   );
 }
 
-function PuzzleItem({ data, style }: { data: CardData; style?: any }) {
+const OVERLAP = 23;
+const CARD_RADIUS = 16;
+const CARD_RATIO = 370 / 185; // Union 원본 비율 대략 반영
+
+function PuzzleItem({ data, idx }: { data: CardData; idx: number }) {
   return (
-    <View style={[s.item, style]}>
-      {/* SVG 배경 (터치 통과) */}
-      <Union width="100%" height="100%" viewBox="0 0 370 170" pointerEvents="none" />
+    <View
+      style={[
+        s.card,
+        {
+          marginTop: idx === 0 ? 0 : -OVERLAP, // 위로 살짝 겹치기
+          zIndex: idx + 1,
+        },
+      ]}
+    >
+      {/* ⬇️ 배경: 별도 래퍼로 감싸서 안전하게 클리핑 */}
+      <View style={s.bgWrap}>
+        <Image source={Union} style={s.bgImage} resizeMode="cover" />
+      </View>
 
       {/* 오버레이 콘텐츠 */}
-      <View style={s.overlay}>
-        {/* 프로필 이미지 (좌측 상단) */}
-        {data.imgurl ? (
-          <Image source={{ uri: data.imgurl }} style={s.avatar} />
-        ) : (
-          <View style={[s.avatar, s.avatarFallback]}>
-            <Text style={s.avatarInitial}>{data.name?.[0] ?? "?"}</Text>
-          </View>
-        )}
+      <View style={s.cardOverlay}>
+        {/* 아바타 + 이름 */}
+        <View style={s.headerRow}>
+          {data.imgurl ? (
+            <Image source={{ uri: data.imgurl }} style={s.avatar} />
+          ) : (
+            <View style={[s.avatar, s.avatarFallback]}>
+              <Text style={s.avatarInitial}>{data.name?.[0] ?? "?"}</Text>
+            </View>
+          )}
+          <Text style={s.name} numberOfLines={1}>
+            {data.name}
+          </Text>
+        </View>
 
-        {/* 이름 */}
-        <Text style={s.name}>{data.name}</Text>
-
-        {/* content */}
-        <Text style={s.content} numberOfLines={2}>
+        {/* 제목/내용 */}
+        <Text style={s.title} numberOfLines={2}>
           {data.content}
         </Text>
       </View>
@@ -172,48 +175,86 @@ const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    flexDirection: "column",
   },
   header: {
-    flexDirection: "row",
+    height: 50,
     alignItems: "center",
     justifyContent: "center",
-    height: 50,
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    fontFamily: "PretendardSemiBold",
   },
   arrow: {
     position: "absolute",
+    left: 10,
     fontSize: 20,
     fontFamily: "PretendardSemiBold",
-    left: 10,
   },
-  puzzlecontainer: {
-    flexDirection: "column",
-    paddingHorizontal: "5%",
-    marginTop: 30,
+
+  // ScrollView content 레이아웃
+  puzzleContent: {
+    paddingBottom: 32,
+    rowGap: 0,               // 겹치기 위해 간격 0
+    paddingHorizontal: "5%",    // ⬅️ 옆으로 튀는 걸 방지하려면 0이 안전
+    alignItems: "stretch",
   },
+
   info: { paddingHorizontal: 16, paddingVertical: 8, color: "#8E8E8E" },
+  loadingWrap: { flex: 1, alignItems: "center", justifyContent: "center" },
+  loadingText: { marginTop: 8, color: "#8E8E8E" },
 
-  // 각 퍼즐 카드 컨테이너
-  item: {
+  // 카드 박스
+  card: {
     position: "relative",
-    minWidth: 300, // ← 쉼표 누락되어 있던 부분 수정!
-    // 필요 시: aspectRatio: 370 / 170,
+    width: "100%",
+    alignSelf: "stretch",        // 부모 폭을 그대로 사용
+    aspectRatio: CARD_RATIO,
+    borderRadius: CARD_RADIUS,
+    overflow: "hidden",          // 내용 클리핑
+    // 그림자 필요하면 여기(elevation/shadow*) 추가
   },
 
-  // SVG 위 오버레이
-  overlay: {
-    position: "absolute",
-    left: 16,
-    top: 16,
-    right: 16,
+  // 배경 래퍼: 절대 채우기 + 각 모서리 radius 지정(안드 이슈 대응)
+  bgWrap: {
+    ...StyleSheet.absoluteFillObject,
+    borderTopLeftRadius: CARD_RADIUS,
+    borderTopRightRadius: CARD_RADIUS,
+    borderBottomLeftRadius: CARD_RADIUS,
+    borderBottomRightRadius: CARD_RADIUS,
+    overflow: "hidden",
+  },
+  // 배경 이미지: 래퍼 안에서 100% 채우기 + radius 부여(안드 이슈 이중 방어)
+  bgImage: {
+    width: "100%",
+    height: "100%",
+    borderTopLeftRadius: CARD_RADIUS,
+    borderTopRightRadius: CARD_RADIUS,
+    borderBottomLeftRadius: CARD_RADIUS,
+    borderBottomRightRadius: CARD_RADIUS,
   },
 
-  // 아바타
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  // 배경 위 컨텐츠
+  cardOverlay: {
+    flex: 1,
+    zIndex: 1,
+    padding: 16,
+    justifyContent: "flex-start",
+  },
+
+  // 아바타 + 이름 한 줄
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
+  },
+
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10, // columnGap 미지원 환경 대비
   },
   avatarFallback: {
     backgroundColor: "#EEF1F5",
@@ -226,24 +267,21 @@ const s = StyleSheet.create({
   },
 
   name: {
+    flexShrink: 1,
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#111",
-    marginBottom: 4,
   },
-  content: {
+
+  title: {
     fontSize: 14,
-    color: "#4A4A4A",
+    color: "#333",
+    lineHeight: 20,
   },
 
   empty: {
     padding: 24,
     textAlign: "center",
     color: "#8E8E8E",
-  },
-  error: {
-    padding: 24,
-    textAlign: "center",
-    color: "#D00",
   },
 });
