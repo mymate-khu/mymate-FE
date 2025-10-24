@@ -1,5 +1,5 @@
 // ChatScreen.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   SafeAreaView,
   View,
@@ -13,10 +13,13 @@ import {
   Image,
   Keyboard,
   InteractionManager,
+  Alert,
 } from "react-native";
 import * as Clipboard from "expo-clipboard"; // expo install expo-clipboard
 import {API_URL} from "@env"
 import Vector from "@/assets/image/home_chattingimg/Vector.svg"
+import { sendMessage, getMessages, transformToChatMessage, deleteMessage, getChatRooms, type ChatMessage, type SendMessageRequest } from "@/components/apis/chat";
+import { useMyProfile } from "@/hooks/useMyProfile";
 
 /**
  * Chat UI (Expo friendly)
@@ -25,69 +28,10 @@ import Vector from "@/assets/image/home_chattingimg/Vector.svg"
  * - 메시지 추가/키보드 표시 시 완전 하단까지 자동 스크롤 (여러 프레임에 걸쳐 보정)
  */
 
-export type ChatMessage = {
-  id: string;
-  text: string;
-  createdAt: number;
-  sender: "me" | "other";
-  avatarUrl?: string;
-};
-
-const initialMessages: ChatMessage[] = [
-  {
-    id: "m3",
-    text: "좋아! 오늘 7시에 보자",
-    createdAt: Date.now() - 1000 * 60 * 2,
-    sender: "other",
-    avatarUrl: "https://i.pravatar.cc/100?img=5",
-  },
-  {
-    id: "m2",
-    text: "오케이. 장소는 어디가 좋을까?",
-    createdAt: Date.now() - 1000 * 60 * 5,
-    sender: "me",
-    avatarUrl: "https://i.pravatar.cc/100?img=1",
-  },
-  {
-    id: "m4",
-    text: "안녕! 오늘 시간 돼?",
-    createdAt: Date.now() - 1000 * 60 * 6,
-    sender: "other",
-    avatarUrl: "https://i.pravatar.cc/100?img=5",
-  },
-  {
-    id: "m5",
-    text: "안녕! 오늘 시간 돼?",
-    createdAt: Date.now() - 1000 * 60 * 6,
-    sender: "other",
-    avatarUrl: "https://i.pravatar.cc/100?img=5",
-  },
-  {
-    id: "m6",
-    text: "안녕! 오늘 시간 돼?",
-    createdAt: Date.now() - 1000 * 60 * 6,
-    sender: "other",
-    avatarUrl: "https://i.pravatar.cc/100?img=5",
-  },
-  {
-    id: "m7",
-    text: "안녕! 오늘 시간 돼?",
-    createdAt: Date.now() - 1000 * 60 * 6,
-    sender: "other",
-    avatarUrl: "https://i.pravatar.cc/100?img=5",
-  },
-  {
-    id: "m8",
-    text: "안녕! 오늘 시간 돼?",
-    createdAt: Date.now() - 1000 * 60 * 6,
-    sender: "other",
-    avatarUrl: "https://i.pravatar.cc/100?img=5",
-  },
-];
-
 type Props = {
   fixedHeight?: number;
-  onScrollActive?: (active: boolean) => void; // 👈 추가
+  onScrollActive?: (active: boolean) => void;
+  chatRoomId?: number; // 채팅방 ID (GroupId와 동일) - 선택적
 };
 
 const timeText = (ts: number) => {
@@ -115,7 +59,7 @@ const MessageRow = ({ msg, onLongPress }: { msg: ChatMessage; onLongPress: (m: C
         delayLongPress={250}
         style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther]}
       >
-        <Text style={[styles.msgText, isMe ? styles.msgTextMe : styles.msgTextOther]}>{msg.text}</Text>
+        <Text style={[styles.msgText, isMe ? styles.msgTextMe : styles.msgTextOther]}>{msg.content}</Text>
         <Text style={[styles.time, isMe ? styles.timeMe : styles.timeOther]}>{timeText(msg.createdAt)}</Text>
       </TouchableOpacity>
     </View>
@@ -155,12 +99,25 @@ const ChatInput = ({ onSend }: { onSend: (text: string) => void }) => {
  * fixedHeight: 전체 ChatScreen 높이 (기본 560)
  * 리스트는 남는 공간을 차지하고, 넘치면 스크롤됨.
  */
-export default function ChatScreen({ fixedHeight = 560, onScrollActive }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+export default function ChatScreen({ fixedHeight = 560, onScrollActive, chatRoomId }: Props) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { me, loading: profileLoading } = useMyProfile();
   const listRef = useRef<FlatList<ChatMessage>>(null);
+  
+  // 실제 채팅방 ID 로드
+  const [actualChatRoomId, setActualChatRoomId] = useState<number | null>(chatRoomId || null);
 
   // 시간 오름차순(위=과거, 아래=최신)
-  const data = useMemo(() => [...messages].sort((a, b) => a.createdAt - b.createdAt), [messages]);
+  const data = useMemo(() => {
+    const sorted = [...messages].sort((a, b) => a.createdAt - b.createdAt);
+    console.log('📊 메시지 데이터:', { 
+      total: messages.length, 
+      sorted: sorted.length,
+      messages: sorted.map(m => ({ id: m.id, content: m.content, sender: m.sender }))
+    });
+    return sorted;
+  }, [messages]);
 
   // 👉 완전 하단까지 확실히 스크롤시키는 유틸 (여러 프레임 시도)
   const scrollToBottom = (animated = true) => {
@@ -171,26 +128,189 @@ export default function ChatScreen({ fixedHeight = 560, onScrollActive }: Props)
     InteractionManager.runAfterInteractions(() => listRef.current?.scrollToEnd({ animated }));
   };
 
-  const onSend = (text: string) => {
-    const newMsg: ChatMessage = {
-      id: Math.random().toString(36).slice(2),
-      text,
-      createdAt: Date.now(),
-      sender: "me",
-      avatarUrl: "https://i.pravatar.cc/100?img=1",
+  // 사용자 정보 로드 완료 확인
+  useEffect(() => {
+    if (me) {
+      console.log('👤 사용자 정보 로드 완료:', { memberId: me.memberId, nickname: me.nickname });
+    }
+  }, [me]);
+
+  // 채팅방 목록 로드 (chatRoomId가 없을 때)
+  useEffect(() => {
+    const loadChatRooms = async () => {
+      if (actualChatRoomId || !me) return;
+      
+      try {
+        console.log('🔄 채팅방 목록 로드 시작');
+        const response = await getChatRooms();
+        console.log('📨 채팅방 목록 응답:', response);
+        
+        if (response.isSuccess && response.data && response.data.length > 0) {
+          const firstRoom = response.data[0];
+          console.log('✅ 첫 번째 채팅방 선택:', firstRoom);
+          setActualChatRoomId(firstRoom.id);
+        } else {
+          console.log('📭 사용 가능한 채팅방이 없습니다');
+        }
+      } catch (error) {
+        console.error('💥 채팅방 목록 로드 실패:', error);
+      }
     };
-    setMessages((prev) => [...prev, newMsg]);
-    // setState 이후 다음 프레임에 하단 고정
+
+    loadChatRooms();
+  }, [me, actualChatRoomId]);
+
+  // 메시지 로드
+  const loadMessages = useCallback(async () => {
+    if (!actualChatRoomId) {
+      console.log('❌ chatRoomId 없음');
+      return;
+    }
+    
+    if (!me) {
+      console.log('❌ 사용자 정보 없음');
+      return;
+    }
+    
+    console.log('🔄 메시지 로드 시작:', { chatRoomId: actualChatRoomId, memberId: me.memberId });
+    
+    try {
+      setLoading(true);
+      const response = await getMessages({ chatRoomId: actualChatRoomId, page: 0, size: 50 });
+      console.log('📨 메시지 조회 응답:', response);
+      
+      if (response.content) {
+        console.log('📋 받은 메시지 개수:', response.content.length);
+        const transformedMessages = response.content.map(msg => 
+          transformToChatMessage(msg, me.memberId)
+        );
+        console.log('🔄 변환된 메시지들:', transformedMessages);
+        setMessages(transformedMessages);
+      } else {
+        console.log('📭 메시지 없음');
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('💥 메시지 로드 실패:', error);
+      Alert.alert('오류', '메시지를 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [actualChatRoomId, me]);
+
+  // 초기 메시지 로드
+  useEffect(() => {
+    if (actualChatRoomId && me) {
+      loadMessages();
+    }
+  }, [loadMessages]);
+
+  const onSend = async (text: string) => {
+    console.log('🚀 메시지 전송 시작:', { text, chatRoomId: actualChatRoomId, memberId: me?.memberId });
+    
+    if (!actualChatRoomId || !me) {
+      console.error('❌ 채팅방 정보 없음:', { chatRoomId: actualChatRoomId, me });
+      Alert.alert('오류', '채팅방 정보가 없습니다.');
+      return;
+    }
+
+    // 낙관적 업데이트
+    const tempMessage: ChatMessage = {
+      id: `temp_${Date.now()}`,
+      content: text,
+      messageType: 'TEXT',
+      createdAt: Date.now(),
+      sender: 'me',
+      senderId: me.memberId,
+      senderName: me.nickname || '나',
+      chatRoomId: actualChatRoomId,
+    };
+    
+    console.log('📝 임시 메시지 추가:', tempMessage);
+    setMessages((prev) => {
+      const newMessages = [...prev, tempMessage];
+      console.log('📋 메시지 목록 업데이트:', newMessages.length);
+      return newMessages;
+    });
     requestAnimationFrame(() => scrollToBottom());
+
+    try {
+      const request: SendMessageRequest = {
+        chatRoomId: actualChatRoomId,
+        messageType: 'TEXT',
+        content: text,
+      };
+
+      console.log('🌐 API 요청:', request);
+      const response = await sendMessage(request);
+      console.log('📨 API 응답:', response);
+      
+      if (response.isSuccess && response.data) {
+        console.log('✅ 서버 응답 성공, 메시지 업데이트');
+        // 서버 응답으로 메시지 업데이트
+        const serverMessage = transformToChatMessage(response.data, me.memberId);
+        console.log('🔄 서버 메시지로 변환:', serverMessage);
+        setMessages((prev) => 
+          prev.map(msg => 
+            msg.id === tempMessage.id ? serverMessage : msg
+          )
+        );
+      } else {
+        console.error('❌ 서버 응답 실패:', response);
+        throw new Error(response.message || '메시지 전송 실패');
+      }
+    } catch (error) {
+      console.error('💥 메시지 전송 실패:', error);
+      // 실패 시 임시 메시지 제거
+      setMessages((prev) => prev.filter(msg => msg.id !== tempMessage.id));
+      Alert.alert('오류', '메시지 전송에 실패했습니다.');
+    }
   };
 
   const onLongPress = async (msg: ChatMessage) => {
     try {
-      await Clipboard.setStringAsync(msg.text);
+      await Clipboard.setStringAsync(msg.content);
     } catch {}
+    
     if (msg.sender === "me") {
-      setMessages((prev) => prev.filter((m) => m.id !== msg.id));
-      requestAnimationFrame(() => scrollToBottom());
+      // 메시지 삭제 확인 다이얼로그
+      Alert.alert(
+        '메시지 삭제',
+        '이 메시지를 삭제하시겠습니까?',
+        [
+          {
+            text: '취소',
+            style: 'cancel',
+          },
+          {
+            text: '삭제',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                // 낙관적 업데이트: 먼저 UI에서 제거
+                setMessages((prev) => prev.filter((m) => m.id !== msg.id));
+                requestAnimationFrame(() => scrollToBottom());
+                
+                // 서버에 삭제 요청
+                const messageId = parseInt(msg.id);
+                if (!isNaN(messageId)) {
+                  const response = await deleteMessage(messageId);
+                  if (!response.isSuccess) {
+                    // 실패 시 롤백
+                    setMessages((prev) => [...prev, msg].sort((a, b) => a.createdAt - b.createdAt));
+                    Alert.alert('오류', '메시지 삭제에 실패했습니다.');
+                  }
+                }
+              } catch (error) {
+                console.error('메시지 삭제 실패:', error);
+                // 실패 시 롤백
+                setMessages((prev) => [...prev, msg].sort((a, b) => a.createdAt - b.createdAt));
+                Alert.alert('오류', '메시지 삭제에 실패했습니다.');
+              }
+            },
+          },
+        ]
+      );
     }
   };
 
@@ -222,27 +342,37 @@ export default function ChatScreen({ fixedHeight = 560, onScrollActive }: Props)
           </View>
 
           {/* Message list (스크롤 영역) */}
-          <FlatList
-            ref={listRef}
-            data={data}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <MessageRow msg={item} onLongPress={onLongPress} />}
-            contentContainerStyle={styles.listContent}
-            onContentSizeChange={() => scrollToBottom(false)}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator
-            ListFooterComponent={<View onLayout={() => scrollToBottom(false)} />}
-            nestedScrollEnabled
+          {loading || profileLoading || !actualChatRoomId ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>
+                {profileLoading ? '사용자 정보를 불러오는 중...' : 
+                 !actualChatRoomId ? '채팅방을 찾는 중...' : 
+                 '메시지를 불러오는 중...'}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              ref={listRef}
+              data={data}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => <MessageRow msg={item} onLongPress={onLongPress} />}
+              contentContainerStyle={styles.listContent}
+              onContentSizeChange={() => scrollToBottom(false)}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator
+              ListFooterComponent={<View onLayout={() => scrollToBottom(false)} />}
+              nestedScrollEnabled
 
-            // 👇 드래그 시작/끝에 부모 스크롤 잠금/해제
-            onScrollBeginDrag={() => onScrollActive?.(true)}
-            onMomentumScrollEnd={() => onScrollActive?.(false)}
-            onScrollEndDrag={() => onScrollActive?.(false)}
+              // 👇 드래그 시작/끝에 부모 스크롤 잠금/해제
+              onScrollBeginDrag={() => onScrollActive?.(true)}
+              onMomentumScrollEnd={() => onScrollActive?.(false)}
+              onScrollEndDrag={() => onScrollActive?.(false)}
 
-            // 👇 가장자리에서 부모 스크롤로 넘어가는 걸 줄임
-            bounces={false}                 // iOS 탄성 제거
-            overScrollMode="never"          // Android 오버스크롤 제거
-          />
+              // 👇 가장자리에서 부모 스크롤로 넘어가는 걸 줄임
+              bounces={false}                 // iOS 탄성 제거
+              overScrollMode="never"          // Android 오버스크롤 제거
+            />
+          )}
 
           {/* Input */}
           <ChatInput onSend={onSend} />
@@ -325,4 +455,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
   },
   sendLabel: { color: "#FFFFFF", fontWeight: "600" },
+  
+  // loading
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#64748B",
+    fontFamily: "DonerRegularDisplay",
+  },
 });
