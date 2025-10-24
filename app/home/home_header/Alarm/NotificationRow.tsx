@@ -28,6 +28,7 @@ export type NotificationRowProps = {
   createdAt: string | number | Date;
   unread?: boolean;
   tintColor?: ColorValue;
+  isProcessing?: boolean; // 수락/거절 처리 중인지 여부
   onPress?: (id: string) => void;
   onAccept?: (id: string) => void;
   onDecline?: (id: string) => void;
@@ -51,6 +52,7 @@ export default function NotificationRow({
   createdAt,
   unread = false,
   tintColor = "#FFF7CC",
+  isProcessing = false,
   onPress,
   onAccept,
   onDecline,
@@ -58,6 +60,8 @@ export default function NotificationRow({
   const Icon = TypeIcon[type];
   const showCTA = type === "mate_invite";
   const safeMessage = message ?? "";
+  
+  console.log(`🎨 [NotificationRow ${id}] isProcessing:`, isProcessing);
 
   return (
     <TouchableOpacity
@@ -92,19 +96,29 @@ export default function NotificationRow({
       {showCTA && (
         <View style={s.ctaRow}>
           <TouchableOpacity
-            style={s.acceptBtn}
+            style={[s.acceptBtn, isProcessing && s.btnDisabled]}
             activeOpacity={0.9}
-            onPress={() => onAccept?.(id)}
+            onPress={() => {
+              console.log("🔥 [NotificationRow] 수락 버튼 클릭", id);
+              console.log("🔥 [NotificationRow] onAccept 함수 존재?", !!onAccept);
+              onAccept?.(id);
+            }}
+            disabled={isProcessing}
           >
-            <Text style={s.acceptText}>수락하기</Text>
+            <Text style={[s.acceptText, isProcessing && s.textDisabled]}>수락하기</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={s.declineBtn}
+            style={[s.declineBtn, isProcessing && s.btnDisabled]}
             activeOpacity={0.9}
-            onPress={() => onDecline?.(id)}
+            onPress={() => {
+              console.log("🔥 [NotificationRow] 거절 버튼 클릭", id);
+              console.log("🔥 [NotificationRow] onDecline 함수 존재?", !!onDecline);
+              onDecline?.(id);
+            }}
+            disabled={isProcessing}
           >
-            <Text style={s.declineText}>거절하기</Text>
+            <Text style={[s.declineText, isProcessing && s.textDisabled]}>거절하기</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -186,5 +200,12 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#111",
+  },
+  btnDisabled: {
+    backgroundColor: "#D3D3D3",
+    opacity: 1,
+  },
+  textDisabled: {
+    color: "#888",
   },
 });
