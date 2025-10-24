@@ -119,20 +119,14 @@ class FCMService {
    */
   async sendTokenToServer(token: string): Promise<boolean> {
     try {
-      // TODO: 실제 서버 API 엔드포인트로 변경하세요
-      const response = await fetch('http://localhost:8080/api/notifications/fcm/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fcmToken: token,
-          platform: Platform.OS,
-
-        }),
+      const { TokenReq } = await import('../apis/axiosInstance');
+      
+      const response = await TokenReq.post('/api/notifications/fcm/token', {
+        fcmToken: token,
+        platform: Platform.OS,
       });
 
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         console.log('✅ FCM 토큰이 서버에 성공적으로 전송되었습니다');
         return true;
       } else {
