@@ -16,7 +16,7 @@ const MAX_CARDS = 3;
 const EXTRA_PAD = 40;
 
 export type StackItem = { id: number; title: string; desc?: string };
-type Palette = "yellow" | "purple";
+type Palette = "yellow" | "purple" | "gray";
 type Size = "small" | "medium" | "large";
 
 export default function TodayPuzzleStack({
@@ -38,6 +38,15 @@ export default function TodayPuzzleStack({
 }) {
   const puzzles = useMemo(() => (items ?? []).slice(0, MAX_CARDS), [items]);
 
+  // ✅ 모든 훅을 조건문 이전에 선언
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [checked, setChecked] = useState<boolean[]>(() => puzzles.map(() => false));
+
+  useEffect(() => {
+    setChecked((prev) => puzzles.map((_, i) => prev[i] ?? false));
+    setOpenIndex((idx) => (idx !== null && idx >= puzzles.length ? null : idx));
+  }, [puzzles.length]);
+
   // ✅ 퍼즐 0개인 경우: 빈 상태 뷰 반환
   if (puzzles.length === 0) {
     const FAB_SIZE = 52;
@@ -49,12 +58,12 @@ export default function TodayPuzzleStack({
         <View style={[styles.cardWrap, { top: 0, zIndex: 1 }]}>
           <PuzzleCard
             variant="empty"
-            palette="neutral"          // ⚠️ PuzzleBox가 neutral 팔레트를 지원해야 함
-            tone="light"
+            palette="gray"
+            tone="medium"
             size="small"
             chevron="up"
             title="아직 퍼즐이 없어요."
-            emptySubtitle="퍼즐을 추가해주세요."
+            emptySubtitle="하단 버튼으로 퍼즐을 만들어 보세요."
             onPress={onAdd}
           />
         </View>
@@ -90,14 +99,6 @@ export default function TodayPuzzleStack({
   }
 
   // ===== 여기부터 기존(퍼즐 1~3개) 로직 =====
-
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [checked, setChecked] = useState<boolean[]>(() => puzzles.map(() => false));
-
-  useEffect(() => {
-    setChecked((prev) => puzzles.map((_, i) => prev[i] ?? false));
-    setOpenIndex((idx) => (idx !== null && idx >= puzzles.length ? null : idx));
-  }, [puzzles.length]);
 
   const tones: Array<"light" | "medium" | "dark"> = ["light", "medium", "dark"];
 

@@ -5,7 +5,7 @@ import ChevronUpIcon from "@/assets/image/homepage_puzzleimg/chevron-up.svg";
 import ChevronDownIcon from "@/assets/image/homepage_puzzleimg/chevron-down.svg";
 
 type Tone = "light" | "medium" | "dark";
-type Palette = "yellow" | "purple";
+type Palette = "yellow" | "purple" | "gray";
 type Size = "small" | "medium" | "large";
 type Chevron = "up" | "down";
 
@@ -33,6 +33,7 @@ const NUB_OFFSET = 16;
 const BG_MAP: Record<Palette, Record<Tone, string>> = {
   yellow: { light: "#FFFCC2", medium: "#FFF385", dark: "#FFE600" },
   purple: { light: "#EBD9FF", medium: "#D3A9FF", dark: "#C188FF" },
+  gray: { light: "#F5F5F5", medium: "#E0E0E0", dark: "#BDBDBD" },
 };
 
 const HEIGHT_MAP: Record<Size, number> = { small: 120, medium: 220, large: 320 };

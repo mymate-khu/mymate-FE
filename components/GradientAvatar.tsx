@@ -9,7 +9,7 @@ type Props = {
 };
 
 export default function GradientAvatar({ uri, size = 40 }: Props) {
-  const ringSize = size + 2; // 외곽선용
+  const ringSize = size + 1; // 41x41 크기로 설정
 
   return (
     <LinearGradient
@@ -18,7 +18,13 @@ export default function GradientAvatar({ uri, size = 40 }: Props) {
       end={{ x: 1, y: 1 }}
       style={[
         s.ring,
-        { width: ringSize, height: ringSize, borderRadius: ringSize / 2 },
+        { 
+          width: ringSize, 
+          height: ringSize, 
+          borderRadius: ringSize / 2,
+          justifyContent: 'center',
+          alignItems: 'center'
+        },
       ]}
     >
       <View
@@ -45,7 +51,10 @@ export default function GradientAvatar({ uri, size = 40 }: Props) {
 }
 
 const s = StyleSheet.create({
-  ring: { padding: 1 },
+  ring: { 
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
   hole: { backgroundColor: "#fff", overflow: "hidden" },
   svgWrap: {
     flex: 1,
