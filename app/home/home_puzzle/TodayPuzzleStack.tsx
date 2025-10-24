@@ -1,3 +1,4 @@
+// app/home_puzzle/TodayPuzzleStack.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { View, StyleSheet, Pressable, StyleSheet as RNStyleSheet } from "react-native";
 import PuzzleCard from "./PuzzleCard";
@@ -5,12 +6,21 @@ import PlusIcon from "@/assets/image/homepage_puzzleimg/PlusYellow.svg";
 
 const CARD_HEIGHT = 120;
 const OVERLAP_OFFSET = 100;
-const EXPAND_DELTA = 200;   // large(320) - small(120)
-const MAX_CARDS = 3;
-const OPEN_TOP = 0;
 
-export type StackItem = { title: string; desc?: string };
+// 사이즈별 확장량(작게/중간/크게로 펼쳤을 때 추가되는 높이)
+// medium = +100, large = +200 은 예시값이며 PuzzleBox의 높이와 맞춰 사용하세요.
+const DELTA = {
+  small: 0,
+  medium: 100,
+  large: 200,
+} as const;
+
+const MAX_CARDS = 3;
+const EXTRA_PAD = 40; // 하단 여유 (플로팅 버튼 그림자 등)
+
+export type StackItem = { id: number; title: string; desc?: string };
 type Palette = "yellow" | "purple";
+type Size = "small" | "medium" | "large";
 
 export default function TodayPuzzleStack({
   items,
@@ -26,16 +36,14 @@ export default function TodayPuzzleStack({
   rightSlot?: (index: number) => React.ReactNode;
   showPlus?: boolean;
   onAdd?: () => void;
-  onEdit?: (index: number) => void;
-  onDelete?: (index: number) => void;
+  onEdit?: (id: number) => void;
+  onDelete?: (id: number) => void;
 }) {
   const puzzles = useMemo(() => (items ?? []).slice(0, MAX_CARDS), [items]);
 
-  // 카드 열림 상태
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  // 체크 토글 상태(카드별)
   const [checked, setChecked] = useState<boolean[]>(() => puzzles.map(() => false));
+
   useEffect(() => {
     setChecked(prev => puzzles.map((_, i) => prev[i] ?? false));
     setOpenIndex(idx => (idx !== null && idx >= puzzles.length ? null : idx));
@@ -43,27 +51,27 @@ export default function TodayPuzzleStack({
 
   const tones: Array<"light" | "medium" | "dark"> = ["light", "medium", "dark"];
 
-  // 펼치면 퍼즐 박스 높이를 200 늘림
+  // 퍼즐 개수에 따라 "열렸을 때" 사이즈 결정
+  const openSize: Size =
+    puzzles.length >= 3 ? "large" : puzzles.length === 2 ? "medium" : "small";
+  const pullUp = DELTA[openSize]; // 펼칠 때 위로 당기는 양
+
+  // 컨테이너는 고정 높이 (펼쳐도 레이아웃 안 흔들리게)
   const containerHeight =
-    CARD_HEIGHT + Math.max(0, puzzles.length - 1) * OVERLAP_OFFSET +
-    (openIndex !== null ? EXPAND_DELTA : 0);
+    CARD_HEIGHT + Math.max(0, puzzles.length - 1) * OVERLAP_OFFSET + EXTRA_PAD;
 
-  // --- FAB 기준: 열린 카드가 있으면 그 카드, 없으면 마지막 카드 ---
-  const anchorIndex = openIndex ?? (puzzles.length - 1);
-  const anchorIsOpen = openIndex === anchorIndex;
-  const anchorBaseTop = anchorIndex * OVERLAP_OFFSET;
-  const anchorTop = anchorIsOpen ? OPEN_TOP : anchorBaseTop;
-  const anchorHeight = anchorIsOpen ? CARD_HEIGHT + EXPAND_DELTA : CARD_HEIGHT;
+  // FAB 위치 계산 (열린 카드 기준)
+  const anchorIndex = openIndex ?? puzzles.length - 1;
+  const anchorBaseTop = Math.max(0, anchorIndex * OVERLAP_OFFSET);
+  const anchorTop = openIndex === null ? anchorBaseTop : Math.max(0, anchorBaseTop - pullUp);
+  const anchorHeight =
+    openIndex === null ? CARD_HEIGHT : CARD_HEIGHT + DELTA[openSize];
 
-  // FAB 위치: 기준 카드 하단 중앙에 살짝 걸치도록
   const FAB_SIZE = 52;
   const fabTop = anchorTop + anchorHeight - FAB_SIZE / 2;
-
-  // FAB은 항상 카드보다 위 레이어
   const fabZIndex = 2000;
   const fabElevation = 24;
 
-  // 팔레트로 모드 판정: 보라면 MATE, 노랑이면 ME
   const isMateMode = palette === "purple";
 
   return (
@@ -71,11 +79,14 @@ export default function TodayPuzzleStack({
       {puzzles.map((p, i) => {
         const isOpen = openIndex === i;
         const baseTop = i * OVERLAP_OFFSET;
-        const top = isOpen ? OPEN_TOP : baseTop;
+        const top = isOpen ? Math.max(0, baseTop - pullUp) : baseTop;
+
+        // 닫힌 카드는 small, 열린 카드는 openSize 로 렌더
+        const sizeForCard: Size = isOpen ? openSize : "small";
 
         return (
           <View
-            key={`${p.title}-${i}`}
+            key={p.id}
             style={[
               styles.cardWrap,
               { top, zIndex: isOpen ? 999 : i, elevation: isOpen ? 12 : 0 },
@@ -86,15 +97,11 @@ export default function TodayPuzzleStack({
               description={p.desc}
               palette={palette}
               tone={tones[i]}
-              size={isOpen ? "large" : "small"}
+              size={sizeForCard}
               chevron={isOpen ? "down" : "up"}
-
-              /* ME(노랑)일 때만 수정/삭제 노출 */
               showActions={isOpen && !isMateMode}
-              onEdit={isOpen && !isMateMode ? () => onEdit?.(i) : undefined}
-              onDelete={isOpen && !isMateMode ? () => onDelete?.(i) : undefined}
-
-              /* 체크 토글은 ME만 사용하고 싶으면 아래처럼 !isMateMode로 가드 */
+              onEdit={isOpen && !isMateMode ? () => onEdit?.(p.id) : undefined}
+              onDelete={isOpen && !isMateMode ? () => onDelete?.(p.id) : undefined}
               checked={!isMateMode ? checked[i] : undefined}
               onToggle={
                 !isMateMode
@@ -106,7 +113,6 @@ export default function TodayPuzzleStack({
                       })
                   : undefined
               }
-
               rightSlot={rightSlot?.(i)}
               onPress={() => setOpenIndex(isOpen ? null : i)}
             />
@@ -146,13 +152,10 @@ export default function TodayPuzzleStack({
   );
 }
 
-
-
 const styles = StyleSheet.create({
   container: {
     position: "relative",
     width: "100%",
-    alignItems: "center",
     paddingTop: 20,
     overflow: "visible",
     marginTop: 16,
@@ -160,7 +163,6 @@ const styles = StyleSheet.create({
   cardWrap: {
     position: "absolute",
     width: "100%",
-    alignItems: "center",
   },
   fab: {
     position: "absolute",

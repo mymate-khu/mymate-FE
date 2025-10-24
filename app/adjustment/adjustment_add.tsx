@@ -1,12 +1,21 @@
+// app/adjustment/adjustment_add.tsx
 import React, { useMemo, useState } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity, SafeAreaView, StyleSheet,
-  StatusBar, Image, Modal, Platform,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+  StyleSheet,
+  StatusBar,
+  Image,
+  Modal,
+  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 
-// ✅ 훅으로 교체
+// ✅ 생성 훅
 import { useCreateAccount } from "@/hooks/useAccounts";
 
 import CalendarCard from "@/components/CalendarCard";
@@ -64,7 +73,7 @@ export default function ExpenseCreate() {
   const [receiveAmount, setReceiveAmount] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
 
-  // ✅ 등록 훅
+  // 등록 훅
   const { mutateAsync: createMutate, isPending } = useCreateAccount();
 
   const pickImage = async () => {
@@ -84,7 +93,7 @@ export default function ExpenseCreate() {
     }
   };
 
-  // TODO: people은 실제 백엔드 멤버 리스트로 교체 예정
+  // TODO: 실제 멤버 목록으로 대체
   const people = useMemo(
     () => [
       { id: "u1", name: "A", uri: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240" },
@@ -114,17 +123,17 @@ export default function ExpenseCreate() {
     }
 
     try {
-      // ⚠️ 로컬 이미지 URI는 서버에서 읽을 수 없음 → 업로드 기능 붙일 때 교체
-      const imageUrlToSend: string | null = null; // imageUri ? await upload(imageUri) : null;
+      // 로컬 이미지 URI는 서버 업로드 기능 붙일 때 처리
+      const imageUrlToSend: string | null = null;
 
-      // 임시 participantIds 매핑 (u1→1, u2→2 …). 실제론 백엔드 memberId 사용.
+      // 임시 participantIds (u1→1, u2→2 …)
       const participantIds = selectedPeople.map((_, idx) => idx + 1);
 
       await createMutate({
         title: item.trim(),
         description: `${item.trim()} 정산`,
-        expenseDate: slashToDash(date),  // "YYYY-MM-DD"
-        category,                        // 예: "식비"
+        expenseDate: slashToDash(date), // "YYYY-MM-DD"
+        category,                       // 예: "식비"
         imageUrl: imageUrlToSend,
         totalAmount: parseCurrencyToNumber(totalAmount),
         receiveAmount: parseCurrencyToNumber(receiveAmount),
@@ -292,28 +301,68 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFE300", borderRadius: 24, padding: 16, marginTop: 8 },
   card: { borderRadius: 24, padding: 16, marginTop: 8 },
 
-  photoBox: { width: 98, height: 98, borderRadius: 12, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", marginTop: 8, marginBottom: 24 },
+  photoBox: {
+    width: 98,
+    height: 98,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    marginBottom: 24,
+  },
   photoPreview: { width: "100%", height: "100%", borderRadius: 12 },
 
-  inputRow: { height: 48, borderRadius: 12, backgroundColor: "#fff", flexDirection: "row", alignItems: "center", paddingHorizontal: 14, marginBottom: 12 },
+  inputRow: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
   trailingIcon: { marginLeft: "auto" },
   input: { flex: 1, color: "#111" },
   inputText: { flex: 1, color: "#111", fontSize: 17 },
 
-  inputSolo: { height: 48, borderRadius: 12, backgroundColor: "#fff", paddingHorizontal: 14, marginBottom: 12, color: "#111", fontSize: 17 },
+  inputSolo: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    color: "#111",
+    fontSize: 17,
+  },
 
   formDivider: { height: 2, backgroundColor: "#FFD51C", marginBottom: 12, borderRadius: 1 },
 
   peopleBox: { backgroundColor: "#fff", borderRadius: 12, padding: 14, marginBottom: 12 },
   peopleLabel: { fontSize: 16, color: "#666", marginBottom: 8 },
   peopleRow: { flexDirection: "row", gap: 12 },
-  avatarWrap: { width: 72, height: 72, borderRadius: 36, padding: 2, borderWidth: 2, borderColor: "#E9E9E9", overflow: "hidden" },
+  avatarWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    padding: 2,
+    borderWidth: 2,
+    borderColor: "#E9E9E9",
+    overflow: "hidden",
+  },
   avatarWrapActive: { borderColor: "#FFD51C" },
   avatar: { width: "100%", height: "100%", borderRadius: 36 },
   avatarDim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.45)" },
   checkWrap: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
 
-  submitBtn: { height: 48, borderRadius: 12, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", marginTop: 24 },
+  submitBtn: {
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 24,
+  },
   submitBtnDisabled: { backgroundColor: "#fff" },
   submitText: { color: "#111", fontWeight: "500", fontSize: 16 },
   submitTextDisabled: { color: "#999999" },
@@ -322,9 +371,32 @@ const s = StyleSheet.create({
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.2)" },
   backdropTransparent: { ...StyleSheet.absoluteFillObject, backgroundColor: "transparent" },
 
-  modalPanel: { width: "97%", borderRadius: 20, backgroundColor: "#fff", paddingVertical: 15, shadowColor: "#000", shadowOpacity: 0.08, shadowOffset: { width: 0, height: 4 }, shadowRadius: 14, elevation: 3, paddingBottom: Platform.select({ ios: 8, android: 8 }), marginTop: 275 },
+  modalPanel: {
+    width: "97%",
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    paddingVertical: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 14,
+    elevation: 3,
+    paddingBottom: Platform.select({ ios: 8, android: 8 }),
+    marginTop: 275,
+  },
 
-  categoryPanel: { width: "94%", borderRadius: 20, backgroundColor: "#fff", overflow: "hidden", elevation: 6, shadowColor: "#000", shadowOpacity: 0.08, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, marginTop: 333 },
+  categoryPanel: {
+    width: "94%",
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    overflow: "hidden",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    marginTop: 333,
+  },
   categoryRow: { flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 18, height: 56 },
   categoryRowActive: { backgroundColor: "#FFF7B8" },
   categoryText: { fontSize: 17, color: "#111" },

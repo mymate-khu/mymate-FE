@@ -1,13 +1,6 @@
 // app/rules/RulesScreen.tsx
 import React, { useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Alert,
-  Platform,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, Alert, Platform, ViewStyle } from "react-native";
 
 import RuleCard from "../rules/RuleCard";
 import AddRuleCard from "../rules/AddRuleCard";
@@ -18,9 +11,8 @@ type EditTarget = { id: number; title: string; body: string } | null;
 
 // 퍼즐 겹침/간격 설정
 const COLS = 2;
-const NOTCH = 26;     // 카드 SVG의 하단 반달 높이(필요하면 24~28 사이로 미세조정)
-const ROW_GAP = 4;   // 행 간 기본 여백
-const OVERLAP = NOTCH - ROW_GAP; // 2행부터 위로 당겨 겹칠 값
+const NOTCH = 26;      // 카드 SVG 하단 반달 높이
+const ROW_GAP = 4;     // 행 간 기본 여백
 
 export default function RulesScreen() {
   const { list: rules, create, update, remove } = useRulebooks();
@@ -49,10 +41,7 @@ export default function RulesScreen() {
   const handleSubmit = async (payload: { title: string; body: string }) => {
     try {
       if (editTarget) {
-        await update(editTarget.id, {
-          title: payload.title,
-          content: payload.body,
-        });
+        await update(editTarget.id, { title: payload.title, content: payload.body });
       } else {
         await create({ title: payload.title, content: payload.body || "" });
       }
@@ -93,7 +82,10 @@ export default function RulesScreen() {
     ]);
   };
 
+  // 목록 + 마지막에 추가 카드
   const dataWithAdd = [...rules, { id: "add" } as any];
+  // 마지막 줄에 카드가 1개만 있는지(= 가운데로 몰리지 않게 처리하기 위함)
+  const singleLast = dataWithAdd.length % COLS === 1;
 
   return (
     <View style={s.screen}>
@@ -107,15 +99,29 @@ export default function RulesScreen() {
         keyExtractor={(it: any) => String(it.id)}
         numColumns={COLS}
         contentContainerStyle={s.listContent}
-        columnWrapperStyle={{ gap: 4,  }} 
-        ItemSeparatorComponent={() => <View style={{ height: ROW_GAP }} />}   // ✅ 행 간 기본 여백
+        columnWrapperStyle={{ gap: 4, justifyContent: "space-between" }}
+        ItemSeparatorComponent={() => <View style={{ height: ROW_GAP }} />}
         renderItem={({ item, index }) => {
+          // 행/열 계산
           const row = Math.floor(index / COLS);
-          const overlapStyle = row > 0 ? { marginTop: -OVERLAP } : null;      // ✅ 2행부터 겹치기
+          const col = index % COLS;
+
+          // 2행부터 위로 살짝 겹치기
+          const overlapStyle: ViewStyle | undefined =
+            row > 0 ? { marginTop: -(NOTCH - ROW_GAP) } : undefined;
+
+          // 지그재그 색상
+          const author = (row + col) % 2 === 0 ? "me" : "mate";
+
+          // 마지막 줄이 1개뿐이고, 그 1개가 '추가' 카드라면 왼쪽 정렬 강제
+          const forceLeftForLonelyAdd: ViewStyle | undefined =
+            item.id === "add" && index === dataWithAdd.length - 1 && singleLast
+              ? ({ alignSelf: "flex-start" as const } as ViewStyle)
+              : undefined;
 
           if (item.id === "add") {
             return (
-              <View style={overlapStyle}>
+              <View style={[overlapStyle, forceLeftForLonelyAdd]}>
                 <AddRuleCard onPress={openCreate} />
               </View>
             );
@@ -126,6 +132,7 @@ export default function RulesScreen() {
               <RuleCard
                 {...item}
                 order={index + 1}
+                author={author}
                 onEdit={() => openEdit(item.id)}
                 onDelete={() => handleDelete(item.id)}
               />
@@ -153,16 +160,17 @@ const s = StyleSheet.create({
     paddingHorizontal: "8%",
     paddingBottom: 20,
   },
-  heroLine: { 
-    fontSize: 24, 
-    lineHeight: 35, 
-    fontWeight: "700", 
-    color: "#111" 
-},
+  heroLine: {
+    fontSize: 24,
+    lineHeight: 35,
+    fontWeight: "700",
+    color: "#111",
+  },
   listContent: {
-    paddingHorizontal: "5%",
+    paddingHorizontal: "2.5%", // 화면 크기에 따라 유동적 여백
     paddingTop: 10,
     paddingBottom: 24,
     gap: 4,
+    
   },
 });

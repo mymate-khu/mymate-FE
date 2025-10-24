@@ -12,25 +12,35 @@ import {
   type AccountEntity,
 } from "@/components/apis/account";
 import { getMyId } from "@/components/apis/storage";
-import { transformToListItems, transformToPaidItems, transformToUnpaidItems } from "@/utils/transformer";
+
+import { withOwnerTag } from "@/utils/owner";
+import {
+  transformToListItems,
+  transformToPaidItems,
+  transformToUnpaidItems,
+} from "@/utils/transformer";
 
 const KEY = {
   list: (params?: ListParams) => ["accounts", "list", params] as const,
   detail: (id: number) => ["accounts", "detail", id] as const,
 };
 
-// 목록 + 변환까지 한 번에
+// 목록 + 화면용 데이터 세트
 export function useAccounts(params?: ListParams) {
   return useQuery({
     queryKey: KEY.list(params),
     queryFn: async () => {
       const page: AccountsPage = await fetchAccounts(params);
-      const myId = (await getMyId()) ?? 0;
+      const myIdNum = (await getMyId()) ?? 0;
+      const myId = String(myIdNum);
 
-      // 필요한 3가지 형태로 변환
-      const listItems = transformToListItems(page.accounts, myId);
-      const paid = transformToPaidItems(page.accounts, String(myId));
-      const unpaid = transformToUnpaidItems(page.accounts);
+      // author(me/mate) 태그 주입 (작성자 createdBy 우선)
+      const tagged: (AccountEntity & { author: "me" | "mate" })[] =
+        withOwnerTag(page.accounts, myId, ["createdBy", "memberId", "memberLoginId"]);
+
+      const listItems = transformToListItems(tagged, myId);
+      const paid = transformToPaidItems(tagged, myId);
+      const unpaid = transformToUnpaidItems(tagged);
 
       return { page, listItems, paid, unpaid };
     },
