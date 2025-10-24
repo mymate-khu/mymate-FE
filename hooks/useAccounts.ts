@@ -13,7 +13,7 @@ import {
   type AccountEntity,
   type AccountStatus,        // ⬅️ 추가
 } from "@/components/apis/account";
-import { getMyId } from "@/components/apis/storage";
+import { fetchMyProfile } from "@/components/apis/profile";
 import { withOwnerTag } from "@/utils/owner";
 import {
   transformToListItems,
@@ -29,13 +29,35 @@ const KEY = {
 export function useAccounts(params?: ListParams) {
   return useQuery({
     queryKey: KEY.list(params),
+    staleTime: 0, // 캐시 무효화
+    gcTime: 0, // 캐시 시간 0으로 설정
     queryFn: async () => {
       const page: AccountsPage = await fetchAccounts(params);
-      const myIdNum = (await getMyId()) ?? 0;
-      const myId = String(myIdNum);
+      const myProfile = await fetchMyProfile();
+      const myId = String(myProfile.memberLoginId || myProfile.id);
+
+      // 디버깅: API 응답 확인
+      console.log("=== API 응답 데이터 ===");
+      console.log("전체 accounts:", page.accounts);
+      console.log("내 ID:", myId);
+      
+      // 첫 번째 항목만 상세 확인
+      if (page.accounts.length > 0) {
+        const firstAccount = page.accounts[0];
+        console.log("첫 번째 항목 상세:", {
+          id: firstAccount.id,
+          title: firstAccount.title,
+          createdByMemberId: firstAccount.createdByMemberId,
+          createdBy: firstAccount.createdBy,
+          status: firstAccount.status
+        });
+      }
 
       const tagged: (AccountEntity & { author: "me" | "mate" })[] =
-        withOwnerTag(page.accounts, myId, ["createdBy", "memberId", "memberLoginId"]);
+        withOwnerTag(page.accounts, myId, ["createdByMemberId", "createdBy", "memberId", "memberLoginId"]);
+
+      // 디버깅: 태그된 데이터 확인
+      console.log("태그된 데이터:", tagged);
 
       const listItems = transformToListItems(tagged, myId);
       const paid = transformToPaidItems(tagged, myId);

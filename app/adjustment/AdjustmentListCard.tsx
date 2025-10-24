@@ -1,4 +1,3 @@
-// app/adjustment/AdjustmentListCard.tsx
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { BlurView } from "expo-blur";
@@ -12,10 +11,12 @@ import HouseIcon from "@/assets/image/adjustmenticon/house_Icon.svg";
 import ShopbagIcon from "@/assets/image/adjustmenticon/shopbag_Icon.svg";
 import GradientAvatar from "@/components/GradientAvatar";
 
-export type SettlementStatus = "done" | "todo";
+// 🔁 통일: settled | unsettled
+export type SettlementStatus = "settled" | "unsettled";
 
 export type AdjustmentCardItem = {
   id: string;
+  accountId: number; // API 호출을 위한 실제 account ID
   title: string;
   dateLabel: string;
   prevAmount?: string;
@@ -23,7 +24,6 @@ export type AdjustmentCardItem = {
   imageUri?: string;
   avatars?: string[];
   category?: string;
-  // 👇 추가: owner 색상(옵션, default yellow)
   color?: "yellow" | "purple";
 };
 
@@ -34,6 +34,7 @@ export type AdjustmentListCardProps = {
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
   onMenuOpenChange?: (id: string, open: boolean) => void;
+  onMenuPress?: (id: string) => void; // 메뉴 버튼 클릭 시 카드 펼치기용
 };
 
 const CATEGORY_ICON: Record<string, React.ComponentType<{ width: number; height: number }>> = {
@@ -45,18 +46,9 @@ const CATEGORY_ICON: Record<string, React.ComponentType<{ width: number; height:
   "문화/여가": TicketIcon,
 };
 
-// 👇 테마 팔레트
 const THEME = {
-  yellow: {
-    cardBg: "#FFE300",
-    cardBorder: "#FFD51C",
-    chipBg: "#FFD51C",
-  },
-  purple: {
-    cardBg: "#D8B6FF",
-    cardBorder: "#C79EFF",
-    chipBg: "#C79EFF",
-  },
+  yellow: { cardBg: "#FFE300", cardBorder: "#FFD51C", chipBg: "#FFD51C" },
+  purple: { cardBg: "#D8B6FF", cardBorder: "#C79EFF", chipBg: "#C79EFF" },
 } as const;
 
 export default function AdjustmentListCard({
@@ -65,13 +57,12 @@ export default function AdjustmentListCard({
   onChangeStatus,
   onEdit,
   onDelete,
+  onMenuPress,
 }: AdjustmentListCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
 
   const IconForCat = CATEGORY_ICON[item.category ?? ""] ?? ShopbagIcon;
-
-  // 👉 owner 색상 적용 (기본 yellow)
   const color = item.color ?? "yellow";
   const t = THEME[color];
 
@@ -93,14 +84,17 @@ export default function AdjustmentListCard({
 
         <View style={s.topRight}>
           <View style={[s.badge, { backgroundColor: t.chipBg, borderColor: t.chipBg }]}>
-            <Text style={s.badgeText}>{status === "done" ? "정산 완료" : "정산 미완료"}</Text>
+            <Text style={s.badgeText}>{status === "settled" ? "정산 완료" : "정산 미완료"}</Text>
           </View>
 
           <TouchableOpacity
             style={s.detailDot}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={() => setMenuOpen(v => !v)}
+            onPress={() => {
+              setMenuOpen(v => !v);
+              onMenuPress?.(item.id); // 메뉴 버튼 클릭 시 카드 펼치기
+            }}
           >
             <DetailIcon width={20} height={20} />
           </TouchableOpacity>
@@ -130,15 +124,12 @@ export default function AdjustmentListCard({
         <>
           <TouchableOpacity style={s.menuBackdrop} activeOpacity={1} onPress={closeMenu} />
           <View style={s.menuWrap} pointerEvents="box-none">
-            <BlurView
-              intensity={30}
-              tint="light"
-              style={[s.menu, { backgroundColor: "rgba(255, 255, 255, 0.54)" }]}
-            >
+            <BlurView intensity={30} tint="light" style={[s.menu, { backgroundColor: "rgba(255, 255, 255, 0.54)" }]}>
+              {/* ✅ 완료 → settled */}
               <TouchableOpacity
                 style={s.menuItem}
                 onPress={() => {
-                  onChangeStatus?.(item.id, "done");
+                  onChangeStatus?.(item.id, "settled");
                   closeMenu();
                 }}
               >
@@ -146,10 +137,11 @@ export default function AdjustmentListCard({
               </TouchableOpacity>
               <View style={s.menuDivider} />
 
+              {/* ✅ 미완료 → unsettled */}
               <TouchableOpacity
                 style={s.menuItem}
                 onPress={() => {
-                  onChangeStatus?.(item.id, "todo");
+                  onChangeStatus?.(item.id, "unsettled");
                   closeMenu();
                 }}
               >

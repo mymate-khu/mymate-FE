@@ -83,19 +83,21 @@ export default function AdjustmentList() {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("삭제 확인", "정말 이 정산을 삭제하시겠습니까?", [
-      { text: "취소", style: "cancel" },
-      {
-        text: "삭제",
-        style: "destructive",
-        onPress: () =>
-          del.mutate(Number(id), {
-            onSuccess: () => Alert.alert("삭제 완료", "정산이 삭제되었습니다."),
-            onError: (e: any) =>
-              Alert.alert("삭제 실패", e?.message || "정산 삭제 중 오류가 발생했습니다."),
-          }),
+    console.log("삭제 요청:", id);
+    
+    // 임시: Alert 없이 바로 삭제 (테스트용)
+    console.log("삭제 실행:", Number(id));
+    del.mutate(Number(id), {
+      onSuccess: () => {
+        console.log("삭제 성공");
+        Alert.alert("삭제 완료", "정산이 삭제되었습니다.");
+        refetch(); // 데이터 새로고침
       },
-    ]);
+      onError: (e: any) => {
+        console.error("삭제 실패:", e);
+        Alert.alert("삭제 실패", e?.message || "정산 삭제 중 오류가 발생했습니다.");
+      },
+    });
   };
 
   const onPressMonth = () => console.log("open month picker");
@@ -107,6 +109,7 @@ export default function AdjustmentList() {
 
       <BackHeader
         backgroundColor="#F8F8F8"
+        onBack={() => router.back()}
         centerSlot={
           <TouchableOpacity style={s.monthButton} onPress={onPressMonth} activeOpacity={0.7}>
             <Text style={s.monthText}>{monthLabel}</Text>

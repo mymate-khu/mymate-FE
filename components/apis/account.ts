@@ -24,6 +24,7 @@ export type AccountEntity = {
   receiveAmount: number;
   status: AccountStatus | string;
   groupId: number;
+  createdByMemberId: string;  // API 응답의 createdByMemberId 필드
   createdBy: number;          // 백엔드 응답 키가 다르면 필요에 맞게 바꿔줘도 됨
   participants: Participant[];
   createdAt: string;

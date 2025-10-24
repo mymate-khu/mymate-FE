@@ -27,11 +27,7 @@ export default function UnpaidCarousel({
       contentContainerStyle={{ paddingHorizontal: 0 }}
       ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
       renderItem={({ item }) => (
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => onPressItem?.(item)}
-          style={styles.card}
-        >
+        <View style={styles.card}>
           <View style={styles.iconBoxYellow}>
             <ShopbagIcon width={28} height={28} />
           </View>
@@ -41,10 +37,15 @@ export default function UnpaidCarousel({
             <Text style={styles.itemAmount}>{item.amount}</Text>
           </View>
 
-          <View style={styles.checkIconBox}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => onPressItem?.(item)}
+            style={styles.checkIconBox}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <CheckIcon width={24} height={24} />
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       )}
     />
   );

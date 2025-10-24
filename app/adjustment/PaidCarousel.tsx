@@ -31,7 +31,16 @@ export default function PaidCarousel({
       contentContainerStyle={{ paddingHorizontal: 0 }}
       ItemSeparatorComponent={() => <View style={{ width: 14 }} />}
       renderItem={({ item }) => {
+        // 디버깅: PaidCarousel에서 받은 데이터 확인
+        console.log("PaidCarousel - 받은 데이터:", {
+          id: item.id,
+          title: item.title,
+          color: item.color,
+          amount: item.amount
+        });
+        
         const isYellow = item.color !== "purple";
+        console.log("PaidCarousel - isYellow:", isYellow, "color:", item.color);
         return (
           <TouchableOpacity
             activeOpacity={0.9}

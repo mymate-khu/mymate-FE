@@ -18,12 +18,35 @@ import UnpaidCarousel from "../adjustment/UnpaidCarousel";
 import PaidCarousel from "../adjustment/PaidCarousel";
 
 // ✅ 공용 훅 사용
-import { useAccounts } from "@/hooks/useAccounts";
+import { useAccounts, useSetAccountStatus } from "@/hooks/useAccounts";
+import { Alert } from "react-native";
 
 export default function Adjustment() {
-  const { data } = useAccounts();
+  const { data, refetch } = useAccounts();
   const paidData = data?.paid ?? [];
   const unpaidData = data?.unpaid ?? [];
+  const setStatus = useSetAccountStatus();
+
+  const handleUnpaidItemPress = (item: any) => {
+    const accountId = Number(item.id);
+    
+    setStatus.mutate(
+      { id: accountId, status: "COMPLETED" },
+      {
+        onSuccess: () => {
+          console.log("정산 완료 처리 성공:", item.title);
+          refetch(); // 데이터 새로고침으로 UI 업데이트
+        },
+        onError: (error: any) => {
+          console.error("정산 완료 처리 실패:", error);
+          Alert.alert(
+            "오류", 
+            error?.message || "정산 완료 처리 중 문제가 발생했습니다."
+          );
+        },
+      }
+    );
+  };
 
   return (
     <SafeAreaView style={s.container}>
@@ -73,7 +96,7 @@ export default function Adjustment() {
         </View>
         <UnpaidCarousel
           data={unpaidData}
-          onPressItem={(item) => console.log("unpaid press:", item)}
+          onPressItem={handleUnpaidItemPress}
         />
       </View>
 
