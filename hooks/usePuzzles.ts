@@ -1,6 +1,6 @@
 // hooks/usePuzzles.ts
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchPuzzles, deletePuzzle, type Puzzle } from "@/components/apis/puzzles";
+import { fetchPuzzles, deletePuzzle, updatePuzzleStatus, type Puzzle } from "@/components/apis/puzzles";
 import { fetchMyProfile } from "@/components/apis/profile";
 import { storage } from "@/components/apis/storage";
 
@@ -92,8 +92,42 @@ export function usePuzzles() {
     [rows]
   );
 
+  /** 상태 업데이트 (낙관적 갱신 + 실패시 롤백) */
+  const toggleStatus = useCallback(
+    async (id: number) => {
+      console.log("[usePuzzles.toggleStatus] try toggle id:", id);
+      const prev = rows;
+      const puzzle = prev.find(p => p.id === id);
+      if (!puzzle) {
+        console.warn("[usePuzzles.toggleStatus] puzzle not found:", id);
+        return;
+      }
+
+      const newStatus = puzzle.status === "DONE" ? "INPROGRESS" : "DONE";
+      console.log(`[usePuzzles.toggleStatus] ${puzzle.status} → ${newStatus}`);
+
+      // 낙관적 업데이트
+      setRows(prev.map(p => 
+        p.id === id ? { ...p, status: newStatus } : p
+      ));
+
+      try {
+        const updated = await updatePuzzleStatus(id, { status: newStatus });
+        console.log("[usePuzzles.toggleStatus] success:", id, updated.status);
+        // 서버에서 받은 최신 데이터로 업데이트
+        setRows(prev.map(p => p.id === id ? updated : p));
+      } catch (e) {
+        console.error("[usePuzzles.toggleStatus] failed:", e);
+        // 롤백
+        setRows(prev);
+        throw e;
+      }
+    },
+    [rows]
+  );
+
   /** 모드/요일 필터 + 카드 매핑 */
-  const { items, mateStatuses } = useMemo(() => {
+  const { items, mateStatuses, puzzleStatuses } = useMemo(() => {
     const filtered = rows.filter(p =>
       mode === "me" ? p.memberLoginId === myLoginId : p.memberLoginId !== myLoginId
     );
@@ -106,9 +140,10 @@ export function usePuzzles() {
     }));
 
     const mateStatuses = byDay.map(p => (p.status === "DONE" ? "done" : "inprogress"));
+    const puzzleStatuses = byDay.map(p => p.status === "DONE");
 
     console.log(`🟢[usePuzzles] mode=${mode} day=${day} myLoginId=${myLoginId} → show=${items.length}`);
-    return { items, mateStatuses };
+    return { items, mateStatuses, puzzleStatuses };
   }, [rows, mode, day, myLoginId]);
 
   return {
@@ -119,7 +154,9 @@ export function usePuzzles() {
     setDay,
     items,
     mateStatuses,
+    puzzleStatuses,  // ← 퍼즐 체크 상태 배열
     refetch,
     remove,          // ← 컴포넌트에서 onDelete에 연결
+    toggleStatus,    // ← 컴포넌트에서 onToggle에 연결
   };
 }

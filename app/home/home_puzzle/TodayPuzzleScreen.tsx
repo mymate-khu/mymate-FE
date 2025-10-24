@@ -10,7 +10,7 @@ import StatusBadge from "./StatusBadge";
 import { usePuzzles } from "@/hooks/usePuzzles";
 
 export default function TodayPuzzleScreen() {
-  const { loading, mode, setMode, day, setDay, items, mateStatuses, refetch, remove } = usePuzzles();
+  const { loading, mode, setMode, day, setDay, items, mateStatuses, puzzleStatuses, refetch, remove, toggleStatus } = usePuzzles();
 
   useFocusEffect(React.useCallback(() => { refetch(); }, [refetch]));
 
@@ -42,6 +42,17 @@ export default function TodayPuzzleScreen() {
     ]);
   };
 
+  const handleToggle = (id: number) => {
+    toggleStatus(id).catch((e: any) => {
+      console.error("[TodayPuzzleScreen] toggle failed:", e);
+      if (Platform.OS === "web") {
+        alert(e?.message || "상태 변경에 실패했어요.");
+      } else {
+        Alert.alert("상태 변경 실패", e?.message || "상태 변경에 실패했어요.");
+      }
+    });
+  };
+
   return (
     <View style={{ flex: 1, marginTop: 20 }}>
       <View style={styles.headerRow}>
@@ -59,6 +70,8 @@ export default function TodayPuzzleScreen() {
         onAdd={() => router.push("/home/home_puzzle/PuzzleCreate")}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onToggle={handleToggle}
+        puzzleStatuses={puzzleStatuses}
       />
 
       {loading ? null : null}

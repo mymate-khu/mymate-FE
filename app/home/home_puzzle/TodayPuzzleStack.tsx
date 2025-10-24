@@ -27,6 +27,8 @@ export default function TodayPuzzleStack({
   onAdd,
   onEdit,
   onDelete,
+  onToggle,
+  puzzleStatuses,
 }: {
   items: StackItem[];
   palette?: Palette;
@@ -35,15 +37,15 @@ export default function TodayPuzzleStack({
   onAdd?: () => void;
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
+  onToggle?: (id: number) => void;
+  puzzleStatuses?: boolean[];
 }) {
   const puzzles = useMemo(() => (items ?? []).slice(0, MAX_CARDS), [items]);
 
   // ✅ 모든 훅을 조건문 이전에 선언
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [checked, setChecked] = useState<boolean[]>(() => puzzles.map(() => false));
 
   useEffect(() => {
-    setChecked((prev) => puzzles.map((_, i) => prev[i] ?? false));
     setOpenIndex((idx) => (idx !== null && idx >= puzzles.length ? null : idx));
   }, [puzzles.length]);
 
@@ -141,15 +143,12 @@ export default function TodayPuzzleStack({
               showActions={isOpen && !isMateMode}
               onEdit={isOpen && !isMateMode ? () => onEdit?.(p.id) : undefined}
               onDelete={isOpen && !isMateMode ? () => onDelete?.(p.id) : undefined}
-              checked={!isMateMode ? checked[i] : undefined}
+              checked={!isMateMode ? (puzzleStatuses?.[i] ?? false) : undefined}
               onToggle={
                 !isMateMode
-                  ? () =>
-                      setChecked((prev) => {
-                        const next = [...prev];
-                        next[i] = !next[i];
-                        return next;
-                      })
+                  ? () => {
+                      onToggle?.(p.id);
+                    }
                   : undefined
               }
               rightSlot={rightSlot?.(i)}
