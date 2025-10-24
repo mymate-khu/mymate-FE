@@ -33,7 +33,7 @@ export type Puzzle = {
   description: string;
   scheduledDate: string; // "YYYY-MM-DD"
   completedAt?: string | null;
-  status: "PENDING" | "DONE";
+  status: "INPROGRESS" | "DONE";
   memberLoginId: string;
   recurrenceType?: string | null;
   recurrenceEndDate?: string | null;
@@ -124,6 +124,22 @@ export async function updatePuzzle(id: number, payload: UpdatePuzzleReq): Promis
     return data.data;
   } catch (e) {
     throw normErr(e, "퍼즐 수정 실패");
+  }
+}
+
+/* ========= 상태 업데이트 ========= */
+/** PATCH /api/puzzles/{id}/status */
+export type UpdatePuzzleStatusReq = {
+  status: "INPROGRESS" | "DONE";
+};
+
+export async function updatePuzzleStatus(id: number, payload: UpdatePuzzleStatusReq): Promise<Puzzle> {
+  try {
+    const { data } = await TokenReq.patch<Envelope<Puzzle>>(`/api/puzzles/${id}/status`, payload);
+    if (!data?.isSuccess) throw new Error(data?.message || "퍼즐 상태 업데이트 실패");
+    return data.data;
+  } catch (e) {
+    throw normErr(e, "퍼즐 상태 업데이트 실패");
   }
 }
 

@@ -41,6 +41,7 @@ export function useGroups() {
         
         console.log("✅ 그룹 데이터:", groupsResult);
         console.log("✅ 수락 대기 중인 요청:", invitationsResult);
+        console.log("🔍 초대 데이터 개수:", invitationsResult.length);
         
         if (mounted) {
           setGroups(groupsResult);
@@ -89,18 +90,27 @@ export function useGroups() {
 
   // 수락 대기 중인 요청을 Mate 형태로 변환
   const getPendingMates = (): MateFromGroup[] => {
+    console.log("🔍 getPendingMates 호출, pendingInvitations:", pendingInvitations);
+    
     if (!pendingInvitations || !Array.isArray(pendingInvitations)) {
+      console.log("❌ pendingInvitations가 없거나 배열이 아님");
       return [];
     }
-    return pendingInvitations.map(invitation => ({
+    
+    const result = pendingInvitations.map(invitation => ({
       id: `invitation_${invitation.id}`,
-      name: invitation.recipientName,
-      code: invitation.recipientUsername,
+      name: invitation.inviteeName || invitation.recipientName,
+      code: invitation.inviteeMemberLoginId || invitation.recipientUsername,
       photo: undefined, // 기본 프로필 이미지 사용
-      memberLoginId: invitation.recipientUsername,
+      memberLoginId: invitation.inviteeMemberLoginId || invitation.recipientUsername,
       joinedAt: invitation.sentAt,
     }));
+    
+    console.log("✅ 변환된 pendingMates:", result);
+    return result;
   };
+
+
 
   return {
     groups,

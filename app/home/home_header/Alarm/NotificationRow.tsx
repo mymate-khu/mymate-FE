@@ -1,11 +1,12 @@
 // app/notifications/NotificationRow.tsx
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ColorValue,
+  ActivityIndicator,
 } from "react-native";
 
 import AddScheduleIcon from "@/assets/image/alarm/add_schedule.svg";
@@ -57,11 +58,36 @@ export default function NotificationRow({
   onAccept,
   onDecline,
 }: NotificationRowProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
   const Icon = TypeIcon[type];
   const showCTA = type === "mate_invite";
   const safeMessage = message ?? "";
   
   console.log(`🎨 [NotificationRow ${id}] isProcessing:`, isProcessing);
+
+  console.log(`🔍 NotificationRow 렌더링: type=${type}, showCTA=${showCTA}, title=${title}`);
+
+  const handleAccept = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    try {
+      await onAccept?.(id);
+    } finally {
+      // 처리 완료 후에도 버튼을 비활성화 상태로 유지
+      // (알림이 목록에서 제거되므로 실제로는 보이지 않음)
+    }
+  };
+
+  const handleDecline = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    try {
+      await onDecline?.(id);
+    } finally {
+      // 처리 완료 후에도 버튼을 비활성화 상태로 유지
+      // (알림이 목록에서 제거되므로 실제로는 보이지 않음)
+    }
+  };
 
   return (
     <TouchableOpacity

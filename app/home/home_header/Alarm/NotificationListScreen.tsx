@@ -9,7 +9,9 @@ import NotificationRow, {
   NotificationRowProps,
 } from "./NotificationRow";
 import { TokenReq } from "@/components/apis/axiosInstance";
+
 import { acceptInvitation, rejectInvitation, fetchMyInvitations, ReceivedInvitation } from "@/components/apis/invitations";
+
 
 /* ===== 서버 응답 타입 ===== */
 type ApiAction = {
@@ -81,14 +83,20 @@ const mapApiTypeToUIType = (t: string): NotificationType => {
   }
 };
 
-const toUIItem = (n: ApiNotification): NotificationItem => ({
-  id: String(n.id),
-  type: mapApiTypeToUIType(n.type),
-  title: n.title ?? "",
-  message: n.content ?? "",
-  createdAt: n.createdAt ?? new Date().toISOString(),
-  unread: n.status === "UNREAD",
-});
+const toUIItem = (n: ApiNotification): NotificationItem => {
+  const uiType = mapApiTypeToUIType(n.type);
+  console.log(`🔍 알림 매핑: ${n.type} → ${uiType}, relatedEntityId: ${n.relatedEntityId}`);
+  
+  return {
+    id: String(n.id),
+    type: uiType,
+    title: n.title ?? "",
+    message: n.content ?? "",
+    createdAt: n.createdAt ?? new Date().toISOString(),
+    unread: n.status === "UNREAD",
+    relatedEntityId: n.relatedEntityId, // 초대 ID 저장
+  };
+};
 
 /* ===== 분류/정렬 ===== */
 const NEW_THRESHOLD_HOURS = 24;
@@ -287,6 +295,9 @@ export default function NotificationListScreen() {
       // 처리 실패 시 처리 중 상태 해제
       setItems(prev => prev.map(n => (n.id === id ? { ...n, isProcessing: false } : n)));
       Alert.alert("오류", "거절 처리 중 문제가 발생했습니다.");
+      
+      // 실패 시 읽음 상태 롤백
+      setItems(prev => prev.map(n => n.id === id ? { ...n, unread: true } : n));
     }
   }, [items, invitations, optimisticRead]);
 

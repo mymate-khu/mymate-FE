@@ -17,6 +17,7 @@ import { router } from "expo-router";
 
 // ✅ 생성 훅
 import { useCreateAccount } from "@/hooks/useAccounts";
+import { useGroups } from "@/hooks/useGroups";
 
 import CalendarCard from "@/components/CalendarCard";
 import CalendarIcon from "@/assets/image/adjustmenticon/calendar_Icon.svg";
@@ -30,6 +31,7 @@ import CutleryIcon from "@/assets/image/adjustmenticon/cutlery_Icon.svg";
 import CarIcon from "@/assets/image/adjustmenticon/car_Icon.svg";
 import HouseIcon from "@/assets/image/adjustmenticon/house_Icon.svg";
 import ShopbagIcon from "@/assets/image/adjustmenticon/shopbag_Icon.svg";
+import BasicProfileIcon from "@/assets/image/home/basic_profile.svg";
 
 /* ---------- helpers ---------- */
 function todayStrSlash() {
@@ -75,6 +77,12 @@ export default function ExpenseCreate() {
 
   // 등록 훅
   const { mutateAsync: createMutate, isPending } = useCreateAccount();
+  
+  // 그룹 메이트 데이터
+  const { otherMembers, loading: groupsLoading, error: groupsError } = useGroups();
+  
+  // 디버깅을 위한 로그
+  console.log("🔍 정산 등록 - 그룹 데이터:", { otherMembers, groupsLoading, groupsError });
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -93,16 +101,25 @@ export default function ExpenseCreate() {
     }
   };
 
-  // TODO: 실제 멤버 목록으로 대체
-  const people = useMemo(
-    () => [
-      { id: "u1", name: "A", uri: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=240" },
-      { id: "u2", name: "B", uri: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240" },
-      { id: "u3", name: "C", uri: "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=240" },
-      { id: "u4", name: "D", uri: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240" },
-    ],
-    []
-  );
+  // 실제 그룹 메이트 데이터
+  const people = useMemo(() => {
+    console.log("🔍 people 계산 중 - otherMembers:", otherMembers);
+    
+    if (!otherMembers || otherMembers.length === 0) {
+      console.log("❌ otherMembers가 비어있음");
+      return [];
+    }
+    
+    const mappedPeople = otherMembers.map((member, index) => ({
+      id: member.memberLoginId || `member_${index}`,
+      name: member.name,
+      uri: member.photo, // 실제 프로필 이미지가 있으면 사용
+      hasPhoto: !!member.photo, // 프로필 사진 여부
+    }));
+    
+    console.log("✅ 매핑된 people:", mappedPeople);
+    return mappedPeople;
+  }, [otherMembers]);
 
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
   const togglePerson = (id: string) =>
@@ -126,8 +143,13 @@ export default function ExpenseCreate() {
       // 로컬 이미지 URI는 서버 업로드 기능 붙일 때 처리
       const imageUrlToSend: string | null = null;
 
-      // 임시 participantIds (u1→1, u2→2 …)
-      const participantIds = selectedPeople.map((_, idx) => idx + 1);
+      // 선택된 메이트들의 실제 ID 매핑
+      const participantIds = selectedPeople.map(selectedId => {
+        const member = people.find(p => p.id === selectedId);
+        // 실제 API에서는 memberLoginId나 실제 사용자 ID를 사용해야 함
+        // 현재는 임시로 인덱스 기반 ID 사용
+        return people.findIndex(p => p.id === selectedId) + 1;
+      });
 
       await createMutate({
         title: item.trim(),
@@ -211,25 +233,37 @@ export default function ExpenseCreate() {
         <View style={s.peopleBox}>
           <Text style={s.peopleLabel}>정산 할 사람을 선택하세요</Text>
           <View style={s.peopleRow}>
-            {people.map((p) => {
-              const on = selectedPeople.includes(p.id);
-              return (
-                <TouchableOpacity
-                  key={p.id}
-                  onPress={() => togglePerson(p.id)}
-                  activeOpacity={0.85}
-                  style={[s.avatarWrap, on && s.avatarWrapActive]}
-                >
-                  <Image source={{ uri: p.uri }} style={s.avatar} />
-                  {on && <View style={s.avatarDim} />}
-                  {on && (
-                    <View style={s.checkWrap}>
-                      <CheckIcon width={28} height={28} />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+            {groupsLoading ? (
+              <Text style={s.loadingText}>그룹 멤버를 불러오는 중...</Text>
+            ) : people.length === 0 ? (
+              <Text style={s.emptyText}>그룹 멤버가 없습니다</Text>
+            ) : (
+              people.map((p) => {
+                const on = selectedPeople.includes(p.id);
+                return (
+                  <TouchableOpacity
+                    key={p.id}
+                    onPress={() => togglePerson(p.id)}
+                    activeOpacity={0.85}
+                    style={[s.avatarWrap, on && s.avatarWrapActive]}
+                  >
+                    {p.hasPhoto ? (
+                      <Image source={{ uri: p.uri }} style={s.avatar} />
+                    ) : (
+                      <View style={s.avatarPlaceholder}>
+                        <BasicProfileIcon width={40} height={40} />
+                      </View>
+                    )}
+                    {on && <View style={s.avatarDim} />}
+                    {on && (
+                      <View style={s.checkWrap}>
+                        <CheckIcon width={28} height={28} />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })
+            )}
           </View>
         </View>
 
@@ -352,6 +386,14 @@ const s = StyleSheet.create({
   },
   avatarWrapActive: { borderColor: "#FFD51C" },
   avatar: { width: "100%", height: "100%", borderRadius: 36 },
+  avatarPlaceholder: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 36,
+    backgroundColor: "#F0F0F0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   avatarDim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.45)" },
   checkWrap: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
 
@@ -402,4 +444,17 @@ const s = StyleSheet.create({
   categoryText: { fontSize: 17, color: "#111" },
   categoryTextActive: { fontWeight: "700" },
   categoryDivider: { height: StyleSheet.hairlineWidth, backgroundColor: "#ECECEC", alignSelf: "stretch" },
+  
+  loadingText: { 
+    fontSize: 14, 
+    color: "#999", 
+    textAlign: "center", 
+    paddingVertical: 20 
+  },
+  emptyText: { 
+    fontSize: 14, 
+    color: "#999", 
+    textAlign: "center", 
+    paddingVertical: 20 
+  },
 });
