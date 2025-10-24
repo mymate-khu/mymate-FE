@@ -4,8 +4,9 @@ import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from "react-nativ
 import { useRouter } from "expo-router";
 import PuzzleLogo from "@/assets/image/home/puzzle_logo.svg";
 import ArrowRight from "@/assets/image/home/arrow_right.svg";
-import AvatarStack from "@/components/AvatarStack";
 import { useMyProfile } from "@/hooks/useMyProfile"; // ← 경로 알맞게
+import { useGroups } from "@/hooks/useGroups";
+import AvatarStack from "@/components/AvatarStack";
 
 type Mate = { id: string; name?: string; photo?: string };
 
@@ -28,9 +29,16 @@ export default function HomeMateOverview({
 }: Props) {
   const router = useRouter();
   const { me, loading } = useMyProfile();
+  const { otherMembers, loading: groupsLoading } = useGroups();
 
   // ✅ 닉네임 없이 username만 사용
   const displayName = loading ? "..." : (me?.username || userName);
+
+  // 실제 그룹 멤버들로 아바타 생성 (기본 SVG 사용)
+  const mateAvatars = (otherMembers || []).slice(0, 3).map(member => ({
+    id: member.id,
+    photo: undefined, // undefined로 두면 GradientAvatar에서 BasicProfile SVG 사용
+  }));
 
   const handleNavigateToManage = () => {
     router.push("/home/home_mate_overview/MateManage/MateManagement");
@@ -52,7 +60,7 @@ export default function HomeMateOverview({
 
         <View style={s.matesRow}>
           <AvatarStack
-            uris={mates.slice(0, 3).map((m) => m.photo || "")}
+            uris={mateAvatars.map((m) => m.photo)}
             size={40}
             overlap={10}
           />
