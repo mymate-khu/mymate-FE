@@ -1,3 +1,4 @@
+// app/home/MyPuzzleScreen.tsx
 import React, { useCallback, useState } from "react";
 import { View, ScrollView, StyleSheet, Text, Image, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
@@ -7,31 +8,34 @@ import { TokenReq } from "@/components/apis/axiosInstance";
 
 const MY_MEMBER_ID = 123;
 
-type PuzzleDto = {
+// ===== API 타입: mateBoards 스키마 =====
+type MateBoardDto = {
   id: number;
-  title: string;
-  description: string;
-  scheduledDate: string;
-  completedAt: string | null;
-  status: "PENDING" | "DONE" | string;
   memberId: number;
-  recurrenceType: string | null;
-  recurrenceEndDate: string | null;
-  parentPuzzleId: number | null;
-  priority: string | null;
-  category: string | null;
+  memberName: string;
+  content: string;
   createdAt: string;
-  updatedAt: string;
+  expiresAt: string;
+  isOwner: boolean;
+};
+
+type ApiData = {
+  mateBoards: MateBoardDto[];
+  totalCount: number;
+  page: number;
+  size: number;
+  totalPages: number;
 };
 
 type ApiResponse = {
   isSuccess: boolean;
   code: string;
   message: string;
-  data: PuzzleDto[];
+  data: ApiData;
   success: boolean;
 };
 
+// ===== 화면 표시용 카드 =====
 type CardData = {
   id: number;
   imgurl: string;
@@ -40,17 +44,8 @@ type CardData = {
   memberId: number;
 };
 
-const DUMMY_CARDS: CardData[] = [
-  { id: 9001, imgurl: "", name: "멤버 201", content: "분리수거 / 오늘 저녁", memberId: 201 },
-  { id: 9002, imgurl: "", name: "멤버 202", content: "거실 청소", memberId: 202 },
-  { id: 9003, imgurl: "", name: "멤버 204", content: "전기요금 정산", memberId: 204 },
-  { id: 9004, imgurl: "", name: "멤버 205", content: "우유/계란 사오기", memberId: 205 },
-  { id: 9005, imgurl: "", name: "멤버 206", content: "욕실 배수구 청소", memberId: 206 },
-  { id: 9006, imgurl: "", name: "멤버 207", content: "공용 쓰레기 배출", memberId: 207 },
-];
-
 export default function MyPuzzleScreen() {
-  const [items, setItems] = useState<CardData[]>(DUMMY_CARDS);
+  const [items, setItems] = useState<CardData[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -59,30 +54,40 @@ export default function MyPuzzleScreen() {
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
+
       (async () => {
         try {
           setLoading(true);
           setErr(null);
 
-          // 실제 엔드포인트로 교체
-          const res = await TokenReq.get<ApiResponse>(`api/puzzles/date/${todayISO}`);
-          if (cancelled) return;
-          const all = res.data?.data ?? [];
+          const res = await TokenReq.get<ApiResponse>("/api/mateboards", {
+            params: { page: 0, size: 300 },
+          });
 
-          const filtered = all.filter((p) => p.memberId !== MY_MEMBER_ID);
-          const mapped: CardData[] = filtered.map((p) => ({
-            id: p.id,
-            imgurl: "",
-            name: `멤버 ${p.memberId}`,
-            content: p.title || p.description || "",
-            memberId: p.memberId,
+          if (cancelled) return;
+
+          if (!res.data?.isSuccess || !res.data?.data) {
+            throw new Error(res.data?.message || "응답 포맷 오류");
+          }
+
+          const boards = res.data.data.mateBoards ?? [];
+
+          // 내 글 제외
+          const filtered = boards.filter((b) => b.memberId !== MY_MEMBER_ID);
+
+          const mapped: CardData[] = filtered.map((b) => ({
+            id: b.id,
+            imgurl: "", // 프로필 이미지 있으면 여기에 추가
+            name: b.memberName || `멤버 ${b.memberId}`,
+            content: b.content || "",
+            memberId: b.memberId,
           }));
 
-          setItems(mapped.length ? mapped : DUMMY_CARDS);
-        } catch (e) {
+          setItems(mapped);
+        } catch (e: any) {
           if (!cancelled) {
-            setItems(DUMMY_CARDS);
-            setErr("서버 연결이 불안정하여 임시 데이터를 표시합니다.");
+            setItems([]);
+            setErr("서버 연결이 불안정합니다. 잠시 후 다시 시도해주세요.");
           }
         } finally {
           if (!cancelled) setLoading(false);
@@ -128,7 +133,7 @@ export default function MyPuzzleScreen() {
 
 const OVERLAP = 23;
 const CARD_RADIUS = 16;
-const CARD_RATIO = 370 / 185; // Union 원본 비율 대략 반영
+const CARD_RATIO = 370 / 185;
 
 function PuzzleItem({ data, idx }: { data: CardData; idx: number }) {
   return (
@@ -136,19 +141,18 @@ function PuzzleItem({ data, idx }: { data: CardData; idx: number }) {
       style={[
         s.card,
         {
-          marginTop: idx === 0 ? 0 : -OVERLAP, // 위로 살짝 겹치기
+          marginTop: idx === 0 ? 0 : -OVERLAP,
           zIndex: idx + 1,
         },
       ]}
     >
-      {/* ⬇️ 배경: 별도 래퍼로 감싸서 안전하게 클리핑 */}
+      {/* 배경 */}
       <View style={s.bgWrap}>
         <Image source={Union} style={s.bgImage} resizeMode="cover" />
       </View>
 
-      {/* 오버레이 콘텐츠 */}
+      {/* 오버레이 */}
       <View style={s.cardOverlay}>
-        {/* 아바타 + 이름 */}
         <View style={s.headerRow}>
           {data.imgurl ? (
             <Image source={{ uri: data.imgurl }} style={s.avatar} />
@@ -162,7 +166,6 @@ function PuzzleItem({ data, idx }: { data: CardData; idx: number }) {
           </Text>
         </View>
 
-        {/* 제목/내용 */}
         <Text style={s.title} numberOfLines={2}>
           {data.content}
         </Text>
@@ -172,32 +175,16 @@ function PuzzleItem({ data, idx }: { data: CardData; idx: number }) {
 }
 
 const s = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "white",
-  },
-  header: {
-    height: 50,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    fontFamily: "PretendardSemiBold",
-  },
-  arrow: {
-    position: "absolute",
-    left: 10,
-    fontSize: 20,
-    fontFamily: "PretendardSemiBold",
-  },
+  container: { flex: 1, backgroundColor: "white" },
 
-  // ScrollView content 레이아웃
+  header: { height: 50, alignItems: "center", justifyContent: "center" },
+  headerTitle: { fontSize: 16, fontWeight: "600", fontFamily: "PretendardSemiBold" },
+  arrow: { position: "absolute", left: 10, fontSize: 20, fontFamily: "PretendardSemiBold" },
+
   puzzleContent: {
     paddingBottom: 32,
-    rowGap: 0,               // 겹치기 위해 간격 0
-    paddingHorizontal: "5%",    // ⬅️ 옆으로 튀는 걸 방지하려면 0이 안전
+    rowGap: 0,
+    paddingHorizontal: "5%",
     alignItems: "stretch",
   },
 
@@ -205,83 +192,29 @@ const s = StyleSheet.create({
   loadingWrap: { flex: 1, alignItems: "center", justifyContent: "center" },
   loadingText: { marginTop: 8, color: "#8E8E8E" },
 
-  // 카드 박스
   card: {
     position: "relative",
     width: "100%",
-    alignSelf: "stretch",        // 부모 폭을 그대로 사용
+    alignSelf: "stretch",
     aspectRatio: CARD_RATIO,
     borderRadius: CARD_RADIUS,
-    overflow: "hidden",          // 내용 클리핑
-    // 그림자 필요하면 여기(elevation/shadow*) 추가
-  },
-
-  // 배경 래퍼: 절대 채우기 + 각 모서리 radius 지정(안드 이슈 대응)
-  bgWrap: {
-    ...StyleSheet.absoluteFillObject,
-    borderTopLeftRadius: CARD_RADIUS,
-    borderTopRightRadius: CARD_RADIUS,
-    borderBottomLeftRadius: CARD_RADIUS,
-    borderBottomRightRadius: CARD_RADIUS,
     overflow: "hidden",
   },
-  // 배경 이미지: 래퍼 안에서 100% 채우기 + radius 부여(안드 이슈 이중 방어)
-  bgImage: {
-    width: "100%",
-    height: "100%",
-    borderTopLeftRadius: CARD_RADIUS,
-    borderTopRightRadius: CARD_RADIUS,
-    borderBottomLeftRadius: CARD_RADIUS,
-    borderBottomRightRadius: CARD_RADIUS,
+  bgWrap: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: CARD_RADIUS,
+    overflow: "hidden",
   },
+  bgImage: { width: "100%", height: "100%", borderRadius: CARD_RADIUS },
 
-  // 배경 위 컨텐츠
-  cardOverlay: {
-    flex: 1,
-    zIndex: 1,
-    padding: 16,
-    justifyContent: "flex-start",
-  },
+  cardOverlay: { flex: 1, zIndex: 1, padding: 16, justifyContent: "flex-start" },
 
-  // 아바타 + 이름 한 줄
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
+  headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
+  avatarFallback: { backgroundColor: "#EEF1F5", alignItems: "center", justifyContent: "center" },
+  avatarInitial: { fontWeight: "700", color: "#4A5568" },
 
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10, // columnGap 미지원 환경 대비
-  },
-  avatarFallback: {
-    backgroundColor: "#EEF1F5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarInitial: {
-    fontWeight: "700",
-    color: "#4A5568",
-  },
-
-  name: {
-    flexShrink: 1,
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#111",
-  },
-
-  title: {
-    fontSize: 14,
-    color: "#333",
-    lineHeight: 20,
-  },
-
-  empty: {
-    padding: 24,
-    textAlign: "center",
-    color: "#8E8E8E",
-  },
+  name: { flexShrink: 1, fontSize: 15, fontWeight: "700", color: "#111" },
+  title: { fontSize: 14, color: "#333", lineHeight: 20 },
+  empty: { padding: 24, textAlign: "center", color: "#8E8E8E" },
 });
