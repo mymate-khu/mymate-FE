@@ -5,6 +5,7 @@ import { router } from "expo-router"; // ✅ 추가
 import BackHeader from "@/components/BackHeader";
 import SectionHeader from "./SectionHeader";
 import MateListItem from "./MateListItem";
+import { useGroups } from "@/hooks/useGroups";
 
 type Mate = {
   id: string;
@@ -14,45 +15,27 @@ type Mate = {
 };
 
 export default function MateManagement() {
-  const pendingMates: Mate[] = useMemo(
-    () => [
-      {
-        id: "p1",
-        name: "박민지",
-        code: "SZZYDE770",
-        photo:
-          "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?q=80&w=480&auto=format&fit=crop",
-      },
-    ],
-    []
-  );
+  const { otherMembers, pendingMates, loading, error } = useGroups();
 
-  const currentMates: Mate[] = useMemo(
-    () => [
-      {
-        id: "m1",
-        name: "김희영",
-        code: "SZZYDE770",
-        photo:
-          "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=480&auto=format&fit=crop",
-      },
-      {
-        id: "m2",
-        name: "손민수",
-        code: "SZZYDE770",
-        photo:
-          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=480&auto=format&fit=crop",
-      },
-      {
-        id: "m3",
-        name: "정하진",
-        code: "SZZYDE770",
-        photo:
-          "https://images.unsplash.com/photo-1463453091185-61582044d556?q=80&w=480&auto=format&fit=crop",
-      },
-    ],
-    []
-  );
+  // 수락 대기 중인 메이트들을 Mate 형태로 변환
+  const pendingMatesList: Mate[] = useMemo(() => {
+    return pendingMates.map(mate => ({
+      id: mate.id,
+      name: mate.name,
+      code: mate.code,
+      photo: mate.photo,
+    }));
+  }, [pendingMates]);
+
+  // API에서 가져온 실제 그룹 멤버들을 Mate 형태로 변환
+  const currentMates: Mate[] = useMemo(() => {
+    return otherMembers.map(member => ({
+      id: member.id,
+      name: member.name,
+      code: member.code,
+      photo: member.photo,
+    }));
+  }, [otherMembers]);
 
   const handleRejectPending = (mate: Mate) => {
     Alert.alert("요청 취소", `${mate.name}의 요청을 취소할까요?`, [
@@ -78,6 +61,31 @@ export default function MateManagement() {
     // router.push("/home/home_mate_overview/MateManage/MateAddScreen");
   };
 
+  // 로딩 상태 처리
+  if (loading) {
+    return (
+      <View style={s.screen}>
+        <BackHeader title="나의 메이트 관리" />
+        <View style={s.loadingContainer}>
+          <Text style={s.loadingText}>메이트 목록을 불러오는 중...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // 에러 상태 처리
+  if (error) {
+    return (
+      <View style={s.screen}>
+        <BackHeader title="나의 메이트 관리" />
+        <View style={s.errorContainer}>
+          <Text style={s.errorText}>메이트 목록을 불러올 수 없습니다.</Text>
+          <Text style={s.errorSubText}>잠시 후 다시 시도해주세요.</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={s.screen}>
       <BackHeader title="나의 메이트 관리" />
@@ -86,7 +94,7 @@ export default function MateManagement() {
         {/* 수락 대기 중 */}
         <SectionHeader title="수락 대기 중" />
         <View style={s.sectionBody}>
-          {pendingMates.map((m) => (
+          {pendingMatesList.map((m) => (
             <MateListItem
               key={m.id}
               name={m.name}
@@ -96,7 +104,7 @@ export default function MateManagement() {
               onPressAction={() => handleRejectPending(m)}
             />
           ))}
-          {pendingMates.length === 0 && (
+          {pendingMatesList.length === 0 && (
             <Text style={s.emptyText}>수락 대기 중인 요청이 없어요.</Text>
           )}
         </View>
@@ -133,7 +141,39 @@ const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#fff" },
   container: { paddingBottom: 40 },
   sectionBody: { paddingTop: 8, paddingBottom: 16 },
-  emptyText: { color: "#9A9A9A", fontSize: 14, paddingHorizontal: 2, paddingVertical: 10 },
+  emptyText: { color: "#9A9A9A", fontSize: 14, paddingHorizontal: "5%", paddingVertical: 10 },
+
+  // 로딩 상태
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+  },
+
+  // 에러 상태
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#FF6B6B",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  errorSubText: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
+  },
 
   addBtn: {
     marginTop: 8,
