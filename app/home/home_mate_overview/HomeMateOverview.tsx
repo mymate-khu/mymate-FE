@@ -46,10 +46,10 @@ export default function HomeMateOverview({
 
   const displayName = loading ? "..." : (me?.username || userName);
 
-  // 실제 그룹 멤버들로 아바타 생성 (사진 없으면 기본 SVG)
+  // 실제 그룹 멤버들로 아바타 생성 (사진 없으면 랜덤 아바타)
   const mateAvatars = (otherMembers || []).slice(0, 3).map(member => ({
-    id: member.id,
-    photo: undefined, // undefined면 AvatarStack/GradientAvatar에서 기본 이미지 사용
+    uri: member.photo,
+    seed: member.code || member.name || member.id, // 랜덤 아바타 생성용 seed
   }));
 
   const handleNavigateToManage = () => {
@@ -69,13 +69,17 @@ export default function HomeMateOverview({
         </View>
 
         <Text style={s.sectionTitle}>MyMate</Text>
-
+        
         <View style={s.matesRow}>
-          <AvatarStack
-            uris={mateAvatars.length ? mateAvatars.map((m) => m.photo) : mates.map(m => m.photo)}
-            size={40}
-            overlap={10}
-          />
+          {mateAvatars.length > 0 ? (
+            <AvatarStack
+              avatars={mateAvatars}
+              size={40}
+              overlap={10}
+            />
+          ) : (
+            <View style={s.emptySpace} />
+          )}
         </View>
       </View>
 
@@ -124,6 +128,10 @@ const s = StyleSheet.create({
   matesRow: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  emptySpace: {
+    height: 40, // AvatarStack과 동일한 높이
+    width: 1, // 최소 너비
   },
   nextBtn: {
     position: "absolute",

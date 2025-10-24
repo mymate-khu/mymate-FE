@@ -6,8 +6,6 @@ export interface Invitation {
   recipientId: number;
   recipientUsername: string;
   recipientName: string;
-  inviteeName: string;
-  inviteeMemberLoginId: string;
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
   sentAt: string;
   respondedAt?: string;
@@ -20,6 +18,8 @@ export interface ReceivedInvitation {
   inviterId: number;
   inviterName: string;
   inviteeId: number;
+  inviteeMemberLoginId?: string | null;
+  inviteeName?: string | null;
   expiresAt: string;
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
   createdAt: string;
@@ -29,24 +29,9 @@ export interface ReceivedInvitation {
  * 보낸 초대 목록 조회
  */
 export async function fetchSentInvitations(status?: string): Promise<Invitation[]> {
-  try {
-    const params = status ? { status } : {};
-    console.log("🔍 fetchSentInvitations 호출, params:", params);
-    
-    const response = await TokenReq.get("/api/invitations/sent", { params });
-    console.log("🔍 API 응답:", response.data);
-    
-    // Envelope 형태인지 확인
-    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-      console.log("📦 Envelope 형태 응답, data:", response.data.data);
-      return response.data.data || [];
-    }
-    
-    return response.data || [];
-  } catch (error) {
-    console.error("❌ fetchSentInvitations 에러:", error);
-    throw error;
-  }
+  const params = status ? { status } : {};
+  const response = await TokenReq.get<Invitation[]>("/api/invitations/sent", { params });
+  return response.data;
 }
 
 /**
@@ -57,42 +42,24 @@ export async function fetchPendingInvitations(): Promise<Invitation[]> {
 }
 
 /**
- * 받은 초대 목록 조회
+ * 내가 받은 초대 목록 조회
  */
-export async function fetchReceivedInvitations(): Promise<ReceivedInvitation[]> {
-  try {
-    console.log("🔍 fetchReceivedInvitations 호출");
-    
-    const response = await TokenReq.get("/api/invitations/me");
-    console.log("🔍 API 응답:", response.data);
-    
-    // Envelope 형태인지 확인
-    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-      console.log("📦 Envelope 형태 응답, data:", response.data.data);
-      return response.data.data || [];
-    }
-    
-    return response.data || [];
-  } catch (error) {
-    console.error("❌ fetchReceivedInvitations 에러:", error);
-    throw error;
-  }
+export async function fetchMyInvitations(): Promise<ReceivedInvitation[]> {
+  const response = await TokenReq.get("/api/invitations/me");
+  const data = response.data?.data ?? [];
+  return data;
 }
 
 /**
  * 초대 수락
  */
 export async function acceptInvitation(invitationId: number): Promise<void> {
-  try {
-    console.log("🔍 acceptInvitation 호출, invitationId:", invitationId);
-    
-    const response = await TokenReq.post(`/api/invitations/${invitationId}/accept`);
-    console.log("🔍 수락 API 응답:", response.data);
-    
-    return response.data;
-  } catch (error) {
-    console.error("❌ acceptInvitation 에러:", error);
-    throw error;
-  }
+  await TokenReq.post(`/api/invitations/${invitationId}/accept`);
 }
 
+/**
+ * 초대 거절
+ */
+export async function rejectInvitation(invitationId: number): Promise<void> {
+  await TokenReq.post(`/api/invitations/${invitationId}/reject`);
+}

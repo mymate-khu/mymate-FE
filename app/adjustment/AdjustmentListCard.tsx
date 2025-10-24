@@ -114,11 +114,14 @@ export default function AdjustmentListCard({
         </View>
       </View>
 
-      {!!item.imageUri && (
-        <View style={s.bottomImageBox}>
+      {/* 이미지 영역: imageUri가 있으면 실제 이미지, 없으면 안내 텍스트 */}
+      <View style={s.bottomImageBox}>
+        {item.imageUri ? (
           <Image source={{ uri: item.imageUri }} style={s.bottomImage} />
-        </View>
-      )}
+        ) : (
+          <Text style={s.noImageText}>이미지가 없습니다</Text>
+        )}
+      </View>
 
       {menuOpen && (
         <>
@@ -237,6 +240,20 @@ const s = StyleSheet.create({
   prevAmount: { fontSize: 12, color: "#707070" },
   finalAmount: { fontSize: 20, fontWeight: "400", color: "#111" },
 
-  bottomImageBox: { marginTop: 5, borderRadius: 16, overflow: "hidden" },
-  bottomImage: { width: "100%", aspectRatio: 16 / 9 },
+  bottomImageBox: { 
+    marginTop: 5, 
+    borderRadius: 16, 
+    overflow: "hidden",
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    aspectRatio: 16 / 9,
+  },
+  bottomImage: { width: "100%", height: "100%" },
+  noImageText: {
+    fontSize: 14,
+    color: "#999",
+    fontWeight: "400",
+  },
 });

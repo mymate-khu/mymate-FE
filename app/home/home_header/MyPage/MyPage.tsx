@@ -17,8 +17,8 @@ import SettingListItem from "./SettingListItem";
 // 아이콘
 import UserIcon from "@/assets/image/mypage/user.svg";
 import LockIcon from "@/assets/image/mypage/lock.svg";
-import BellIcon from "@/assets/image/mypage/Bell.svg";
-import FlagIcon from "@/assets/image/mypage/Flag.svg";
+import BellIcon from "@/assets/image/mypage/bell.svg";
+import FlagIcon from "@/assets/image/mypage/flag.svg";
 import ChatIcon from "@/assets/image/mypage/chat.svg";
 import LogoutIcon from "@/assets/image/mypage/logout.svg";
 import EditIcon from "@/assets/image/mypage/edit.svg";
@@ -36,6 +36,7 @@ export default function MyPage() {
   const idLabel = loading ? "" : (me?.memberLoginId ?? "");
 
   const avatarUri = me?.profileImageUrl ?? undefined;
+  const avatarSeed = me?.memberLoginId || me?.nickname || me?.username;
 
   const handleLogout = async () => {
     Alert.alert("로그아웃", "정말 로그아웃 하시겠어요?", [
@@ -67,7 +68,7 @@ export default function MyPage() {
         {/* 프로필 영역 */}
         <View style={s.profileBox}>
           <View style={s.avatarWrap}>
-            <GradientAvatar uri={avatarUri} size={80} />
+            <GradientAvatar uri={avatarUri} seed={avatarSeed} size={80} />
             <TouchableOpacity style={s.editBtn} activeOpacity={0.8} onPress={goEditProfile}>
               <EditIcon width={24} height={24} />
             </TouchableOpacity>

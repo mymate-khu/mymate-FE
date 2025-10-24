@@ -31,7 +31,7 @@ export default function MateListItem({
       <View style={s.container}>
         {/* 프로필 */}
         <View style={s.left}>
-          <GradientAvatar uri={photo} size={48} />
+          <GradientAvatar uri={photo} seed={code || name} size={48} />
           <View style={s.textBox}>
             <Text style={s.name}>{name}</Text>
             <Text style={s.code}>{code}</Text>
@@ -70,7 +70,7 @@ export default function MateListItem({
     <View style={s.container}>
       {/* 프로필 */}
       <View style={s.left}>
-        <GradientAvatar uri={photo} size={48} />
+        <GradientAvatar uri={photo} seed={code || name} size={48} />
         <View style={s.textBox}>
           <Text style={s.name}>{name}</Text>
           <Text style={s.code}>{code}</Text>

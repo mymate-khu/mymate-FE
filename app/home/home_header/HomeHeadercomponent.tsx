@@ -8,6 +8,7 @@ import GradientAvatar from "@/components/GradientAvatar";
 type Props = {
   style?: ViewStyle;
   profileImage?: string;
+  profileSeed?: string | number;
   profileLabel?: string;
   onPressProfile?: () => void;
   unreadCount?: number;
@@ -17,6 +18,7 @@ type Props = {
 export default function HomeHeadercomponent({
   style,
   profileImage,
+  profileSeed,
   profileLabel = "내 계정",
   onPressProfile,
   unreadCount = 0,
@@ -40,7 +42,7 @@ export default function HomeHeadercomponent({
     <View style={[s.container, style]}>
       {/* 좌측: 프로필 */}
       <TouchableOpacity activeOpacity={0.85} style={s.profileBtn} onPress={handlePressProfile}>
-        <GradientAvatar uri={profileImage} size={40} />
+        <GradientAvatar uri={profileImage} seed={profileSeed} size={40} />
         <Text style={s.profileText}>{profileLabel}</Text>
         <ChevronRight width={14} height={14} />
       </TouchableOpacity>

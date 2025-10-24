@@ -16,7 +16,7 @@ export type AdjustmentListStackProps = {
 
 export default function AdjustmentListStack({
   items,
-  overlap = 210,
+  overlap = 220,
   onChangeStatus,
   onEdit,
   onDelete,

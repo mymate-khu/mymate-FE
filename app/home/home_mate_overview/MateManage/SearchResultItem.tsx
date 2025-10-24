@@ -37,7 +37,7 @@ export default function SearchResultItem({
       style={[s.row, disabled && { opacity: 0.5 }]}
     >
       {/* 아바타 */}
-      <GradientAvatar uri={avatarUri} size={40} />
+      <GradientAvatar uri={avatarUri} seed={code || name} size={40} />
 
       {/* 이름 + 코드 */}
       <View style={s.center}>
