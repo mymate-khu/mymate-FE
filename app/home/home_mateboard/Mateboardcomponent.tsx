@@ -5,21 +5,62 @@ import Mypuzzle from "@/assets/image/homepage_puzzleimg/Mypuzzle.svg";
 import Matepuzzle from "@/assets/image/homepage_puzzleimg/Matepuzzle.svg";
 import ChevronRight from "@/assets/image/homepage_puzzleimg/chevron-right.svg";
 import { TokenReq } from "@/components/apis/axiosInstance";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const MEMO_KEY = "mateboard:last_memo";
+
+async function storageGet(key: string): Promise<string | null> {
+  try {
+    if (Platform.OS === "web") {
+      return window.localStorage.getItem(key);
+    }
+    return await AsyncStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+async function storageSet(key: string, value: string): Promise<void> {
+  try {
+    if (Platform.OS === "web") {
+      window.localStorage.setItem(key, value);
+      return;
+    }
+    await AsyncStorage.setItem(key, value);
+  } catch {}
+}
 
 export default function MateboardComponent() {
   const [memo, setMemo] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latestSent = useRef<string>("");
+  const latestSent = useRef<string>(""); // 마지막으로 서버/로컬에 반영된 내용
+
+  // 최초 로드: 로컬 저장된 최근 메모 불러오기
+  useEffect(() => {
+    (async () => {
+      const saved = (await storageGet(MEMO_KEY)) ?? "";
+      if (saved) {
+        setMemo(saved);
+        latestSent.current = saved; // 초기 로드 시 불필요한 POST 방지
+      }
+    })();
+  }, []);
 
   const postMemo = useCallback(
     async (content: string) => {
       const body = content.trim();
-      if (!body) return; // 빈 내용은 전송 안 함
+      if (!body) return; // 빈 내용은 저장/전송 안 함
       if (latestSent.current === body) return; // 중복 전송 방지
 
       try {
+        // 서버로 전송
         const res = await TokenReq.post("/api/mateboards", { content: body });
-        console.log(res)
+        console.log(res);
+
+        // 로컬에도 저장
+        await storageSet(MEMO_KEY, body);
+
+        // 최신 반영값 갱신
         latestSent.current = body;
       } catch (e: any) {
         if (Platform.OS === "web") {
@@ -74,7 +115,7 @@ export default function MateboardComponent() {
               placeholder="내용을 입력해주세요..."
               placeholderTextColor="#888"
               multiline
-              value={memo}
+              value={memo}               // ← 저장된 최근 내용이 여기 자동 노출됨
               onChangeText={setMemo}
               onBlur={onBlurSave}
             />

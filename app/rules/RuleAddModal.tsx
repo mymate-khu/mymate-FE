@@ -16,7 +16,7 @@ type Props = {
   visible: boolean;
   initialTitle?: string;
   initialBody?: string;
-  mode?: "create" | "edit";              // ✅ 추가: 모달 모드
+  mode?: "create" | "edit";
   onClose: () => void;
   onSubmit: (payload: { title: string; body: string }) => void;
 };
@@ -25,7 +25,7 @@ export default function RuleAddModal({
   visible,
   initialTitle = "",
   initialBody = "",
-  mode = "create",                      // ✅ 기본은 생성
+  mode = "create",
   onClose,
   onSubmit,
 }: Props) {
@@ -42,22 +42,31 @@ export default function RuleAddModal({
   return (
     <Modal visible={visible} animationType="fade" transparent>
       <KeyboardAvoidingView
-        style={s.center}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={s.centerContainer}
       >
-        {/* Dim */}
+        {/* 배경 딤 처리 */}
         <TouchableOpacity style={s.dim} activeOpacity={1} onPress={onClose} />
 
-        {/* Sheet */}
+        {/* 모달 본체 */}
         <View style={s.sheet}>
-          <RuleAddBg width="100%" height="100%" style={StyleSheet.absoluteFillObject} />
+          <RuleAddBg
+            width="100%"
+            height="100%"
+            style={StyleSheet.absoluteFillObject}
+          />
 
+          {/* 닫기 버튼 */}
           <TouchableOpacity style={s.close} onPress={onClose} hitSlop={8}>
             <X size={22} color="#111" />
           </TouchableOpacity>
 
-          <Text style={s.title}>{mode === "edit" ? "규칙 수정하기" : "규칙 등록하기"}</Text>
+          {/* 제목 */}
+          <Text style={s.title}>
+            {mode === "edit" ? "규칙 수정하기" : "규칙 등록하기"}
+          </Text>
 
+          {/* 입력 영역 */}
           <Text style={s.label}>제목</Text>
           <View style={s.inputBox}>
             <TextInput
@@ -70,7 +79,7 @@ export default function RuleAddModal({
           </View>
 
           <Text style={[s.label, { marginTop: 16 }]}>내용</Text>
-          <View style={[s.inputBox, { height: 180 }]}>
+          <View style={[s.inputBox, s.bodyBox]}>
             <TextInput
               value={body}
               onChangeText={setBody}
@@ -81,12 +90,17 @@ export default function RuleAddModal({
             />
           </View>
 
+          {/* 완료 버튼 */}
           <TouchableOpacity
             style={s.cta}
             activeOpacity={0.9}
-            onPress={() => onSubmit({ title: title.trim(), body: body.trim() })}
+            onPress={() =>
+              onSubmit({ title: title.trim(), body: body.trim() })
+            }
           >
-            <Text style={s.ctaText}>{mode === "edit" ? "수정" : "완료"}</Text>
+            <Text style={s.ctaText}>
+              {mode === "edit" ? "수정" : "완료"}
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -95,29 +109,82 @@ export default function RuleAddModal({
 }
 
 const s = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  dim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.35)" },
-  sheet: {
-    width: 370,
-    height: 520,
-    borderRadius: 24,
-    //backgroundColor: "pink",
-    paddingHorizontal: 20,
+  /** ✅ 모달 전체를 화면 중앙에 배치 */
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  close: { position: "absolute", right: 16, top: 16 },
-  title: { fontSize: 20, fontWeight: "500", color: "#111", alignSelf: "center", marginTop: 60, marginBottom: 16 },
-  label: { fontSize: 16 , color: "#797979", marginLeft: 6, marginBottom: 8 },
-  inputBox: { height: 48, borderRadius: 16, backgroundColor: "#F0F0F0", borderWidth: 0, borderColor: "#999999", paddingHorizontal: 14, justifyContent: "center" },
-  input: { fontSize: 15, color: "#111" },
+
+  /** 반투명 딤 레이어 */
+  dim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  bodyBox: {
+    height: 180,
+    justifyContent: "flex-start", // ✅ 글자가 위에서부터 시작
+    paddingTop: 10,               // ✅ 위 여백 살짝 줘서 자연스럽게
+  },
+
+  /** 본체 카드 */
+  sheet: {
+    width: 340,
+    height: 480,
+    borderRadius: 24,
+    overflow: "hidden",
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    backgroundColor: "white",
+    elevation: 8, // 안드로이드 그림자
+    shadowColor: "#000", // iOS 그림자
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+
+  close: {
+    position: "absolute",
+    right: 16,
+    top: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#111",
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 15,
+    color: "#797979",
+    marginLeft: 6,
+    marginBottom: 6,
+  },
+  inputBox: {
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "#F5F5F5",
+    paddingHorizontal: 14,
+    justifyContent: "center",
+  },
+  input: {
+    fontSize: 15,
+    color: "#111",
+  },
   cta: {
-    marginTop: 18,
+    marginTop: 22,
     alignSelf: "flex-end",
-    height: 40,
-    paddingHorizontal: 18,
+    height: 42,
+    paddingHorizontal: 22,
     backgroundColor: "#FFE600",
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaText: { fontSize: 14, fontWeight: "500", color: "#111" },
+  ctaText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#111",
+  },
 });
