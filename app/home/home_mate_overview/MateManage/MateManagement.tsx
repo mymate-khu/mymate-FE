@@ -1,5 +1,5 @@
 // app/home/home_mate_overview/MateManage/MateManagement.tsx
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { router } from "expo-router"; // ✅ 추가
 import BackHeader from "@/components/BackHeader";
@@ -37,6 +37,7 @@ export default function MateManagement() {
     }));
   }, [otherMembers]);
 
+
   const handleRejectPending = (mate: Mate) => {
     Alert.alert("요청 취소", `${mate.name}의 요청을 취소할까요?`, [
       { text: "아니오", style: "cancel" },
@@ -50,6 +51,7 @@ export default function MateManagement() {
       { text: "삭제", style: "destructive", onPress: () => console.log("remove", mate.id) },
     ]);
   };
+
 
   const handleAddMate = () => {
     // ✅ 메이트 추가 화면으로 이동
