@@ -16,6 +16,7 @@ import MainIcon from "@/assets/image/loginpageimg/main.png";
 import kakaoIcon from "@/assets/image/loginpageimg/kakaoicon.png";
 import naverIcon from "@/assets/image/loginpageimg/navericon.png";
 import appleIcon from "@/assets/image/loginpageimg/appleicon.png";
+import FCMService from "@/components/firebase/FCMService";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -46,6 +47,13 @@ export default function LoginScreen() {
       if (refreshToken) {
         await AsyncStorage.setItem("refreshToken", refreshToken);
       }
+
+      const fcmtoken = await AsyncStorage.getItem("FCMtoken")
+      console.log(fcmtoken)
+      if(fcmtoken){
+        await FCMService.getInstance().sendTokenToServer(fcmtoken)
+      }
+      
 
       router.replace("/(tabs)/home");
     } catch (err: any) {
