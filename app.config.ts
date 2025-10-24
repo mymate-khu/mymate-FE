@@ -12,7 +12,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   android: {
     package: 'com.mymate.app',
-    googleServicesFile: './google-services.json', // Firebase Android 설정
+    // googleServicesFile: './google-services.json', // Firebase Android 설정 - 임시 비활성화
     icon: './assets/image/onboarding/MymateMainlogo.png', // 안드로이드용 아이콘
     adaptiveIcon: {
       foregroundImage: './assets/image/onboarding/MymateMainlogo.png',
@@ -21,7 +21,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
 
   ios: {
-    googleServicesFile: './GoogleService-Info.plist', // Firebase iOS 설정
+    // googleServicesFile: './GoogleService-Info.plist', // Firebase iOS 설정 - 임시 비활성화
   },
 
   plugins: ['expo-notifications'],
