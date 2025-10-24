@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { View, StyleSheet, SectionList, ListRenderItem, Alert, ActivityIndicator } from "react-native";
+import { View, StyleSheet, SectionList, ListRenderItem, Alert } from "react-native";
 import { router } from "expo-router";
 
 import BackHeader from "@/components/BackHeader";
@@ -116,7 +116,6 @@ const markAsRead = async (id: string) => {
 
 export default function NotificationListScreen() {
   const [items, setItems] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
   /* ---- 서버에서 목록 조회 ---- */
   useEffect(() => {
@@ -136,8 +135,6 @@ export default function NotificationListScreen() {
       } catch (e: any) {
         console.error("[notifications] fetch error:", e?.response?.data ?? e);
         Alert.alert("알림", "알림을 불러오는 중 문제가 발생했습니다.");
-      } finally {
-        if (mounted) setLoading(false);
       }
     })();
     return () => {
@@ -270,23 +267,17 @@ export default function NotificationListScreen() {
   return (
     <View style={s.container}>
       <BackHeader title="알림" />
-      {loading ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator />
-        </View>
-      ) : (
-        <SectionList
-          sections={sections as any}
-          keyExtractor={(it) => it.id}
-          renderItem={renderItem}
-          renderSectionHeader={({ section }) => (
-            <SectionHeader title={section.title} style={{ backgroundColor: "#fff" }} />
-          )}
-          stickySectionHeadersEnabled={false}
-          contentContainerStyle={s.listContent}
-          ItemSeparatorComponent={() => <View style={s.separator} />}
-        />
-      )}
+      <SectionList
+        sections={sections as any}
+        keyExtractor={(it) => it.id}
+        renderItem={renderItem}
+        renderSectionHeader={({ section }) => (
+          <SectionHeader title={section.title} style={{ backgroundColor: "#fff" }} />
+        )}
+        stickySectionHeadersEnabled={false}
+        contentContainerStyle={s.listContent}
+        ItemSeparatorComponent={() => <View style={s.separator} />}
+      />
     </View>
   );
 }
