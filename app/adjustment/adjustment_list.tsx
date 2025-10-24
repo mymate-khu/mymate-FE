@@ -11,7 +11,7 @@ import {
   Alert,
   TouchableOpacity,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 
 import SearchBlackIcon from "@/assets/image/adjustmenticon/searchblack_Icon.svg";
 import DropDownIcon from "@/assets/image/adjustmenticon/dropdown_Icon.svg";
@@ -32,11 +32,35 @@ const formatKRW = (n: number) =>
 
 export default function AdjustmentList() {
   const monthLabel = "2025년 10월";
+  const { search, category } = useLocalSearchParams<{ search?: string; category?: string }>();
 
   const { data, isLoading, refetch, isRefetching } = useAccounts();
-  const listItems = (data?.listItems ?? []) as (AdjustmentCardItem & {
-    status: SettlementStatus;
-  })[];
+  
+  // 검색/카테고리 필터링
+  const listItems = useMemo(() => {
+    const allItems = (data?.listItems ?? []) as (AdjustmentCardItem & {
+      status: SettlementStatus;
+    })[];
+    
+    let filtered = allItems;
+    
+    // 검색어 필터링
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.title.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // 카테고리 필터링
+    if (category) {
+      filtered = filtered.filter(item => 
+        item.category === category
+      );
+    }
+    
+    return filtered;
+  }, [data?.listItems, search, category]);
 
   const totalReceive = useMemo(() => {
     const accs = data?.page.accounts ?? [];
@@ -111,10 +135,16 @@ export default function AdjustmentList() {
         backgroundColor="#F8F8F8"
         onBack={() => router.back()}
         centerSlot={
-          <TouchableOpacity style={s.monthButton} onPress={onPressMonth} activeOpacity={0.7}>
-            <Text style={s.monthText}>{monthLabel}</Text>
-            <DropDownIcon width={24} height={24} />
-          </TouchableOpacity>
+          search || category ? (
+            <Text style={s.monthText}>
+              {search ? `"${search}"` : category ? `카테고리: ${category}` : monthLabel}
+            </Text>
+          ) : (
+            <TouchableOpacity style={s.monthButton} onPress={onPressMonth} activeOpacity={0.7}>
+              <Text style={s.monthText}>{monthLabel}</Text>
+              <DropDownIcon width={24} height={24} />
+            </TouchableOpacity>
+          )
         }
         rightSlot={
           <TouchableOpacity
@@ -127,11 +157,13 @@ export default function AdjustmentList() {
         }
       />
 
-      {/* Total */}
-      <View style={s.revenueBox}>
-        <Text style={s.revenueLabel}>Total Revenue</Text>
-        <Text style={s.revenueAmount}>{formatKRW(totalReceive)}</Text>
-      </View>
+      {/* Total - 검색 결과가 없을 때만 숨김 */}
+      {listItems.length > 0 && (
+        <View style={s.revenueBox}>
+          <Text style={s.revenueLabel}>Total Revenue</Text>
+          <Text style={s.revenueAmount}>{formatKRW(totalReceive)}</Text>
+        </View>
+      )}
 
       {/* 리스트 */}
       <ScrollView
@@ -142,14 +174,29 @@ export default function AdjustmentList() {
             tintColor="#FFD51C"
           />
         }
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
       >
-        <AdjustmentListStack
-          items={listItems}
-          onChangeStatus={handleChangeStatus}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        {listItems.length === 0 ? (
+          <View style={s.emptyContainer}>
+            <Text style={s.emptyText}>
+              {search 
+                ? `"${search}"에 대한 검색 결과가 없습니다.`
+                : category 
+                  ? `"${category}" 카테고리에 해당하는 정산 내역이 없습니다.`
+                  : "정산 내역이 없습니다."}
+            </Text>
+            <Text style={s.emptySubText}>
+              {search || category ? "다른 검색어나 카테고리로 시도해보세요." : "새로운 정산을 추가해보세요."}
+            </Text>
+          </View>
+        ) : (
+          <AdjustmentListStack
+            items={listItems}
+            onChangeStatus={handleChangeStatus}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -164,4 +211,24 @@ const s = StyleSheet.create({
   revenueBox: { paddingHorizontal: 24, marginBottom: 25, marginTop: 15 },
   revenueLabel: { fontSize: 18, color: "#707070", fontWeight: "600", marginBottom: 8 },
   revenueAmount: { fontSize: 32, fontWeight: "500", color: "#111", letterSpacing: 0.5 },
+  
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingTop: 80,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: "#707070",
+    textAlign: "center",
+  },
 });

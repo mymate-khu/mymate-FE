@@ -16,7 +16,7 @@ const MAX_CARDS = 3;
 const EXTRA_PAD = 40;
 
 export type StackItem = { id: number; title: string; desc?: string };
-type Palette = "yellow" | "purple";
+type Palette = "yellow" | "purple" | "gray";
 type Size = "small" | "medium" | "large";
 
 export default function TodayPuzzleStack({
@@ -49,12 +49,12 @@ export default function TodayPuzzleStack({
         <View style={[styles.cardWrap, { top: 0, zIndex: 1 }]}>
           <PuzzleCard
             variant="empty"
-            palette="neutral"          // ⚠️ PuzzleBox가 neutral 팔레트를 지원해야 함
-            tone="light"
+            palette="gray"
+            tone="medium"
             size="small"
             chevron="up"
             title="아직 퍼즐이 없어요."
-            emptySubtitle="퍼즐을 추가해주세요."
+            emptySubtitle="하단 버튼으로 퍼즐을 만들어 보세요."
             onPress={onAdd}
           />
         </View>

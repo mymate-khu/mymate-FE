@@ -164,3 +164,29 @@ export async function setAccountStatus(
     throw normErr(e, "정산 상태 변경 실패");
   }
 }
+
+/** ✅ 검색: GET /api/accounts/search?keyword={keyword} */
+export async function searchAccounts(keyword: string, params?: ListParams): Promise<AccountsPage> {
+  try {
+    const { data } = await TokenReq.get<ApiEnvelope<AccountsPage>>("/api/accounts/search", {
+      params: { ...params, keyword }
+    });
+    if (!data?.isSuccess) throw new Error(data?.message || "정산 검색 실패");
+    return data.data;
+  } catch (e) {
+    throw normErr(e, "정산 검색 실패");
+  }
+}
+
+/** ✅ 카테고리별 조회: GET /api/accounts/category?category={category} */
+export async function getAccountsByCategory(category: string, params?: ListParams): Promise<AccountsPage> {
+  try {
+    const { data } = await TokenReq.get<ApiEnvelope<AccountsPage>>("/api/accounts/category", {
+      params: { ...params, category }
+    });
+    if (!data?.isSuccess) throw new Error(data?.message || "카테고리별 정산 조회 실패");
+    return data.data;
+  } catch (e) {
+    throw normErr(e, "카테고리별 정산 조회 실패");
+  }
+}
