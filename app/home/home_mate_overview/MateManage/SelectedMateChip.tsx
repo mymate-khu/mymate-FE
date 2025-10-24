@@ -21,7 +21,7 @@ export default function SelectedMateChip({
 }: SelectedMateChipProps) {
   return (
     <View style={s.wrap}>
-      <GradientAvatar uri={avatarUri} size={40} />
+      <GradientAvatar uri={avatarUri} seed={code || name} size={40} />
 
       {/* 이름 */}
       <Text style={s.name} numberOfLines={1}>

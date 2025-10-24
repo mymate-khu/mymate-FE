@@ -36,6 +36,7 @@ export default function MyPage() {
   const idLabel = loading ? "" : (me?.memberLoginId ?? "");
 
   const avatarUri = me?.profileImageUrl ?? undefined;
+  const avatarSeed = me?.memberLoginId || me?.nickname || me?.username;
 
   const handleLogout = async () => {
     Alert.alert("로그아웃", "정말 로그아웃 하시겠어요?", [
@@ -67,7 +68,7 @@ export default function MyPage() {
         {/* 프로필 영역 */}
         <View style={s.profileBox}>
           <View style={s.avatarWrap}>
-            <GradientAvatar uri={avatarUri} size={80} />
+            <GradientAvatar uri={avatarUri} seed={avatarSeed} size={80} />
             <TouchableOpacity style={s.editBtn} activeOpacity={0.8} onPress={goEditProfile}>
               <EditIcon width={24} height={24} />
             </TouchableOpacity>

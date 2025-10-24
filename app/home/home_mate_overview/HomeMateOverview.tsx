@@ -46,10 +46,10 @@ export default function HomeMateOverview({
 
   const displayName = loading ? "..." : (me?.username || userName);
 
-  // 실제 그룹 멤버들로 아바타 생성 (사진 없으면 기본 SVG)
+  // 실제 그룹 멤버들로 아바타 생성 (사진 없으면 랜덤 아바타)
   const mateAvatars = (otherMembers || []).slice(0, 3).map(member => ({
-    id: member.id,
-    photo: undefined, // undefined면 AvatarStack/GradientAvatar에서 기본 이미지 사용
+    uri: member.photo,
+    seed: member.code || member.name || member.id, // 랜덤 아바타 생성용 seed
   }));
 
   const handleNavigateToManage = () => {
@@ -73,7 +73,7 @@ export default function HomeMateOverview({
         <View style={s.matesRow}>
           {mateAvatars.length > 0 ? (
             <AvatarStack
-              uris={mateAvatars.map((m) => m.photo)}
+              avatars={mateAvatars}
               size={40}
               overlap={10}
             />

@@ -123,13 +123,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "700",
     color: "#111",
   },
   emptySub: {
-    fontSize: 16,
-    color: "#9A9A9A",
+    fontSize: 12,
+    color: "#999999",
   },
 
   title: {

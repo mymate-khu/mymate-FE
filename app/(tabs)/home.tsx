@@ -11,8 +11,10 @@ import MateboardComponent from "@/app//home/home_mateboard/Mateboardcomponent";
 import HomeHeadercomponent from "@/app/home/home_header/HomeHeadercomponent";
 import HomeMateOverview from "../home/home_mate_overview/HomeMateOverview";
 import TodayPuzzleScreen from "../home/home_puzzle/TodayPuzzleScreen";
+import { useMyProfile } from "@/hooks/useMyProfile";
 
 export default function Home() {
+  const { me } = useMyProfile();
   useEffect(() => {
     const backHandler = BackHandler.addEventListener("hardwareBackPress", () => true);
     return () => backHandler.remove();
@@ -45,7 +47,10 @@ export default function Home() {
       }}
     >
       {/* 맨위 마이페이지, 알림 */}
-      <HomeHeadercomponent />
+      <HomeHeadercomponent 
+        profileImage={me?.profileImageUrl}
+        profileSeed={me?.memberLoginId || me?.nickname || me?.username}
+      />
 
       {/* 로고 & 메이트관리 */}
       <HomeMateOverview refreshSignal={refreshSeq} />
