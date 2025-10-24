@@ -24,7 +24,10 @@ type PuzzleDto = {
   category: string | null;
   createdAt: string;
   updatedAt: string;
+
 };
+
+
 
 type ApiResponse = {
   isSuccess: boolean;
@@ -43,8 +46,17 @@ type CardData = {
   memberId: number;
 };
 
+const DUMMY_CARDS: CardData[] = [
+  { id: 9001, imgurl: "", name: "멤버 201", content: "분리수거 / 오늘 저녁", memberId: 201 },
+  { id: 9002, imgurl: "", name: "멤버 202", content: "거실 청소", memberId: 202 },
+  { id: 9003, imgurl: "", name: "멤버 204", content: "전기요금 정산", memberId: 204 },
+  { id: 9004, imgurl: "", name: "멤버 205", content: "우유/계란 사오기", memberId: 205 },
+  { id: 9005, imgurl: "", name: "멤버 206", content: "욕실 배수구 청소", memberId: 206 },
+  { id: 9006, imgurl: "", name: "멤버 207", content: "공용 쓰레기 배출", memberId: 207 },
+];
+
 export default function MyPuzzleScreen() {
-  const [items, setItems] = useState<CardData[]>([]);
+  const [items, setItems] = useState<CardData[]>(DUMMY_CARDS);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -77,9 +89,12 @@ export default function MyPuzzleScreen() {
             memberId: p.memberId,
           }));
 
-          setItems(mapped);
+          setItems(mapped.length ? mapped : DUMMY_CARDS);
         } catch (e: any) {
-          if (!cancelled) setErr(e?.message ?? "목록을 불러오지 못했어요.");
+          if (!cancelled){
+            setItems(DUMMY_CARDS);
+            setErr("서버 연결이 불안정하여 임시 데이터를 표시합니다.");
+          } 
         } finally {
           if (!cancelled) setLoading(false);
         }
@@ -104,18 +119,21 @@ export default function MyPuzzleScreen() {
           <ActivityIndicator />
           <Text style={{ marginTop: 8, color: "#8E8E8E" }}>불러오는 중…</Text>
         </View>
-      ) : err ? (
-        <Text style={s.error}>목록이 없습니다.</Text>
       ) : (
-        <ScrollView style={s.puzzlecontainer} contentContainerStyle={{ paddingBottom: 32 }}>
-          {items.length === 0 ? (
-            <Text style={s.empty}>표시할 퍼즐이 없어요.</Text>
-          ) : (
-            items.map((item) => (
-              <PuzzleItem key={item.id} data={item} style={{ marginBottom: -30 }} />
-            ))
-          )}
-        </ScrollView>
+        <>
+          {/* 5) 에러는 안내 배너처럼만 표시하고, 리스트는 항상 렌더 */}
+          {err && <Text style={s.info}>{err}</Text>}
+
+          <ScrollView style={s.puzzlecontainer} contentContainerStyle={{ paddingBottom: 32 }}>
+            {items.length === 0 ? (
+              <Text style={s.empty}>표시할 퍼즐이 없어요.</Text>
+            ) : (
+              items.map((item) => (
+                <PuzzleItem key={item.id} data={item} style={{ marginBottom: -30 }} />
+              ))
+            )}
+          </ScrollView>
+        </>
       )}
     </View>
   );
@@ -173,6 +191,7 @@ const s = StyleSheet.create({
     paddingHorizontal: "5%",
     marginTop: 30,
   },
+  info: { paddingHorizontal: 16, paddingVertical: 8, color: "#8E8E8E" },
 
   // 각 퍼즐 카드 컨테이너
   item: {
