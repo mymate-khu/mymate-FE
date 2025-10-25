@@ -17,11 +17,30 @@ LocaleConfig.locales['ko'] = {
 };
 LocaleConfig.defaultLocale = 'ko';
 
-/** ---------- Utils ---------- */
+/** ---------- Utils (KST/로컬 기준으로 변경) ---------- */
 const pad2 = (n: number) => String(n).padStart(2, '0');
-const toISODate = (d: Date) => d.toISOString().split('T')[0];
-const lastDayOfMonthISO = (year: number, month1to12: number) => toISODate(new Date(year, month1to12, 0));
-const ymd = (s?: string | null) => (s ?? '').slice(0, 10);
+
+/** 🔧 로컬(디바이스) 타임존 기준 YYYY-MM-DD */
+const toLocalYMD = (d: Date) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+/** 🔧 해당 월의 마지막 날(로컬 기준) */
+const lastDayOfMonthYMD = (year: number, month1to12: number) =>
+  toLocalYMD(new Date(year, month1to12, 0));
+
+/** 🔧 서버 문자열(UTC 포함 가능)을 로컬(한국) 기준 YYYY-MM-DD로 정규화 */
+const toKSTYMD = (s?: string | null) => {
+  if (!s) return '';
+  const d = new Date(s); // JS Date는 자동으로 로컬타임존(KST)로 보여줌
+  return toLocalYMD(d);
+};
+
+/** 🔧 보기용: YYYY-MM-DD HH:MM (KST) */
+const formatKST = (s?: string | null) => {
+  if (!s) return '';
+  const d = new Date(s);
+  return `${toLocalYMD(d)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+};
 
 /** ---------- Local Types ---------- */
 type CardItem = {
@@ -37,12 +56,12 @@ type CardItem = {
 export default function MyCalendar() {
   const { width, height } = useWindowDimensions();
 
-  /** 오늘/선택상태 */
+  /** 오늘/선택상태 (🔧 로컬 기준으로 변경) */
   const today = new Date();
-  const todayISO = toISODate(today);
+  const todayYMD = toLocalYMD(today); // 🔧
 
-  const [currentISO, setCurrentISO] = useState(todayISO);
-  const [selected, setSelected] = useState(todayISO);
+  const [currentISO, setCurrentISO] = useState(todayYMD); // 🔧 이름 그대로 두되 값은 로컬 YMD
+  const [selected, setSelected] = useState(todayYMD);     // 🔧
 
   /** 현재 캘린더 커서(연/월) */
   const [curMonth, setCurMonth] = useState(today.getMonth() + 1);
@@ -75,34 +94,33 @@ export default function MyCalendar() {
   /** ---------- API: 해당 월 퍼즐 조회(가장 최신 응답만 반영) ---------- */
   const fetchMonthPuzzles = useCallback(
     async (myLoginId: string, y: number, m: number, signal?: AbortSignal) => {
-      const myFetchId = ++lastFetchId.current; // 이 호출의 고유 ID
+      const myFetchId = ++lastFetchId.current;
       try {
         if (!signal?.aborted) setLoading(true);
 
         const startDate = `${y}-${pad2(m)}-01`;
-        const endDate = lastDayOfMonthISO(y, m);
+        const endDate = lastDayOfMonthYMD(y, m); // 🔧
 
         const res = await TokenReq.get('/api/puzzles/date/range', {
           params: { startDate, endDate },
-          signal, // axios@1.x AbortController 지원
+          signal,
         });
 
-        // 뒤늦게 도착한 오래된 응답은 무시
         if (myFetchId !== lastFetchId.current) return;
 
         const list: PuzzleItem[] = Array.isArray(res?.data?.data) ? res.data.data : [];
         setAllPuzzles(list);
 
+        // buildCalendarDots 내부가 UTC기준으로만 표시한다면, 유틸도 로컬 변환해서 넘기도록 조정 필요.
+        // 여기서는 myLoginId와 원본 리스트 그대로 전달(도트 계산은 날짜 키만 일치하면 OK)
         const dots = buildCalendarDots(myLoginId, list);
         setEvents(dots);
       } catch (err: any) {
         if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') {
-          // 취소된 요청은 조용히 무시
           return;
         }
         console.error('월 데이터 조회 실패 ❌', err);
       } finally {
-        // 최신 요청인 경우에만 로딩 종료
         if (lastFetchId.current === myFetchId) setLoading(false);
       }
     },
@@ -115,7 +133,6 @@ export default function MyCalendar() {
       try {
         await TokenReq.delete(`/api/puzzles/${puzzleId}`);
         if (myId) {
-          // 직후 월데이터 재조회 (Abort/가드가 있으므로 안전)
           await fetchMonthPuzzles(myId, curYear, curMonth);
         }
       } catch (err) {
@@ -126,7 +143,7 @@ export default function MyCalendar() {
     [myId, curYear, curMonth, fetchMonthPuzzles]
   );
 
-  /** ---------- boot: myId만 가져오기 (데이터 fetch는 아래 effect 전담) ---------- */
+  /** ---------- boot: myId만 가져오기 ---------- */
   useEffect(() => {
     (async () => {
       const id = await fetchMyId();
@@ -134,7 +151,7 @@ export default function MyCalendar() {
     })();
   }, [fetchMyId]);
 
-  /** ---------- myId/연/월 바뀔 때마다: 이전 요청 취소+최신요청만 유지 ---------- */
+  /** ---------- myId/연/월 변경 시 조회 ---------- */
   useEffect(() => {
     if (!myId) return;
     const controller = new AbortController();
@@ -142,9 +159,9 @@ export default function MyCalendar() {
     return () => controller.abort();
   }, [myId, curYear, curMonth, fetchMonthPuzzles]);
 
-  /** ---------- 선택 날짜의 퍼즐 목록 ---------- */
+  /** ---------- 선택 날짜의 퍼즐 목록 (🔧 비교를 KST YYYY-MM-DD로) ---------- */
   const selectedDayPuzzles = useMemo(() => {
-    return allPuzzles.filter((p) => ymd(p.scheduledDate) === selected);
+    return allPuzzles.filter((p) => toKSTYMD(p.scheduledDate) === selected); // 🔧
   }, [allPuzzles, selected]);
 
   /** ---------- 캘린더 markedDates (선택 강조 포함) ---------- */
@@ -216,16 +233,13 @@ export default function MyCalendar() {
             setSelected(dateString);
             setCurrentISO(dateString);
           }}
-          onMonthChange={(yy, mm, cursorISO) => {
+          onMonthChange={(yy, mm, cursorYMD) => { // 🔧 변수명만 의미 맞춤
             setCurYear(yy);
             setCurMonth(mm);
-            setCurrentISO(cursorISO); // YYYY-MM-01
-            // UX상 월을 바꾸면 그 달의 1일을 선택하고 싶다면 아래 주석 해제:
-            // setSelected(cursorISO);
+            setCurrentISO(cursorYMD); // 예: 'YYYY-MM-01' (로컬 기준)
+            // 필요시: setSelected(cursorYMD);
           }}
           style={{ backgroundColor: 'white' }}
-          // 필요하면 CalendarCard 내부에서 loading 표시 prop 전달 가능
-          // loading={loading}
         />
       </View>
     ),
@@ -238,14 +252,13 @@ export default function MyCalendar() {
       sections={sections}
       keyExtractor={(item) => item.id}
       onManualRefresh={async () => {
-        // 중복 요청 방지
         if (loading) return;
         if (!myId) {
           const id = await fetchMyId();
           if (!id) return;
-          setMyId(id); // setMyId → effect 통해 자동 재조회
+          setMyId(id);
         } else {
-          await fetchMonthPuzzles(myId, curYear, curMonth); // Abort/가드 적용
+          await fetchMonthPuzzles(myId, curYear, curMonth);
         }
       }}
       ListHeaderComponent={
@@ -310,7 +323,7 @@ export default function MyCalendar() {
             {!!item.description && <Text style={styles.discript}>{item.description}</Text>}
 
             {!!item.scheduledDate && (
-              <Text style={[styles.discript, { marginTop: 30 }]}>{item.scheduledDate}</Text>
+              <Text style={[styles.discript, { marginTop: 30 }]}>{formatKST(item.scheduledDate) /* 🔧 */}</Text>
             )}
           </View>
         );

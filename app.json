@@ -8,7 +8,7 @@
     "userInterfaceStyle": "light",
     "scheme": "my-app",
     "splash": {
-      "image": "./assets/image/onboarding/MyMate.png",
+      "image": "./assets/image/onboarding/mymatemainlogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

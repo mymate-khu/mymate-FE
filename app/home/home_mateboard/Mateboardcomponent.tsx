@@ -136,9 +136,10 @@ export default function MateboardComponent() {
             </TouchableOpacity>
 
             <Text style={[s.label, { left: 16 }]}>Mate</Text>
-            <Text style={[s.label, { left: 16, color: "#888", fontSize: 14, fontWeight: "400" }]}>
-              {"오늘의 메이트 보드를\n확인해보세요!"}
-            </Text>
+<Text style={s.mateSubText}>
+  {"오늘의 메이트 보드를\n확인해보세요!"}
+</Text>
+            
           </View>
         </View>
       </View>
@@ -172,11 +173,13 @@ const s = StyleSheet.create({
     zIndex: 10,
     elevation: 2,
   },
+  /** 🔽 Me, Mate 라벨을 더 아래로 */
   label: {
     fontSize: 18,
     fontWeight: "400",
     color: "#111",
     marginBottom: 6,
+    marginTop: 8, // 🔧 이전 3 → 8 : 조금 더 아래로
     fontFamily: "DonerRegularDisplay",
   },
   memoInput: {
@@ -187,9 +190,19 @@ const s = StyleSheet.create({
     backgroundColor: "transparent",
     fontSize: 14,
   },
+  /** 🔽 “오늘의 메이트 보드를 확인해보세요!” 더 많이 아래로 */
+  mateSubText: {
+    left: 16,
+    color: "#888",
+    fontSize: 14,
+    fontWeight: "400",
+    marginTop: 18, // 🔧 이전 8 → 18 : 더 많이 아래로
+    fontFamily: "DonerRegularDisplay",
+  },
   title: {
     fontWeight: "400",
     fontSize: 18,
     fontFamily: "DonerRegularDisplay",
   },
 });
+

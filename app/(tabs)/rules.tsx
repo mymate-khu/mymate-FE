@@ -35,24 +35,32 @@ type GridItem = RuleItem | typeof PLACEHOLDER | typeof LAST_CARD;
 export default function RuleScreen() {
   const [rules, setRules] = useState<RuleItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [editTarget, setEditTarget] = useState<RuleItem | null>(null); // 수정 타겟
-  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);   // 열린 메뉴의 카드 id
+  const [editTarget, setEditTarget] = useState<RuleItem | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
 
   const isEditing = !!editTarget;
 
-  // 규칙 목록 불러오기
+  // 공용 로드 함수
+  const loadRules = useCallback(async () => {
+    try {
+      const res = await TokenReq.get("/api/rulebooks");
+      const list: RuleItem[] = Array.isArray(res?.data?.data) ? res.data.data : [];
+      setRules(list);
+    } catch (e) {
+      console.error("규칙 로드 실패", e);
+      setRules([]);
+    }
+  }, []);
+
+  // 초기 로드
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const res = await TokenReq.get("/api/rulebooks");
-        const list: RuleItem[] = Array.isArray(res?.data?.data) ? res.data.data : [];
-        if (mounted) setRules(list);
-      } catch (e) {
-        console.error("규칙 로드 실패", e);
-        if (mounted) setRules([]);
+        await loadRules();
       } finally {
         if (mounted) setLoading(false);
       }
@@ -60,7 +68,18 @@ export default function RuleScreen() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [loadRules]);
+
+  // ✅ onRefresh 훅을 조건부 반환보다 위로 이동
+  const onRefresh = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      setMenuOpenId(null);
+      await loadRules();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadRules]);
 
   // grid 데이터: 항상 마지막 카드 추가 + 홀수면 placeholder
   const gridData: GridItem[] = useMemo(() => {
@@ -82,7 +101,7 @@ export default function RuleScreen() {
 
       try {
         if (isEditing && editTarget) {
-          // ✅ 수정
+          // 수정
           const id = editTarget.id;
           const res = await TokenReq.put(`/api/rulebooks/${id}`, {
             title: t,
@@ -109,7 +128,7 @@ export default function RuleScreen() {
           return;
         }
 
-        // ✅ 생성
+        // 생성
         const res = await TokenReq.post("/api/rulebooks", {
           title: t,
           content: c,
@@ -159,6 +178,15 @@ export default function RuleScreen() {
     []
   );
 
+  // ✅ 여기까지 훅 선언 끝 — 아래부터 조건부 렌더 가능
+  if (loading) {
+    return (
+      <View style={[s.screen, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
   const renderItem = ({ item, index }: { item: GridItem; index: number }) => {
     // placeholder
     if (item === PLACEHOLDER) {
@@ -190,25 +218,27 @@ export default function RuleScreen() {
     // 일반 규칙 카드
     const rule = item as RuleItem;
 
-    // rules 배열 내 위치(= 그리드 내 시각적 인덱스) → 지그재그용 행/열 계산
+    // 지그재그 배치 계산
     const idxInRules = rules.findIndex((r) => r.id === rule.id);
-    const visualIndex = idxInRules >= 0 ? idxInRules : index; // 안전망
+    const visualIndex = idxInRules >= 0 ? idxInRules : index;
     const row = Math.floor(visualIndex / 2);
     const col = visualIndex % 2;
-
-    // ✅ 체커보드(지그재그) 규칙: (row + col) 짝/홀에 따라 카드 배경 선택
     const imgSource = (row + col) % 2 === 0 ? RuleCard1 : RuleCard2;
 
     const ordinal = visualIndex + 1;
-    const ruleNo = String(ordinal).padStart(2, "0"); // 01, 02, ...
+    const ruleNo = String(ordinal).padStart(2, "0");
 
     const isMenuOpen = menuOpenId === rule.id;
 
     return (
       <View style={s.cardWrapper}>
-        <Image source={imgSource} style={s.ruleImage} resizeMode="contain" />
+        <Image
+          source={imgSource ?? RuleCard1}
+          style={s.ruleImage}
+          resizeMode="contain"
+        />
 
-        {/* 메뉴 버튼 (Vector 아이콘) */}
+        {/* 메뉴 버튼 */}
         <TouchableOpacity
           style={s.menuBtn}
           onPress={() => setMenuOpenId((cur) => (cur === rule.id ? null : rule.id))}
@@ -216,7 +246,11 @@ export default function RuleScreen() {
           accessibilityRole="button"
           accessibilityLabel="규칙 메뉴 열기"
         >
-          <Image source={Vector} style={s.menuIcon} resizeMode="contain" />
+          {Vector ? (
+            <Image source={Vector} style={s.menuIcon} resizeMode="contain" />
+          ) : (
+            <Text style={{ fontSize: 18 }}>⋯</Text>
+          )}
         </TouchableOpacity>
 
         {/* 드롭다운 메뉴 */}
@@ -249,25 +283,18 @@ export default function RuleScreen() {
 
         {/* 텍스트 오버레이 */}
         <View style={s.overlay}>
-          <Text style={s.ruleNo}>{ruleNo}</Text>
-          <Text style={s.ruleTitle} numberOfLines={1}>{rule.title}</Text>
-          <Text style={s.ruleContent} numberOfLines={3}>{rule.content}</Text>
+          <Text style={s.ruleNo}>{String(ruleNo)}</Text>
+          <Text style={s.ruleTitle} numberOfLines={1}>{String(rule?.title ?? "")}</Text>
+          <Text style={s.ruleContent} numberOfLines={3}>{String(rule?.content ?? "")}</Text>
         </View>
       </View>
     );
   };
 
-  if (loading) {
-    return (
-      <View style={[s.screen, { justifyContent: "center", alignItems: "center" }]}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
-
   return (
     <View style={s.screen}>
-      <View style={s.hero}>
+      {/* 좌측 정렬 헤더 */}
+      <View style={s.heroWrap}>
         <Text style={s.heroLine}>규칙은 딱 필요한 만큼만,</Text>
         <Text style={s.heroLine}>서로 편하게</Text>
       </View>
@@ -276,16 +303,19 @@ export default function RuleScreen() {
         <FlatList
           data={gridData}
           renderItem={renderItem}
-          keyExtractor={(item, i) => {
-            if (item === PLACEHOLDER) return `placeholder-${i}`;
-            if (item === LAST_CARD) return `last-${i}`;
-            return `rule-${(item as RuleItem).id}-${i}`;
+          keyExtractor={(item) => {
+            if (item === PLACEHOLDER) return "placeholder";
+            if (item === LAST_CARD) return "last";
+            const id = (item as RuleItem)?.id;
+            return typeof id === "number" ? `rule-${id}` : `rule-temp`;
           }}
           numColumns={2}
           columnWrapperStyle={s.row}
-          onScrollBeginDrag={() => setMenuOpenId(null)} // 스크롤 시작 시 메뉴 닫기
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 40 }}
+          onScrollBeginDrag={() => setMenuOpenId(null)}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />
       </View>
 
@@ -310,13 +340,18 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  hero: {
+
+  // 헤더 좌측 정렬 + 그리드 폭과 동일하게
+  heroWrap: {
+    width: "90%",
+    marginHorizontal: "5%",
     marginVertical: 16,
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   heroLine: {
     fontSize: 20,
     fontWeight: "600",
+    textAlign: "left",
   },
 
   gridContainer: {
@@ -326,19 +361,16 @@ const s = StyleSheet.create({
     paddingVertical: 10,
   },
 
-  // 카드 행: 퍼즐 겹침 효과
   row: {
     justifyContent: "space-between",
     marginBottom: -35,
   },
 
-  // 메뉴 아이콘
   menuIcon: {
     width: 18,
     height: 18,
   },
 
-  // 카드 컨테이너
   cardWrapper: {
     width: "49.2%",
     aspectRatio: 1,
@@ -346,14 +378,12 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
 
-  // 카드 배경 이미지 (퍼즐 PNG)
   ruleImage: {
     position: "absolute",
     width: "100%",
     height: "100%",
   },
 
-  // 텍스트 오버레이
   overlay: {
     position: "absolute",
     left: 10,
@@ -361,7 +391,6 @@ const s = StyleSheet.create({
     top: 25,
   },
 
-  // 번호(01, 02...)
   ruleNo: {
     fontSize: 13,
     fontWeight: "700",
@@ -369,7 +398,6 @@ const s = StyleSheet.create({
     color: "#111",
   },
 
-  // 제목
   ruleTitle: {
     fontSize: 15,
     fontWeight: "600",
@@ -377,14 +405,12 @@ const s = StyleSheet.create({
     color: "#111",
   },
 
-  // 내용
   ruleContent: {
     fontSize: 12,
     lineHeight: 18,
     color: "#333",
   },
 
-  // 마지막 카드 중앙 라벨
   centerLabelWrap: {
     position: "absolute",
     top: 0,
@@ -405,30 +431,27 @@ const s = StyleSheet.create({
     textShadowRadius: 4,
   },
 
-  // 메뉴 버튼 (흰 원 배경 제거 + 위쪽 여유)
   menuBtn: {
     position: "absolute",
-    top: 16,         // 위쪽 마진
+    top: 16,
     right: 8,
     width: 28,
     height: 28,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    // backgroundColor: "rgba(255,255,255,0.75)", // 제거
   },
 
-  // 드롭다운
   menuDropdown: {
     position: "absolute",
-    top: 44,         // 버튼 위치에 맞춰 드롭다운 위치 조정
+    top: 44,
     right: 8,
     width: 120,
     backgroundColor: "#fff",
     borderRadius: 12,
     paddingVertical: 6,
-    elevation: 8, // Android shadow
-    shadowColor: "#000", // iOS shadow
+    elevation: 8,
+    shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
