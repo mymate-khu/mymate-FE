@@ -62,10 +62,10 @@ export default function AdjustmentList() {
     return filtered;
   }, [data?.listItems, search, category]);
 
+  // ✅ 필터링된 listItems를 기반으로 Total Revenue 계산
   const totalReceive = useMemo(() => {
-    const accs = data?.page.accounts ?? [];
-    return accs.reduce((sum, a) => sum + (Number(a?.receiveAmount) || 0), 0);
-  }, [data]);
+    return listItems.reduce((sum, item) => sum + (item.receiveAmount || 0), 0);
+  }, [listItems]);
 
   const del = useDeleteAccount();
   const setStatus = useSetAccountStatus();
