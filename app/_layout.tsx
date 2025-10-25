@@ -1,6 +1,6 @@
 // app/_layout.tsx
 import React, { useEffect } from "react";
-import { StatusBar, AppState, Platform } from "react-native";
+import { StatusBar, AppState, Platform, LogBox } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Slot } from "expo-router";
 
@@ -14,6 +14,28 @@ import {
   onlineManager,
 } from "@tanstack/react-query";
 import NetInfo from "@react-native-community/netinfo";
+
+// 🔇 프로덕션에서만 로그/경고/에러 화면 숨기기
+if (!__DEV__) {
+  // RN 경고 전체 숨김 (노란 박스/로그)
+  LogBox.ignoreAllLogs(true);
+
+  // 콘솔 출력 막기 (필요 시 원하는 것만 막아도 됨)
+  const noop = () => {};
+  console.log = noop;
+  console.warn = noop;
+  console.error = noop;
+
+  // 빨간 에러 화면(전역 JS 에러)도 막기 — 주의: 조용히 실패할 수 있음
+  const g = globalThis as any;
+  if (g?.ErrorUtils?.setGlobalHandler) {
+    const prev = g.ErrorUtils.getGlobalHandler?.();
+    g.ErrorUtils.setGlobalHandler((_err: any, _isFatal?: boolean) => {
+      // TODO: Sentry/Crashlytics로 전송하려면 여기서 처리
+      // prev?.(_err, _isFatal); // 기존 핸들러까지 호출하려면 주석 해제
+    });
+  }
+}
 
 // 전역 QueryClient (필요 시 옵션 조정)
 const queryClient = new QueryClient({
@@ -34,7 +56,7 @@ export default function Layout() {
         shouldShowList: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
-        shouldShowAlert: true, // 포그라운드에서도 배너보이게
+        shouldShowAlert: true, // 포그라운드에서도 배너 보이게
       }),
     });
 
