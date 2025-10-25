@@ -1,7 +1,8 @@
-import { Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import FirebaseConfig from './FirebaseConfig';
+import messaging from '@react-native-firebase/messaging';
 
 const ANDROID_CHANNEL_ID = 'default';
 
@@ -121,7 +122,7 @@ class FCMService {
     try {
       const { TokenReq } = await import('../apis/axiosInstance');
       
-      const response = await TokenReq.post('/api/notifications/fcm/token', {
+      const response = await TokenReq.post('/api/notifications/push/token', {
         fcmToken: token,
         platform: Platform.OS,
       });
@@ -166,11 +167,17 @@ class FCMService {
       // Android 알림 채널 생성 (필수)
       await this.createNotificationChannel();
       
+      // 백그라운드 메시지 핸들러 설정
+      this.setupBackgroundMessageHandler();
+      
       // 토큰 새로고침 리스너 설정
       await this.setupTokenRefreshListener();
       
       // 메시지 수신 리스너 설정
       await this.setupMessageListeners();
+      
+      // 알림 수신 리스너 설정
+      this.setupNotificationReceivedListener();
       
       // 초기 토큰 가져오기
       const token = await this.getFCMToken();
@@ -194,7 +201,14 @@ class FCMService {
   async setupExpoNotifications(): Promise<void> {
     try {
       // 전역(App 루트)에서 setNotificationHandler를 1회만 등록합니다.
-      console.log('✅ Expo Notifications 기본 설정 확인');
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+        }),
+      });
+      console.log('✅ Expo Notifications 기본 설정 완료');
     } catch (error) {
       console.error('Expo Notifications 설정 중 오류 발생:', error);
     }
@@ -250,10 +264,10 @@ class FCMService {
   async createNotificationChannel(): Promise<void> {
     try {
       if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-          name: '기본 알림(High)',
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'default',
           description: '앱의 기본 알림 채널입니다',
-          importance: Notifications.AndroidImportance.HIGH,
+          importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#FF231F7C',
           sound: 'default',
@@ -288,6 +302,57 @@ class FCMService {
       console.log('✅ 로컬 알림 표시 완료');
     } catch (error) {
       console.error('로컬 알림 표시 중 오류 발생:', error);
+    }
+  }
+
+  /**
+   * 백그라운드 메시지 핸들러 설정
+   */
+  private setupBackgroundMessageHandler(): void {
+    try {
+      messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+        console.log('📱 백그라운드에서 메시지 수신:', remoteMessage);
+        
+        // 백그라운드에서 알림 표시
+        if (remoteMessage.notification) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: remoteMessage.notification.title || '새 메시지',
+              body: remoteMessage.notification.body || '알림이 도착했습니다',
+              sound: true,
+            },
+            trigger: null, // 즉시 표시
+          });
+        }
+      });
+      
+      console.log('✅ 백그라운드 메시지 핸들러 설정 완료');
+    } catch (error) {
+      console.error('백그라운드 메시지 핸들러 설정 중 오류 발생:', error);
+    }
+  }
+
+  /**
+   * 알림 수신 리스너 설정
+   */
+  private setupNotificationReceivedListener(): void {
+    try {
+      const subscription = Notifications.addNotificationReceivedListener(
+        (notification) => {
+          console.log('📱 알림 수신:', notification);
+          
+          // 여기서 추가 로직을 구현할 수 있습니다
+          // 예: Alert 표시, 네비게이션, 상태 업데이트 등
+          Alert.alert(
+            notification.request.content.title || '알림',
+            notification.request.content.body || '새 메시지가 도착했습니다'
+          );
+        }
+      );
+      
+      console.log('✅ 알림 수신 리스너 설정 완료');
+    } catch (error) {
+      console.error('알림 수신 리스너 설정 중 오류 발생:', error);
     }
   }
 }
