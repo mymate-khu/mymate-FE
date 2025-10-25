@@ -21,6 +21,7 @@ export type AdjustmentCardItem = {
   dateLabel: string;
   prevAmount?: string;
   finalAmount: string;
+  receiveAmount: number; // 숫자 값 (계산용)
   imageUri?: string;
   avatars?: string[];
   category?: string;

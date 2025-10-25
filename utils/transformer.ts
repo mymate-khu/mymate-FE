@@ -129,6 +129,7 @@ export const transformToListItems = (
     dateLabel: toDateLabel(a.expenseDate),
     prevAmount: `-${fmtKRW(Number(a.totalAmount) || 0)}`,
     finalAmount: fmtKRW(Number(a.receiveAmount) || 0),
+    receiveAmount: Number(a.receiveAmount) || 0, // 숫자 값 추가
     imageUri: a.imageUrl ?? undefined,
     avatars: (a.participants ?? []).slice(0, 4).map((p: any) =>
       p?.avatarUrl ?? getRandomAvatarUrl(p?.memberName ?? p?.memberId)
